@@ -1,0 +1,51 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4:ft=zsh
+
+# 
+# 
+# ~/.config/zsh/func/urun
+# 
+# 
+
+(( $+commands[systemd-run] )) || return 127
+
+local +h functions
+local this_file="$0"
+local unit
+
+function print_help () {
+    print -f "%s\n" \
+        "Helper wrapper for systemd-run --user" \
+        "Usage: $this_file [options] [command] [args]" \
+
+    print -f "\n%s\n" "Options:"
+    print -f "    %-10s %s\n" \
+        "-u|--unit " "Unit name, default is the command and first two arguments" \
+        ""           "underscore concatenated" \
+        ""           "For example 'urun cclip -S -t "image/png" -t ...' -> 'cclipd_-S_-t'" \
+        "-h|--help " "Print this help"
+}
+
+while true; do
+    case $1 in
+        -u|--unit)
+            if [[ -z "$2" ]]; then
+                print -u2 "${0}: $1 was provided with no value"
+                return 1
+            fi
+            unit="$2"
+            shift 2
+            ;;
+        -h|--help) print_help; return 0;;
+        *) break;;
+    esac
+done
+
+if ! (( $+commands[$1] )); then
+    print -u2 "${0}: Command not found: $1"
+    return 127
+fi
+
+: ${unit:=${(j:_:)@:1:3}}
+
+systemd-run --user --unit="${unit:gs/\//_/}" "$@"

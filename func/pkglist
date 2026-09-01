@@ -1,0 +1,62 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4:ft=zsh
+
+#
+#
+# termux://~/.config/zsh/functions/pkglist
+#
+#
+
+#
+#
+#
+
+if [[ -z "$TERMUX_VERSION" ]]; then
+    echo "${0}: This is termux exclusive" >&2
+    return 1
+fi
+
+# Localise internally declared functions, do not persist post-execution
+zmodload -e zsh/parameter || zmodload zsh/parameter
+local +h functions 
+
+function wrap_desc () {
+    local text="$1" width="${2:-70}" indent="${3:-'    '}"
+    local -a words
+    words=(${=text})
+
+    local line result word
+    for word in "${words[@]}"; do
+        if [[ -z $line ]]; then
+            line="${indent}${word}"
+        elif (( ${#line} + 1 + ${#word} > width )); then
+            result+="${line}"$'\n'"$indent"
+            line="$word"
+        else
+            line+=" ${word}"
+        fi
+    done
+    result+="$line"
+
+    print -r -- "$result"
+}
+
+function print_pkglist () {
+    # Query installed pacakages
+    typeset -A installed
+    while IFS="" read -r pkg; do
+        installed[$pkg]=1
+    done < <(dpkg-query -W -f='${Package}\n' 2>/dev/null)
+
+    apt-cache search . | while IFS="" read -r line; do
+        local name="${line%% - *}"
+        local desc="${line#* - }"
+
+        printf "%s%s\n%s\n" \
+            $'\e[32m'"${name}" \
+            $'\e[36m'"${installed[$name]:+" [Installed]"}" \
+            $'\e[0;m'"$(wrap_desc "${desc}" 70 "    ")"
+    done
+}
+
+print_pkglist | less -R

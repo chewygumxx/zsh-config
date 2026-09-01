@@ -1,0 +1,64 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4:filetype=zsh:
+
+# 
+# 
+# ~chewygumxx/dotfiles.git
+# ::: :/dot_config/zsh/func/openrouter
+# 
+# 
+
+# 
+# Secure wrapper for curl of openrouter REST API 
+# 
+
+local PASS_URI_OPENROUTER_APIKEY="${PASS_URI_OPENROUTER_APIKEY:-"pass://J-xaaVbsyf9NXSOTldrv8KqCo46GwqzhNFBtLlq80kZIVU6i54tu3l1k2-poPAfD-O6sOeYHLPzPIaCj8v20pg==/NbssAEYTKTxgsBgkYlmtOQJ9rccg8Vm93YDxF9BC4neMF06etWFU35EtsLES93nSSExPI5MnFSC5LhwjMylB1A==/API\ Key"}"
+
+local __this_file="${(D)${${(%):-%N}:A}}"
+
+function log () {
+    if [[ "$2" == "--" ]]; then
+        local ctx="$1"; shift 2
+    fi
+
+    case "$1" in
+        FATAL|INFO|NOTICE|WARN|ERROR)
+            local level="$1"; shift
+            local message="$@"
+            ;;
+        *)
+            print -u2 -f "%s: [%s] %s" "$__this_file" FATAL \
+                "${ctx:+"($ctx) "}Invalid log call: Level provided not INFO, NOTICE, WARN, ERROR or FATAL: $@"
+            print -u2 -f "%s: [%s] %s" "$__this_file" FATAL \
+                "'log ${ctx:+"($ctx) -- "}$@"
+            return 1
+            ;;
+    esac
+
+    print -u2 -f "%s: [%s] %s" "$__this_file" "$level" "${ctx:+"($ctx) "}$message"
+}
+
+local command_not_found=0
+if ! (( $+commands[pass-cli] )); then
+    log FATAL "Command not found: pass-cli"
+    command_not_found=1
+fi
+
+if ! (( $+commands[curl] )); then
+    log FATAL "Command not found: curl"
+    command_not_found=1
+fi
+
+(( command_not_found )) && return 127
+
+if [[ "$PASS_URI_OPENROUTER_APIKEY" != "pass://"* ]]; then
+    log FATAL "Variable PASS_URI_OPENROUTER_APIKEY is not of pass:// URI Format"
+    return 1
+fi
+
+local OPENROUTER_APIKEY="$(pass-cli item show "$PASS_URI_OPENROUTER_APIKEY")"
+\builtin command curl --fail-with-body --silent --show-error \
+        'https://openrouter.ai/api/v1/chat/completions' \
+        -H 'Content-Type: application/json' \
+        -H "Authorization: Bearer $OPENROUTER_APIKEY" \
+        --data-raw "$1"

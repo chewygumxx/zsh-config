@@ -1,0 +1,74 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4:ft=zsh
+
+#
+#
+# ~/.local/share/zsh/function/gtrash
+#
+#
+
+#
+# Shadow zsh function for environment variable configuration of nb.
+# Intended for autoload from fpath directory.
+#
+# https://xwmx.github.io/nb
+# https://xwmx.github.io/nb/#-variables
+# https://github.com/xwmx/nb
+#
+
+if [[ -z "$commands[nb]" ]]; then
+    echo "command 'nb' not found" >&2
+    return 127
+fi
+
+local -x NB_DIR="$HOME/doc"
+#local -x NBRC_PATH=
+
+local -x NB_FOLDERS_FIRST=1
+local -x NB_LIMIT="auto"
+local -x NB_HEADER=1
+local -x NB_FOOTER=1
+#local -x NB_PINNED_PATTERN=
+#local -x NB_DEFAULT_TEMPLATE=
+
+local -x NB_SERVER_HOST="localhost"
+local -x NB_SERVER_PORT=6789
+
+local -x NB_AUTO_SYNC=1
+local -x NB_AUTO_SYNC_SECONDS=60
+
+#local -x NB_COLOR_PRIMARY=
+#local -x NB_COLOR_SECONDARY=
+#local -x NB_COLOR_THEME=
+
+#local -x NB_INDICATOR_AUDIO=
+#local -x NB_INDICATOR_BOOKMARK=
+#local -x NB_INDICATOR_DOCUMENT=
+#local -x NB_INDICATOR_EBOOK=
+#local -x NB_INDICATOR_ENCRYPTED=
+#local -x NB_INDICATOR_FOLDER=
+#local -x NB_INDICATOR_IMAGE=
+#local -x NB_INDICATOR_PINNED=
+#local -x NB_INDICATOR_TODO=
+#local -x NB_INDICATOR_TODO_DONE=
+#local -x NB_INDICATOR_VIDEO=
+
+#local -x NB_CUSTOM_CSS=
+#local -x NB_CUSTOM_CSS_URL=
+#local -x NB_CUSTOM_JAVASCRIPT=
+#local -x NB_CUSTOM_JAVASCRIPT_URL=
+
+#local -x NB_DATA_TOOL=
+#local -x NB_DIRECTORY_TOOL=
+#local -x NB_ENCRYPTION_TOOL=
+local -x NB_GUI_BROWSER="$BROWSER"
+#local -x NB_IMAGE_TOOL=
+#local -x NB_MATHJAX_ENABLED=
+local -x NB_MARKDOWN_TOOL="glow"
+local -x NB_SYNTAX_THEME="chewyansi"
+
+
+local -x NB_BROWSE_SUPPORT_LINKS=0
+
+
+command nb "$@"

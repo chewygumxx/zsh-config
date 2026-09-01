@@ -1,0 +1,40 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4:filetype=zsh
+
+#
+#
+# ~chewygumxx/dotfiles.git
+# ::: :/dot_config/zsh/func/sv
+#
+#
+
+#
+# Zsh wrapper function for Termux service manager: sv
+#
+
+local __this_file="${(D)${${(%):-%N}:A}}"
+local +h functions 
+
+
+# ---------------------
+# Validate Environment
+# ---------------------
+
+if [[ ! -v TERMUX_VERSION ]]; then
+    print -u2 "${__this__file}: This is function is termux exclusive"
+    return 1
+fi
+
+if (( ! $+commands[sv] )); then
+    print -u2 "${__this_file}: command 'sv' not found"
+    print -z "command pkg install termux-services"
+    return 127
+fi
+
+
+
+if (( $# == 0 )); then
+    
+fi
+
+sv "$@"

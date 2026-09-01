@@ -1,0 +1,108 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4:filetype=zsh:
+
+# 
+# 
+# ~chewygumxx/dotfiles.git
+# ::: :/dot_config/zsh/func/eza-wrapper
+# 
+# 
+
+#
+# Zsh function for wrapping command line utility: eza
+# Dependent upon array variables: __eza_opts __eza_ignore_glob
+#
+
+local __this_file="${(D)${${(%):-%N}:a}}"
+local __eza_ignore_glob=( $__eza_ignore_glob )
+
+# ---------------------
+# Validate Environment
+# ---------------------
+
+if (( ! $+commands[eza] )); then
+    print -u2 "${__this_file}: [FATAL] Command not found: eza"
+    return 127
+fi
+
+local envvar
+for envvar in __eza_opts __eza_ignore_glob; do
+    if [[ ! -v "$envvar" ]]; then
+        print -u2 "${__this_file}: [ERROR] Variable not set: $envvar"
+        continue
+    fi
+
+    if [[ "${(Pt)envvar}" != array* ]]; then
+        print -u2 "${__this_file}: [ERROR] Variable is not an array: $envvar"
+    fi
+done
+
+
+# -----------------
+# Invocation Parse
+# -----------------
+
+local -a opts=( "${__eza_opts[@]}" )
+local -a args=()
+local -i ignore=1
+local -i long=0
+
+while (( $# )); do
+    case "$1" in
+        -u|--unignore)
+            ignore=0
+            ;;
+        -l|--long)
+            long+=1
+            ;;
+        -T|--tree)
+            opts+=("$1")
+            __eza_ignore_glob+=( ".git" )
+            ;;
+        -*)
+            opts+=("$1")
+            ;;
+        *)
+            args+=("$1")
+            ;;
+    esac
+    shift
+done
+
+
+# --------
+# Options
+# --------
+
+(( ignore )) && opts+=( "--ignore-glob" "${(j:|:)__eza_ignore_glob}" )
+
+if   (( long == 0 )); then;
+    opts+=( "--no-permissions" "--no-user" "--no-filesize" "--no-time")
+elif (( long == 1 )); then;
+    opts+=( "--header" "--mounts" "--no-user")
+elif (( long >  1 )); then;
+    opts+=( "--header" "--mounts" "--extended" "--group" "--smart-group" )
+else
+    print -u2 "${(D)${${(%):-%N}:A}}: Variable 'long' is somehow negative"
+fi
+
+
+# ---------
+# Argument 
+# ---------
+
+(( ${#args} == 0 )) && args+=( "${PWD}" )
+
+# Show directory path for --tree
+typeset -a dirs=()
+local dirpath
+for dirpath in "${args[@]}"; do
+    dirs+=( "${dirpath:a}" )
+done
+
+
+# --------
+# Execute
+# --------
+
+\builtin command eza "${opts[@]}" "${dirs[@]}"

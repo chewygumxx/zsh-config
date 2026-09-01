@@ -1,0 +1,22 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4:ft=zsh
+
+#
+#
+# ~/.config/zsh/func/man
+#
+#
+
+#
+# Shadow function of man
+#
+
+local -x MANPAGER='nvim +Man!'
+local -x MANWIDTH=$(( (COLUMNS - 5) < 100 ? (COLUMNS - 5) : 100 ))
+local -x MANOPT='--no-justification --no-hyphenation'
+
+if (( $+commands[batman] )); then
+#    batman "$@"
+fi
+
+command man "$@"

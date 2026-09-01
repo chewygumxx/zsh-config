@@ -1,0 +1,21 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4
+
+# 
+# 
+# ~/.config/zsh/functions/read-pipe
+# 
+# 
+
+
+if   [[ $# -eq 0 ]]; then
+    echo "Usage: $0 <fifo>"
+    echo "    Persistently reads named pipe FIFO file even after EOF"
+    echo "    All other arguments ignored"
+elif [[ !  -p $1 ]]; then
+    echo "${0}: Unrecognised file '$1' (not FIFO)"
+fi
+
+while true; do
+    stdbuf -oL cat $1
+done

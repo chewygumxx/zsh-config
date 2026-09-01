@@ -1,0 +1,27 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4
+
+# 
+# 
+# ~/.config/zsh/func/named
+# 
+# 
+
+#
+# Overwrites 'named' system command for DNS (I never invoke it interactively)
+#
+
+local name dir
+for name in "${(@ko)nameddirs}"
+do
+    dir="${nameddirs[$name]}"
+
+    name="[$name]"
+    name=$'\e[34m'"$name"$'\e[0m'
+
+    dir="${dir/#$HOME/~}"
+    dir=$'\e[35m'"$dir"$'\e[0m'
+
+    \builtin print -f "%20s=%s\n" "$name" "$dir"
+done
+

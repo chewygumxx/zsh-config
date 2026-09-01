@@ -1,0 +1,30 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4
+
+# 
+# 
+# ~/.config/zsh/func/__slugify
+# 
+# 
+
+
+emulate -L zsh
+setopt extended_glob
+
+local allow="._-"
+while true; do
+    case $1 in
+        -D|--no-dot)        allow="${allow//./}" ;;
+        -H|--no-hyphen)     allow="${allow//-/}" ;;
+        -U|--no-underscore) allow="${allow//_/}" ;;
+        --) shift; break ;;
+        *)  break ;;
+    esac
+    shift
+done
+
+local slug="${(L)1//[^[:alnum:]${allow}]/_}"
+slug="${slug//_##/_}"
+slug="${slug##[._-]##}"
+slug="${slug%%[._-]##}"
+print -r -- "$slug"

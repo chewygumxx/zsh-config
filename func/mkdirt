@@ -1,0 +1,15 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4
+
+# 
+# 
+# ~/.config/zsh/func/mkdir
+# 
+# 
+
+while (( $# ))
+do
+    \builtin command mkdir -p "$1"
+    \builtin command touch "$1/.keep"
+    shift
+done

@@ -1,0 +1,42 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4:filetype=zsh:
+
+#
+# 
+# ~chewygumxx/dotfiles.git
+# ::: :/dot_config/zsh/.zshrc
+#
+#
+
+#
+# Interactive Zsh Shell Initialisation
+# Dependent upon associative array variable 'zsh_dirs' set in advance.
+#
+
+[[ -o interactive ]] || return
+
+setopt re_match_pcre
+setopt interactive_comments 
+
+
+zshrcs=( "$zsh_dirs[rc]"/*.rc.zsh )
+
+zshrcs=(                        # ** Order Rationale **
+    ${(M)zshrcs:#*ls_colors*}   # Provides for completion
+    ${(M)zshrcs:#*completion*}  # Minimise fpath for completion index
+    ${(M)zshrcs:#*function*}    # Provide function dependencies
+
+    ${zshrcs:#*(ls_colors|completion|function)*}
+
+    "${zsh_dirs[util]}"/*.rc.zsh
+)
+
+() {
+    local source 
+    for source in $zshrcs; do
+        source "$source"
+    done
+}
+
+zle_highlight=('paste:none')
+

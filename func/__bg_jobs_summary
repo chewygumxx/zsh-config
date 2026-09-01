@@ -1,0 +1,85 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4:ft=zsh
+
+# 
+# 
+# ~/.config/zsh/func/__bg_jobs_summary
+# 
+# 
+
+# ~/.config/zsh/functions/_bg_jobs_summary  (autoload from fpath, matches your convention)
+
+#
+# To enable, call this function without argument
+# To disable, call this function with argument
+#
+
+emulate -L zsh
+[[ -o interactive ]] || return
+
+# --------------------
+# Enable/Disable Hook
+# --------------------
+
+local safevarname="${(L)${${(%):-%N}:A:t}//[^[:alnum:]_]/_}"
+
+if (( $# )); then
+    unset __enabled_${safevarname}
+    PS1="${PS1//"\${__bg_jobs_info}"/}"
+    add-zsh-hook -d precmd "${${(%):-%N}:A:t}"
+    return
+fi
+
+if [[ ! -v __enabled_${safevarname} ]]; then
+    typeset -g __enabled_${safevarname}=1
+    PS1="\${__bg_jobs_info}$PS1"
+    add-zsh-hook precmd "${${(%):-%N}:A:t}"
+fi
+
+
+# ---------------
+# Enumerate Jobs
+# ---------------
+
+if ! (( ${#jobstates} )); then
+    unset __bg_jobs_info
+    return
+fi
+
+local red=$'\e[31m' grn=$'\e[32m' ylw=$'\e[33m' cyn=$'\e[36m' wht=$'\e[37m' BLK=$'\e[90m' n=$'\e[0m' b=$'\e[1m' d=$'\e[2m'
+
+local job call wdir state hue print_text
+local -a jobs_list
+
+for job in ${(kon)jobstates}; do
+    call=${jobtexts[$job]}
+    if (( ${#call} > 30 )); then
+        call="${call[1,13]}...${call[-13,-1]}"
+    fi
+
+    wdir="${(D)${jobdirs[$job]:a}}"
+    if (( ${#wdir} > 15 )); then
+        wdir="...${wdir[-12,-1]}"
+    fi
+
+    state=${jobstates[$job]%%:*}
+    case $state in
+        running)   hue=$grn state='Exec' ;;
+        suspended) hue=$ylw state='Rest' ;;
+        *)         hue=$red   ;;
+    esac
+
+    hue+=$b
+    job="${hue}${job}${n}"
+    state="${hue}${state}${n}"
+    call="${hue}${d}${call}${n}"
+
+    print_text="${BLK}[${job}${BLK}] "
+    print_text+="${state} "
+    print_text+="${call} "
+    # print_text+="${BLK}(${wdir})"
+
+    jobs_list+=( "${hue}[${n}${print_text}${hue}]${n}" )
+done
+
+typeset -g __bg_jobs_info="${(j: :)jobs_list}"$'\n'

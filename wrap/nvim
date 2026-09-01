@@ -1,0 +1,76 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4:ft=zsh
+
+# 
+# 
+# ~chewygumxx/dotfiles.git
+# ::: :/dot_config/zsh/wrap/nvim
+# 
+# 
+
+#
+# Zsh wrapper function for Neovim.
+#
+
+local __this_file="${(D)${${(%):-%N}:A}}"
+
+if (( ! $+commands[nvim] )); then
+    print -u2 "${__this_file}: Command not found: nvim"
+    return 127
+fi
+
+if (( $# != 1 )); then
+    command nvim "$@"
+    return
+fi
+
+local target="${1:a}"
+
+
+# ---------
+# New File
+# ---------
+
+if [[ ! -e "$target" ]]; then
+    command nvim "$target"
+    local nvim_exit=$?
+
+    if [[ ! -e "$target" ]]; then
+        return $nvim_exit
+    fi
+
+
+    if (( $+commands[chezmoi] )); then
+        local source_dir
+        if source_dir="$(command chezmoi source-path "${target:h}" 2>/dev/null)"; then
+            command chezmoi add --prompt "$target"
+        fi
+    fi
+
+    return $nvim_exit
+fi
+
+
+# ---------------
+# File Exists
+# ---------------
+
+if [[ -d "$target" ]]; then
+    cd "$target"
+    return
+fi
+
+if (( $(zstat +uid "$target") == 0 )); then
+    SUDO_EDITOR=nvim command sudoedit "$target"
+    return
+fi
+
+if (( $+commands[chezmoi] )) && [[ -n "$(command chezmoi managed "$target" 2>/dev/null)" ]]; then
+    local -x TMPDIR="$XDG_CACHE_HOME/chezmoi"
+    [[ ! -d "$TMPDIR" ]] && command mkdir -p "$TMPDIR"
+    command nvim "$target"
+    command chezmoi re-add "$target" &!
+    return
+fi
+
+command nvim "$@"

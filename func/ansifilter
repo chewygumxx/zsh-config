@@ -1,0 +1,23 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4:filetype=zsh:
+
+#
+#
+# ~chewygumxx/dotfiles.git
+# ::: :/dot_config/zsh/func/ansifilter
+#
+#
+
+#
+# Filters ANSI escape codes from stdin and prints to stdout
+#
+
+local __this_file="${(D)${${(%):-%N}:A}}"
+
+if [[ ! -t 0 ]]; then
+    sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" </dev/stdin
+    return 0
+else
+    print -u2 -f "%s: [%s] %s\n" "${__this_file}" FATAL "Intended for read piped data from stdin"
+    return 1
+fi

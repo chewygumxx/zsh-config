@@ -1,0 +1,22 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+
+# 
+# 
+# ~chewygumxx/dotfiles.git
+# ::: :/dot_config/zsh/wrap/systemctl
+# 
+# 
+
+if (( $# == 0 )) && (( $+commands[systemctl-tui] )); then
+    command systemctl-tui --scope user
+    return
+fi
+
+if (( $# == 1 )) && [[ "$1" == "--user" ]] && (( $+commands[systemctl-tui] )); then
+    command systemctl-tui --scope user
+    return
+fi
+
+command systemctl "$@"
+

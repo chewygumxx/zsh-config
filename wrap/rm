@@ -1,0 +1,29 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+
+# 
+# 
+# ~chewygumxx/dotfiles.git
+# ::: :/dot_config/zsh/wrap/rm
+# 
+# 
+
+local n=$'\e[0m'      # None
+local grn=$'\e[0;32m' # Green   
+local ylw=$'\e[0;33m' # Yellow  
+local blu=$'\e[0;34m' # Blue    
+local MAG=$'\e[1;35m' # Magenta Bold
+
+if (( $+commands[gtrash] )) && (( $+aliases[del] )); then
+    printf "%s\n" "${grn}gtrash ${n}is installed, try the ${blu}alias ${grn}del${ylw}='${blu}gtrash ${MAG}put${ylw}'"
+    #print -z "del $@"  # Gentle nudge
+    return
+fi
+
+if (( $+commands[trash-put] )) && (( $+aliases[del] )); then
+    printf "%s\n" "${grn}trash-cli ${n}is installed, try the ${blu}alias ${grn}del${ylw}='${blu}trash-put${ylw}'"
+    #print -z "del $@"  # Gentle nudge
+    return
+fi
+
+command rm "$@"

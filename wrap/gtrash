@@ -1,0 +1,50 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4:ft=zsh
+
+#
+#
+# ~/.local/share/zsh/function/gtrash
+#
+#
+
+#
+# Shadow zsh function for environment variable configuration of gtrash.
+# Intended for autoload from fpath directory.
+#
+# https://github.com/umlx5h/gtrash
+# https://github.com/umlx5h/gtrash/blob/main/doc/configuration.md
+#
+
+if [[ -z "$commands[gtrash]" ]]; then
+    echo "command 'gtrash' not found" >&2
+    return 127
+fi
+
+# Full path of home trash directory
+#
+# Default is what the XDG Trash Specification defines, either:
+#   - "$XDG_DATA_HOME/Trash"
+#   - "$HOME/.local/share/Trash"
+local -x GTRASH_HOME_TRASH_DIR="$XDG_DATA_HOME/Trash"
+
+# Whether to always utilise home trash directory.
+# If true, disposed files of external media are first copied to home trash
+# directory before their remote deletion.
+#
+# Default: "false"
+local -x GTRASH_ONLY_HOME_TRASH="false"
+
+# Whether to utilise home trash directory in the event trash directory of
+# external media is unavailable.
+#
+# Default: "false"
+local -x GTRASH_HOME_TRASH_FALLBACK_COPY="true"
+
+# Whether `gtrash put` should emulate `rm` and enforce recursive CLI options
+# including `-r`, `--recursive`, `-R`, and `-d`.
+# Can also be set with `--rm-mode`.
+# 
+# Default: "false"
+local -x GTRASH_PUT_RM_MODE="false"
+
+command gtrash "$@"

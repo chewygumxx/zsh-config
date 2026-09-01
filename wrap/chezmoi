@@ -1,0 +1,44 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4
+
+# 
+# 
+# ~chewygumxx/dotfiles.git
+# ::: :/dot_config/zsh/func/chezmoi
+# 
+# 
+
+#
+# Zsh function wrapper for command line shell utility: chezmoi
+#
+
+local __this__file="${(D)${${(%):-%N}:A}}"
+local +h functions
+
+
+# ---------------------
+# Validate Environment
+# ---------------------
+
+if (( ! $+commands[chezmoi] )); then
+    print -u2 -f "%s: [%s] %s" "${__this_file}" FATAL "Command not found: chezmoi"
+    return 127
+fi
+
+
+local -x TMPDIR="$XDG_CACHE_HOME/chezmoi"
+[[ ! -d "$TMPDIR" ]] && command mkdir -p "$TMPDIR"
+
+# ----------------------
+#
+# ----------------------
+
+if (( $# == 0 )) && (( $+command[bat] )); then
+    \builtin command chezmoi help | bat --language=help
+    return
+fi
+
+
+
+
+command chezmoi "$@"

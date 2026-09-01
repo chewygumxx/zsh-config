@@ -1,0 +1,13 @@
+# vim: expandtab:shiftwidth=4
+
+# 
+# 
+# ~/.config/zsh/functions/gc
+# 
+# 
+
+#
+# Overwrites gc command (I never use it)
+#
+
+IFS=" " git commit --message="${*:-"Lazy Commit: $(date)"}"

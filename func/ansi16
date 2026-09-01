@@ -1,0 +1,36 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4:ft=zsh
+
+#
+#
+# ~/.config/zsh/functions/ansi16
+#
+#
+
+local __ansi16_fg=(
+    $'\e[0;30m 0 - Black   ' $'\e[1;30mBold Black   '
+    $'\e[0;90m 8 - Bright  ' $'\e[1;90mBright Bold'
+    $'\n'
+    $'\e[0;31m 1 - Red     ' $'\e[1;31mBold Red     '
+    $'\e[0;91m 9 - Bright  ' $'\e[1;91mBright Bold'
+    $'\n'
+    $'\e[0;32m 2 - Green   ' $'\e[1;32mBold Green   '
+    $'\e[0;92m10 - Bright  ' $'\e[1;92mBright Bold'
+    $'\n'
+    $'\e[0;33m 3 - Yellow  ' $'\e[1;33mBold Yellow  '
+    $'\e[0;93m11 - Bright  ' $'\e[1;93mBright Bold'
+    $'\n'
+    $'\e[0;34m 4 - Blue    ' $'\e[1;34mBold Blue    '
+    $'\e[0;94m12 - Bright  ' $'\e[1;94mBright Bold'
+    $'\n'
+    $'\e[0;35m 5 - Magenta ' $'\e[1;35mBold Magenta '
+    $'\e[0;95m13 - Bright  ' $'\e[1;95mBright Bold'
+    $'\n'
+    $'\e[0;36m 6 - Cyan    ' $'\e[1;36mBold Cyan    '
+    $'\e[0;96m14 - Bright  ' $'\e[1;96mBright Bold'
+    $'\n'
+    $'\e[0;37m 7 - White   ' $'\e[1;37mBold White   '
+    $'\e[0;97m15 - Bright  ' $'\e[1;97mBright Bold'
+    $'\n'
+)
+printf "%s" ${__ansi16_fg[@]}

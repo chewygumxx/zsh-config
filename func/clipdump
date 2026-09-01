@@ -1,0 +1,13 @@
+#!/bin/false
+# vim: expandtab:shiftwidth=4
+
+# 
+# 
+# ~/.config/zsh/functions/clipdump
+# 
+# 
+
+local CLIPDUMP_DIR="/tmp/clipdump"
+mkdir -p $CLIPDUMP_DIR
+wl-paste --watch $HOME/scr/python/textdump.py | \
+    tee --append $CLIPDUMP_DIR/$(date +"%Y-%m-%d_%H-%M-%S").clipdump.txt

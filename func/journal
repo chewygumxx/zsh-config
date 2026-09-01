@@ -1,0 +1,25 @@
+# vim: expandtab:shiftwidth=4
+
+# 
+# 
+# ~/.config/zsh/functions/j
+# 
+# 
+
+#
+# Generate fleeting journal entry and populate with cat stdin.
+#
+
+local suffix=""
+if [[ -n $1 ]]; then
+    local safe="${1//[^[:alnum:]_-]/}"
+    safe="${safe#[-.]}"
+    [[ -z $safe ]] && { print -u2 "${0}: invalid suffix argument"; return 1 }
+    suffix="_${safe}"
+fi
+
+journal_dir="$HOME/doc/journal"
+local entry_path="$journal_dir/$(date +%Y-%m-%d)$suffix.txt"
+
+echo -e "\e[35mJournaling to \e[32m${(D)entry_path}\e[0m"
+cat >>| "$entry_path"
