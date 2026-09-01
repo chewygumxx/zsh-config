@@ -4,7 +4,7 @@
 # 
 # 
 # ~chewygumxx/dotfiles.git
-# ::: :/dot_config/zsh/rc/plugin.rc.zsh
+# ::: :/home/dot_config/zsh/rc/plugin.rc.zsh
 # 
 # 
 
