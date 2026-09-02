@@ -56,8 +56,7 @@ while (( $# )); do
             long+=1
             ;;
         -T|--tree)
-            opts+=("$1")
-            __eza_ignore_glob+=( ".git" )
+            opts+=("$1" --git-ignore )
             ;;
         -*)
             opts+=("$1")
