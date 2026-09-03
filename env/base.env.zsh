@@ -1,18 +1,23 @@
 #!/bin/false
-# vim: expandtab:shiftwidth=4
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
 
-# 
-# 
-# ~/.config/zsh/env/base.env.zsh
-# 
-# 
+#
+#
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/env/base.env.zsh
+#
+#
 
 #
 # Sister of ~/.config/environment.d/base.conf
 #
 
-path+=(
+export path=(
     "$HOME/.local/bin"
+    "$XDG_DATA_HOME/cargo/bin"
+    "$XDG_DATA_HOME/go/bin"
+    "${path[@]}"
 )
 export PAGER="less"
 export BROWSER="firefox"
