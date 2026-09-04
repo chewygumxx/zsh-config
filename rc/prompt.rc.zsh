@@ -47,7 +47,12 @@ setopt prompt_percent     # %-Based escape sequences
             "%F{#4db380}>%f"                #   Caret is green '>'
         ")"
     )
-    local shell_level="%(2L.%F{#ec5f66} <%L>%f.)"
+
+    # Don't consider the herdr parent shell
+    # If in a `herdr` pane, increase the SHLVL condition by one and decrease the level printed by one
+    local herdr_offset=${+HERDR_ENV}
+    local shell_level="%($(( 2 + herdr_offset ))L.%F{#ec5f66} <$(( SHLVL - herdr_offset ))>%f.)"
+
     local curr_work_dir=" %F{magenta}%(#.%d.%~)%f"   # If root, /absolute/path, otherwise ~named/path
     local background_jobs="%(1j.%F{2} [%B%j%b].)"
     local exit_code="%(?..%F{red}%B %?%b%f)"        # Exit Code (if not zero)
