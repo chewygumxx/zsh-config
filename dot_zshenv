@@ -1,12 +1,12 @@
 #!/bin/false
 # vim: expandtab:shiftwidth=4:filetype=zsh:
 
-# 
-# 
+#
+#
 # ~chewygumxx/dotfiles.git
 # ::: :/home/dot_config/zsh/dot_zshenv
-# 
-# 
+#
+#
 
 #
 # Universal Zsh Initialisation
@@ -14,7 +14,7 @@
 
 typeset -ga zshenvs
 zshenvs=(
-    "$XDG_CONFIG_HOME/zsh/env/"*.env.zsh
+    "$ZDOTDIR/env/"*.env.zsh
 )
 
 () {
