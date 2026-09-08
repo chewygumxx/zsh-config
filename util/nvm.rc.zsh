@@ -1,12 +1,11 @@
 #!/bin/false
-# vim: expandtab:shiftwidth=4
-
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~/.config/zsh/rc/util/nvm.rc.zsh
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/util/nvm.rc.zsh
 #
-#
-
 #
 # Node Version Manager
 #

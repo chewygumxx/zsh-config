@@ -1,12 +1,11 @@
 #!/bin/false
-# vim: expandtab:shiftwidth
-
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~/.config/zsh/rc/util/bat.rc.zsh
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/util/bat.rc.zsh
 #
-#
-
 #
 # https://github.com/sharkdp/bat
 #

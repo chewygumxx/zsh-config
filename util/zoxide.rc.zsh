@@ -1,11 +1,11 @@
-# vim: expandtab:shiftwidth=4:textwidth=80
-
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~/.config/zsh/rc/util/zoxide.rc.zsh
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/util/zoxide.rc.zsh
 #
-#
-
 #
 # Fuzzy frecency directory jumper
 # https://github.com/ajeetdsouza/zoxide

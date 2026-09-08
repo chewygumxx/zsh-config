@@ -1,12 +1,12 @@
 #!/bin/false
-# vim: expandtab:shiftwidth=4
-
-# 
-# 
-# ~/.config/zsh/rc/util/systemd.rc.zsh
-# 
-# 
-
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/util/systemd.rc.zsh
+#
+#
 [[ -o interactive        ]] || return
 (( $+commands[systemctl] )) || return
 

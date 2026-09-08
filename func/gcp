@@ -1,12 +1,12 @@
 #!/bin/false
-# vim: expandtab:shiftwidth=4:ft=zsh
-
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~/.config/zsh/func/gcp
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/func/gcp
 #
 #
-
 # Locally scope internally declared functions
 #zmodload -e zsh/parameter || zmodload zsh/parameter
 local +h functions 

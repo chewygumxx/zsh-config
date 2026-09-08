@@ -1,13 +1,12 @@
 #!/bin/false
-# vim: expandtab:shiftwidth=4
-
-# 
-# 
-# ~/.config/zsh/env/util/fzf.env.zsh
-# 
-# 
-
-
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/env/fzf.env.zsh
+#
+#
 # FZF_DEFAULT_COMMAND
 # Populates fzf list with an entry for each newline to stdout.
 # Is *NOT* referenced for shell integration; neither keybinds nor completions.

@@ -1,11 +1,11 @@
-# vim: expandtab:shiftwidth=4
-
-# 
-# 
-# ~/.config/zsh/functions/j
-# 
-# 
-
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/func/journal
+#
 #
 # Generate fleeting journal entry and populate with cat stdin.
 #

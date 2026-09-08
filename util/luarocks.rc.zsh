@@ -1,12 +1,11 @@
 #!/bin/false
-# vim: expandtab:shiftwidth=4
-
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~/.config/zsh/rc/util/luarocks.rc.zsh
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/util/luarocks.rc.zsh
 #
-#
-
 #
 # https://luarocks.org/docs
 # https://github.com/luarocks/luarocks/blob/main/docs/index.md

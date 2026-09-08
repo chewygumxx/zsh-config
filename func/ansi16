@@ -1,12 +1,12 @@
 #!/bin/false
-# vim: expandtab:shiftwidth=4:ft=zsh
-
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~/.config/zsh/functions/ansi16
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/func/ansi16
 #
 #
-
 local __ansi16_fg=(
     $'\e[0;30m 0 - Black   ' $'\e[1;30mBold Black   '
     $'\e[0;90m 8 - Bright  ' $'\e[1;90mBright Bold'

@@ -1,12 +1,12 @@
 #!/bin/false
-# vim: expandtab:shiftwidth=4
-
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~/.config/zsh/rc/history.rc.zsh
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/rc/history.rc.zsh
 #
 #
-
 [[ -o interactive ]] || return
 
 HISTFILE="$zsh_dirs[state]/history"

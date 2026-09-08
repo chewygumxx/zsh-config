@@ -1,12 +1,11 @@
 #!/bin/false
-# vim: expandtab:shiftwidth=4:ft=zsh
-
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~/.local/share/zsh/function/gtrash
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/wrap/gtrash
 #
-#
-
 #
 # Shadow zsh function for environment variable configuration of gtrash.
 # Intended for autoload from fpath directory.

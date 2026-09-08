@@ -1,11 +1,11 @@
-# vim:
-
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~/.config/zsh/rc/plugin/zsh-vi-mode.rc.zsh
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/spec/zsh-vi-mode.rc.zsh
 #
-#
-
 #
 # TODO(@chewygumxx): (Priority: Medium) 
 # This plugin is both incredibly valued and pervasively problematic.

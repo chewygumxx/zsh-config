@@ -1,14 +1,12 @@
 #!/bin/false
-# vim: expandtab:shiftwidth=4
-
-# 
-# 
-# ~/.config/zsh/functions/unicode-search-fonts
-# 
-# 
-
-
-
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/func/unicode-search-fonts
+#
+#
 local UNICODE=$1 # U+0123
 if ! [[ $UNICODE =~ '^U\+[0-9ABCDEFabcdef]{4}$' ]]; then
     echo "Usage: $0 <unicode>"

@@ -1,11 +1,11 @@
-# vim: expandtab:shiftwidth=4
-
-# 
-# 
-# ~/.config/zsh/functions/gc
-# 
-# 
-
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/func/gc
+#
 #
 # Overwrites gc command (I never use it)
 #

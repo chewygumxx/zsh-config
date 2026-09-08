@@ -1,11 +1,11 @@
-# vim: expandtab:shiftwidth=4:textwidth=100
-
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~/.config/zsh/prompt.rc.zsh
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/rc/prompt.rc.zsh
 #
-#
-
 #
 # https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html
 # https://zsh.sourceforge.io/Doc/Release/Parameters.html#index-PROMPT

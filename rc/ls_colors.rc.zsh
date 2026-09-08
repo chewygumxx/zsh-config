@@ -1,12 +1,11 @@
 #!/bin/false
-# vim: expandtab:shiftwidth=4
-
-# 
-# 
-# ~/.config/zsh/rc/ls_colors.rc.zsh
-# 
-# 
-
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/rc/ls_colors.rc.zsh
+#
 #
 # Provides for `rc/completion.rc.zsh` and `rc/util/eza.rc.zsh`
 #

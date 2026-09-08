@@ -1,12 +1,11 @@
 #!/bin/false
-# vim: expandtab:shiftwidth=4:ft=zsh
-
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~/.config/zsh/func/man
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/wrap/man
 #
-#
-
 #
 # Shadow function of man
 #

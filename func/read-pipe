@@ -1,13 +1,12 @@
 #!/bin/false
-# vim: expandtab:shiftwidth=4
-
-# 
-# 
-# ~/.config/zsh/functions/read-pipe
-# 
-# 
-
-
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/func/read-pipe
+#
+#
 if   [[ $# -eq 0 ]]; then
     echo "Usage: $0 <fifo>"
     echo "    Persistently reads named pipe FIFO file even after EOF"

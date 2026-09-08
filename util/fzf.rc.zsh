@@ -1,12 +1,11 @@
 #!/bin/false
-# vim: expandtab:shiftwidth=4
-
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~/.config/zsh/rc/util/fzf.rc.zsh
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/util/fzf.rc.zsh
 #
-#
-
 #
 # The ubiquitous command-line fuzzy finder
 # https://github.com/junegunn/fzf

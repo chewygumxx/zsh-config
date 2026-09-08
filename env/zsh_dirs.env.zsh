@@ -1,12 +1,12 @@
 #!/bin/false
-# vim: expandtab:shiftwidth=4
-
-# 
-# 
-# ~/.config/zsh/env/zsh_dirs.env.zsh
-# 
-# 
-
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/env/zsh_dirs.env.zsh
+#
+#
 typeset -gA zsh_dirs
 zsh_dirs=(
     [conf]="$XDG_CONFIG_HOME/zsh"
