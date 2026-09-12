@@ -1,0 +1,21 @@
+#!/usr/bin/env zsh
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/wrap/gh
+#
+#
+
+emulate -L zsh
+setopt local_options re_match_pcre
+
+if (( $# == 0 )) || [[ "$1" =~ "(help|--help)" ]]; then
+    shift
+    command gh help "$@" | bat --language=help
+    return
+fi
+
+command gh "$@"
