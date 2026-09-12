@@ -1,24 +1,21 @@
 #!/bin/false
 # vim: expandtab:shiftwidth=4
 
-# 
-# 
+#
+#
 # ~chewygumxx/dotfiles.git
 # ::: :/home/dot_config/zsh/wrap/chezmoi
-# 
-# 
+#
+#
 
 #
 # Zsh function wrapper for command line shell utility: chezmoi
 #
 
+emulate -L zsh
+setopt local_options re_match_pcre  # Regex
+
 local __this__file="${(D)${${(%):-%N}:A}}"
-local +h functions
-
-
-# ---------------------
-# Validate Environment
-# ---------------------
 
 if (( ! $+commands[chezmoi] )); then
     print -u2 -f "%s: [%s] %s" "${__this_file}" FATAL "Command not found: chezmoi"
@@ -26,19 +23,38 @@ if (( ! $+commands[chezmoi] )); then
 fi
 
 
-local -x TMPDIR="$XDG_CACHE_HOME/chezmoi"
-[[ ! -d "$TMPDIR" ]] && command mkdir -p "$TMPDIR"
+# ------------
+# Custom Help
+# ------------
+custom_help_text () {
+    local help_{pager,out,ins}
 
-# ----------------------
-#
-# ----------------------
+    # Resolve help pager
+    if (( $+commands[bat] )); then
+        help_pager="bat --language=help"
+    else
+        help_pager="less --raw-control-characters --quit-if-one-screen"
+    fi
 
-if (( $# == 0 )) && (( $+command[bat] )); then
-    \builtin command chezmoi help | bat --language=help
-    return
+    # Compose custom help lines
+    help_ins="$(printf '  %20-s %s' "alias" "[cgxx] Chezmoi aliases")"
+
+    # Capture -> Insert -> Print
+    help_out="$(command chezmoi help)"
+    help_out="${(f)help_out}"
+    help_out=( "${(@)help_out:1:8}" "${(@)help_ins}" "${(@)help_out[9,-1]}" )
+
+    printf "%s\n" "${(F)help_out}" | ${(s: :)help_pager}
+    return 0
+}
+
+if (( $# == 0 )) || [[ "$1" =~ "(help|--help)" ]]; then
+    custom_help_text
 fi
 
 
-
+# ---------
+# Fallback
+# ---------
 
 command chezmoi "$@"
