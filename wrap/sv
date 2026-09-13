@@ -13,7 +13,6 @@
 #
 
 local __this_file="${(D)${${(%):-%N}:A}}"
-local +h functions 
 
 
 # ---------------------
@@ -32,9 +31,4 @@ if (( ! $+commands[sv] )); then
 fi
 
 
-
-if (( $# == 0 )); then
-    
-fi
-
-sv "$@"
+command sv "$@"
