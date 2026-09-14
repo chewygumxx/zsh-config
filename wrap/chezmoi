@@ -27,7 +27,7 @@ fi
 # Help
 # -----
 
-help_pager () {
+__help_pager () {
     if (( $+commands[bat] )); then
         printf '%s\n' "bat --language=help"
     else
@@ -35,11 +35,11 @@ help_pager () {
     fi
 }
 
-help_main() {
-    local cgxx_cmds=(
+__help_main() {
+    local cgxx_cmds="$(printf '  %-20s %s\n'
         "alias"     "[cgxx] Alias management"
-    )
-    local cgxx_help_sect="$(printf '%s\n%s' "Commands of chewygumxx:" "$(printf '  %-20s %s\n' $cmds)")"
+    )"
+    local cgxx_help_sect="$(printf '%s\n%s' "Commands of chewygumxx:" "$cgxx_cmds")"
 
     local chez_help_raw="$(command chezmoi help)"
     local chez_help_sects=( "${(@ps:\n\n:)chez_help_raw}" )
@@ -49,27 +49,27 @@ help_main() {
         ${cgxx_help_sect}
         ${chez_help_sects[3,-1]}
     )
-    printf '%s\n\n' $help_output | $(help_pager)
+    printf '%s\n\n' $help_output | $(__help_pager)
 }
 
 # ------
 # Alias
 # ------
 
-alias_help () {
+__alias_help () {
     # TODO(@chewygumxx): [Low]
     IFS=' ' printf '%s\n' "$*"
 }
 
-alias_main () {
+__alias_main () {
     if [[ "$1" == "help" ]]; then
         shift
-        alias_help "$@"
+        __alias_help "$@"
         return
     fi
 
     # TODO(@chewygumxx): [Low]
-    IFS=' ' printf '%s\n' "$*"
+    IFS=' ' printf '%s\n' "I haven't actually written this yet"
 }
 
 
@@ -77,28 +77,28 @@ alias_main () {
 # Argument Parse
 # ---------------
 
-dispatch () {
-    if [[ "$1" =~ "(help|--help)" ]]; then
+__dispatch () {
+    if [[ "$1" == "help" || "$1" == "--help" ]]; then
         local help_first_arg=1
         shift
     fi
 
     # No argument or just help/--help
     if (( $# == 0 )); then
-        print_help_main
+        __help_main
         return
     fi
 
     case "$1" in
         alias)
             shift
-            alias_management ${help_first_arg:+"help"} "$@"
+            __alias_main ${help_first_arg:+"help"} "$@"
             ;;
         *)
             # Handle natively
-            command chezmoi  ${help_first_arg:+"help"} "$@"
+            command chezmoi ${help_first_arg:+"help"} "$@"
             ;;
     esac
 }
 
-dispatch "$@"
+__dispatch "$@"
