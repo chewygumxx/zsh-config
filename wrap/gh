@@ -9,13 +9,54 @@
 #
 #
 
-emulate -L zsh
-setopt local_options re_match_pcre
+(( $+commands[gh] )) || return 127
 
-if (( $# == 0 )) || [[ "$1" =~ "(help|--help)" ]]; then
+
+__print_help() {
+    local -a help_pager
+    if   [[ -v HELPPAGER ]]; then
+        help_pager=( $HELPPAGER )  # Split string at whitespace
+    elif (( $+commands[bat] )); then
+        help_pager=( bat --language=help )
+    elif [[ -v PAGER ]]; then
+        help_pager=( $PAGER )  # Split string at whitespace
+    else
+        help_pager=( less --raw-control-characters --quit-if-one-screen )
+    fi
+
+    command gh help "$@" | $help_pager
+}
+
+
+
+# ---------
+# Argparse
+# ---------
+
+if (( $# == 0 )) || [[ "$1" == "help" ]]; then
     shift
-    command gh help "$@" | bat --language=help
+    __print_help "$@"
     return
 fi
 
-command gh "$@"
+local -a gh_argv=()
+while (( $# )); do
+    case "$1" in
+        --help)
+            shift
+            __print_help "${gh_argv[@]}" "$@"
+            return
+        ;;
+        *)
+            gh_argv+=( "$1" )
+        ;;
+    esac
+    shift
+done
+
+
+# ----------
+# Fallthrough
+# ----------
+
+command gh "${gh_argv[@]}"
