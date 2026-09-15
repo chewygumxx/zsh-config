@@ -2,7 +2,7 @@
 # vim: expandtab:shiftwidth=4:filetype=zsh:
 
 #
-# 
+#
 # ~chewygumxx/dotfiles.git
 # ::: :/home/dot_config/zsh/dot_zshrc
 #
@@ -16,7 +16,8 @@
 [[ -o interactive ]] || return
 
 setopt re_match_pcre
-setopt interactive_comments 
+setopt interactive_comments
+setopt globdots   # Match names preceeded by a dot
 
 
 zshrcs=( "$zsh_dirs[rc]"/*.rc.zsh )
@@ -32,7 +33,7 @@ zshrcs=(                        # ** Order Rationale **
 )
 
 () {
-    local source 
+    local source
     for source in $zshrcs; do
         source "$source"
     done
