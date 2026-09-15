@@ -40,9 +40,9 @@ typeset -ga __eza_opts=(
     "--git"
 )
 typeset -ga __eza_ignore_glob=(
-    "[0-9a-f][0-9a-f]"  # .git/objects/* subdirectories
-    ".obsidian"
-    ".zettel-notes"
+    #"[0-9a-f][0-9a-f]"  # .git/objects/* subdirectories
+    #".obsidian"
+    #".zettel-notes"
     #".git"
 )
 
