@@ -15,7 +15,7 @@
 # -----
 
 hash -d   bin="$HOME/.local/bin"
-hash -d share="$XDG_DATA_HOME"
+hash -d share="${XDG_DATA_HOME:-$HOME/.local/share}"
 
 # Home directories (excluding hidden) because who has time for `~/scr` over `~scr`
 for dir in "$HOME"/*(/:t); do
@@ -23,27 +23,34 @@ for dir in "$HOME"/*(/:t); do
 done
 
 
-# --------------
-# Configuration
-# --------------
+# ---------
+# Dotfiles
+# ---------
 
 # CHEZMOI_* Must be defined from systemd user session start
 if [[ -v CHEZMOI_WORKING_TREE ]] && [[ -d "$CHEZMOI_WORKING_TREE" ]]; then
-    hash -d czroot="$CHEZMOI_WORKING_TREE"
-    hash -d     cz="$CHEZMOI_SOURCE_DIR"
-    hash -d czconf="$CHEZMOI_SOURCE_DIR/dot_config"
+    hash -d dfrepo="$CHEZMOI_WORKING_TREE"
 fi
 
-for dir in herdr hypr nvim wezterm yazi zsh; do
-    if [[ -d "${nameddirs[czconf]:=$XDG_CONFIG_HOME}/$dir" ]]; then
-        hash -d "${dir:0:4}=${nameddirs[czconf]:=$XDG_CONFIG_HOME}/$dir"
-    fi
-done
+if [[ -v CHEZMOI_SOURCE_DIR ]] && [[ -d "$CHEZMOI_SOURCE_DIR" ]]; then
+    hash -d df="$CHEZMOI_SOURCE_DIR"
 
-[[ -d "${nameddirs[czconf]:=$XDG_CONFIG_HOME}/systemd/user" ]] &&
-    hash -d sysu="${nameddirs[czconf]:=$XDG_CONFIG_HOME}/systemd/user"
-[[ -d "${nameddirs[czconf]:=$XDG_CONFIG_HOME}/environment.d" ]] &&
-    hash -d envd="${nameddirs[czconf]:=$XDG_CONFIG_HOME}/environment.d"
+    [[ -d "$CHEZMOI_SOURCE_DIR/dot_config" ]] &&
+        hash -d dfconf="$CHEZMOI_SOURCE_DIR/dot_config"
+    [[ -d "$CHEZMOI_SOURCE_DIR/dot_local/bin" ]] &&
+        hash -d  dfbin="$CHEZMOI_SOURCE_DIR/dot_local/bin"
+fi
+
+# Short-names of ~df/.config/ subdirectories
+() {
+    local conf_dir="${nameddirs[dfconf]:-${XDG_CONFIG_HOME:-$HOME/.config}}"
+    local dir
+    for dir in git herdr hypr nvim wezterm yazi zsh; do
+        [[ -d "$conf_dir/$dir" ]] && hash -d "${dir:0:4}=$conf_dir/$dir"
+    done
+    [[ -d "$conf_dir/systemd/user"  ]] && hash -d sysu="$conf_dir/systemd/user"
+    [[ -d "$conf_dir/environment.d" ]] && hash -d envd="$conf_dir/environment.d"
+}
 
 
 # --------
@@ -57,8 +64,18 @@ done
 # Termux
 # -------
 
-if [[ -v TERMUX_VERSION ]]; then
-    hash -d pref="$PREFIX"
-    hash -d emul="/storage/emulated/0/"
-    hash -d cgxx="${nameddirs[emul]}/_chewygumxx"
-fi
+() {
+    [[ ! -v TERMUX_VERSION ]] && return
+    local emulated="/storage/emulated/0/"
+
+    hash -d pref="${PREFIX:-/data/data/com.termux/files/usr}"
+    hash -d emul="$emulated"
+    hash -d cgxx="$emulated/_chewygumxx"
+    hash -d  edl="$emulated/Download"
+    hash -d edoc="$emulated/Documents"
+    hash -d epic="$emulated/Pictures"
+    hash -d emov="$emulated/Movies"
+    hash -d etas="$emulated/Tasker"
+    hash -d ecam="$emulated/DCIM/Camera"
+    hash -d escr="$emulated/DCIM/Screenshots"
+}
