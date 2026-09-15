@@ -19,6 +19,9 @@
 
 (( $+commands[claude] )) || return 127
 
+emulate -L zsh
+setopt localoptions extended_glob
+
 local __this_file="${(D)${${(%):-%N}:A}}"
 
 
@@ -26,23 +29,27 @@ local __this_file="${(D)${${(%):-%N}:A}}"
 # Directories
 # ------------
 
-local -x CLAUDE_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/claude-code}"
+local -x CLAUDE_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/claude"
 if [[ ! -d "$CLAUDE_CONFIG_DIR" ]]; then
     mkdir -p "$CLAUDE_CONFIG_DIR" || return 1
 fi
 
-project_dir() {
-    local git_repo_{url,slug}
-    git_repo_url="$(git -C "$git_repo_root" remote get-url origin)" || return 1
-    git_repo_slug="${${${${${(s:/:)git_repo_url}[-2,-1]}##*:}// /_}%\.git}"
-    print "$git_repo_slug"
-}
-
 if [[ ! -v CLAUDE_CODE_PROJECT_DIR_NAME ]]; then
-    local project_dir
-    if project_dir="$(project_dir)"; then
-        local -x CLAUDE_CODE_PROJECT_DIR_NAME="$project_dir"
-    fi
+    local git_origin{,_trim} git_slug
+
+    git_origin="$(git -C "$PWD" remote get-url origin)"
+    git_origin_trim="${${git_origin##*:}%\.git}"
+    git_slug="${(j:_:)${${(s:/:)git_origin_trim}[-2,-1]}}"
+    git_slug="${git_slug// /_}"
+
+    # POSIX portable filename charset
+    git_slug="${git_slug//[^A-Za-z0-9._-]/_}"
+    git_slug="${git_slug//_##/_}"
+    git_slug="${git_slug##[-._]##}"
+    git_slug="${git_slug%%[-._]##}"
+    git_slug="${git_slug:-project}"
+
+    local -x CLAUDE_CODE_PROJECT_DIR_NAME="$git_slug"
 fi
 
 
@@ -51,7 +58,8 @@ fi
 # ----------
 
 if (( $+commands[rg] )); then
-    : "${USE_BUILTIN_RIPGREP:=0}"
+    # Locally installed is almost certainly more up-to-date
+    local -x USE_BUILTIN_RIPGREP="${USE_BUILTIN_RIPGREP:-0}"
 fi
 
 
@@ -59,10 +67,10 @@ fi
 # Telemetry
 # ----------
 
-: "${DO_NOT_TRACK:=1}"
-: "${DISABLE_TELEMETRY:=1}"
-: "${DISABLE_GROWTHBOOK:=1}"
-: "${CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC:=1}"
+local -x DO_NOT_TRACK="${DO_NOT_TRACK:-1}"
+local -x DISABLE_TELEMETRY="${DISABLE_TELEMETRY:-1}"
+local -x DISABLE_GROWTHBOOK="${DISABLE_GROWTHBOOK:-1}"
+local -x CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="${CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC:-1}"
 
 
 # --------
