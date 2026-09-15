@@ -82,7 +82,7 @@ elif (( long == 1 )); then;
 elif (( long >  1 )); then;
     opts+=( "--header" "--mounts" "--extended" "--group" "--smart-group" )
 else
-    print -u2 "${(D)${${(%):-%N}:A}}: Variable 'long' is somehow negative"
+    print -u2 "${__this_file}: Variable 'long' is somehow negative"
 fi
 
 
@@ -92,11 +92,11 @@ fi
 
 (( ${#args} == 0 )) && args+=( "${PWD}" )
 
-# Show directory path for --tree
-typeset -a dirs=()
-local dirpath
-for dirpath in "${args[@]}"; do
-    dirs+=( "${dirpath:a}" )
+# Always resolve to absolute paths, so headers stay stable regardless of cwd
+typeset -a paths=()
+local p
+for p in "${args[@]}"; do
+    paths+=( "${p:a}" )
 done
 
 
@@ -104,4 +104,4 @@ done
 # Execute
 # --------
 
-\builtin command eza "${opts[@]}" "${dirs[@]}"
+\builtin command eza "${opts[@]}" "${paths[@]}"
