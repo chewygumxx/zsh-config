@@ -45,13 +45,14 @@ fi
 () {
     local conf_dir="${nameddirs[dfconf]:-${XDG_CONFIG_HOME:-$HOME/.config}}"
     local dir
-    for dir in git herdr hypr nvim wezterm yazi zsh; do
+    for dir in git herdr hypr wezterm yazi zsh; do
         [[ -d "$conf_dir/$dir" ]] && hash -d "${dir:0:4}=$conf_dir/$dir"
     done
     [[ -d "$conf_dir/systemd/user"  ]] && hash -d sysu="$conf_dir/systemd/user"
     [[ -d "$conf_dir/environment.d" ]] && hash -d envd="$conf_dir/environment.d"
 }
 
+[[ -d "$XDG_CONFIG_HOME/nvim" ]] && hash -d nvim="$XDG_CONFIG_HOME/nvim"
 
 # --------
 # Network

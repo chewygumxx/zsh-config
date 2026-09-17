@@ -1,12 +1,12 @@
 #!/bin/false
 # vim: expandtab:shiftwidth=4:ft=zsh
 
-# 
-# 
+#
+#
 # ~chewygumxx/dotfiles.git
 # ::: :/home/dot_config/zsh/wrap/nvim
-# 
-# 
+#
+#
 
 #
 # Zsh wrapper function for Neovim.
@@ -18,7 +18,6 @@ if (( ! $+commands[nvim] )); then
     print -u2 "${__this_file}: Command not found: nvim"
     return 127
 fi
-
 if (( $# != 1 )); then
     command nvim "$@"
     return
@@ -38,7 +37,6 @@ if [[ ! -e "$target" ]]; then
     if [[ ! -e "$target" ]]; then
         return $nvim_exit
     fi
-
 
     if (( $+commands[chezmoi] )); then
         local source_dir
