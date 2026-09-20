@@ -1,13 +1,35 @@
 #!/bin/false
 # vim:set expandtab shiftwidth=4 filetype=zsh:
 # SPDX-License-Identifier: GPL-3.0-only
+
 #
 #
 # ~chewygumxx/dotfiles.git
 # ::: :/home/dot_config/zsh/func/gc
 #
+
 #
-# Overwrites gc command (I never use it)
+# Git commit
 #
 
-IFS=" " git commit --message="${*:-"Lazy Commit: $(date)"}"
+(( $+commands[git] )) || return 127
+
+local __this_file="${(D)${${(%):-%N}:A}}"
+
+if (( $# >= 1 )); then
+    IFS=" " command git commit --message="${*:-}"
+    return
+fi
+
+if (( $# == 0 )) && (( $+commands[nvim] )); then
+    local tempfile
+    if tempfile="$(mktemp "$TMPDIR/git-commit-message.XXXXXXXXXX")"; then
+        trap EXIT 'command rm -rf -- "$tempfile"'
+        command nvim "$tempfile"
+        if [[ -s "$tempfile" ]]; then
+            print -f '%s: %s "%s" %s' "$__this_file" "Empty file" "$tempfile" "no commit made"
+            return
+        fi
+        command git commit -F "$tempfile"
+    fi
+fi
