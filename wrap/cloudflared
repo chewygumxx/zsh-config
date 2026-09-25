@@ -1,0 +1,60 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/dotfiles.git
+# ::: :/home/dot_config/zsh/wrap/cloudflared
+#
+#
+
+#
+# Zsh wrapper function for `cloudflared` intended for autoload
+# https://developers.cloudflare.com/tunnel/reference/run-parameters/
+#
+
+local __this_file="${(D)${${(%):-%N}:A}}"
+
+(($+commands[cloudflared])) || return 127
+
+local dir_config="${XDG_CONFIG_HOME:-"$HOME/.config"}/cloudflared"
+local dir_cache="${XDG_CACHE_HOME:-"$HOME/.cache"}/cloudflared"
+
+# --------------
+# Configuration
+# --------------
+
+# Configuration file
+if [[ -z "$TUNNEL_CONFIG_FILE" && -r "$dir_config/config.yml" ]]; then
+	# TUNNEL_CONFIG_FILE is not an envvar handled by `cloudflared`
+	local TUNNEL_CONFIG_FILE="$dir_config/config.yml"
+fi
+
+# Origin Certificate
+local -x TUNNEL_ORIGIN_CERT="$TUNNEL_ORIGIN_CERT"
+if [[ -z "$TUNNEL_ORIGIN_CERT" && -r "$dir_config/cert.pem" ]]; then
+	TUNNEL_ORIGIN_CERT="$dir_config/cert.pem"
+fi
+
+# Log Directory
+local -x TUNNEL_LOGDIRECTORY="${TUNNEL_LOGDIRECTORY:-$dir_cache/log}"
+if [[ ! -d "$TUNNEL_LOGDIRECTORY" ]]; then
+	local mkdir_exit
+	command mkdir -p "$TUNNEL_LOGDIRECTORY"
+	mkdir_exit=$?
+	if ((mkdir_exit)); then
+		print -u2 -f '%s: `%s` exited: %s\n' "$__this_file" \
+			"mkdir -p \"$TUNNEL_LOGDIRECTORY\"" \
+			"$mkdir_exit"
+		return $mkdir_exit
+	fi
+fi
+
+# --------
+# Execute
+# --------
+
+command cloudflared \
+	${TUNNEL_CONFIG_FILE:+--config "$TUNNEL_CONFIG_FILE"} \
+	"$@"
