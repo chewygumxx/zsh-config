@@ -11,7 +11,7 @@
 
 local __this_file="${(D)${${(%):-%N}:A}}"
 local spec
-for spec in $zsh_dirs[spec]/*(N.); do
+for spec in "$zsh_dirs[spec]"/*(N.); do
 
     () {
         local slug enabled
