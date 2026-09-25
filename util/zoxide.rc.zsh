@@ -12,12 +12,12 @@
 # https://github.com/ajeetdsouza/zoxide#configuration
 #
 
-[[ -o interactive     ]] || return
-(( $+commands[zoxide] )) || return
+[[ -o interactive ]] || return
+(($+commands[zoxide])) || return
 
 local __this_file="$0"
 
-function __init_zoxide () {
+function __init_zoxide() {
     local _zo_exclude_dirs=(
         "$HOME"
     )
@@ -30,7 +30,7 @@ function __init_zoxide () {
         --border
         --height 40%
         --scheme=history
-    
+
         "--preview='eza --oneline --color=always --all --group-directories-first --tree --level 1 {2}'"
         --with-nth 2
     )
@@ -42,15 +42,16 @@ function __init_zoxide () {
     #  - Missing
     #  - Older than binary
     #  - Older than this file
-    if  [[ ! -f "$__init_cache" ]] ||\
-        [[ "$__init_cache" -ot "$commands[zoxide]" ]] ||\
-        [[ "$__init_cache" -ot "$__this_file" ]]
-    then
+    if [[ ! -f "$__init_cache" ]] ||
+        [[ "$__init_cache" -ot "$commands[zoxide]" ]] ||
+        [[ "$__init_cache" -ot "$__this_file" ]]; then
         echo "Regenerating zoxide source cache"
         zoxide init zsh --cmd cd --hook pwd >| "$__init_cache"
     fi
 
     source "$__init_cache"
-}; __init_zoxide; unset -f __init_zoxide
+}
+__init_zoxide
+unset -f __init_zoxide
 
 unset __this_file

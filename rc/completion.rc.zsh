@@ -7,7 +7,7 @@
 # ::: :/rc/completion.rc.zsh
 #
 #
-# https://thevaluable.dev/zsh-completion-guide-examples/ 
+# https://thevaluable.dev/zsh-completion-guide-examples/
 #
 
 [[ -o interactive ]] || return
@@ -39,7 +39,7 @@ fpath+=(
 # --------------
 
 # Provides 'menuselect' keymap. Must be loaded before compinit call
-zmodload zsh/complist 
+zmodload zsh/complist
 _comp_options+=(globdots)
 
 autoload -Uz compinit
@@ -48,9 +48,11 @@ setopt list_types extended_glob
 #   N      Return an empty list if nothing found, instead of an error
 #   mh-24  Return files less than 24 hours old.
 if [[ -n "$zsh_dirs[cache]"(Nmh-24) ]]; then
-    compinit -C -d  "${zsh_dirs[cache]}/zcompdump"
+compinit -C -d  "${zsh_dirs[cache]}/zcompdump"
+
 else
-    compinit -d     "${zsh_dirs[cache]}/zcompdump"
+compinit -d     "${zsh_dirs[cache]}/zcompdump"
+
 fi
 
 # ---------------
@@ -65,7 +67,7 @@ zstyle ':completion:*' list-dirs-first true
 zstyle ':completion:*:*:-command-:*:*' group-order aliases functions builtins commands
 zstyle ":completion:*" list-colors $ls_colors
 
-if (( $+commands[fzf] )); then
+if (($+commands[fzf])); then
     # Must be after `compinit` and before widget wrapping plugins
     # `fast-syntax-highlighting` and `zsh-autosuggestions`.
     # https://github.com/aloxaf/fzf-tab
@@ -89,7 +91,7 @@ if (( $+commands[fzf] )); then
     #zstyle ':fzf-tab:*' fzf-flags --color=fg:1,fg+:2 --bind=tab:accept
     # Switch group using `<` and `>`
     zstyle ':fzf-tab:*' switch-group '<' '>'
-else 
+else
     zstyle ':completion:*:*:*:*:descriptions' format '%F{blue}[%d]%f'
     zstyle ':completion:*' menu select
 

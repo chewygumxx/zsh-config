@@ -9,6 +9,6 @@
 #
 #
 
-(( $+commands[git] )) || return 127
+(($+commands[git])) || return 127
 
 git add "$@"

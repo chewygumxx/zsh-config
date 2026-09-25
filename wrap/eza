@@ -1,12 +1,13 @@
 #!/bin/false
-# vim: expandtab:shiftwidth=4:filetype=zsh:
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
 
-# 
-# 
+#
+#
 # ~chewygumxx/zsh-config.git
 # ::: :/wrap/eza
-# 
-# 
+#
+#
 
 #
 # Zsh function for wrapping command line utility: eza
@@ -14,91 +15,87 @@
 #
 
 local __this_file="${(D)${${(%):-%N}:a}}"
-local __eza_ignore_glob=( $__eza_ignore_glob )
+local __eza_ignore_glob=($__eza_ignore_glob)
 
 # ---------------------
 # Validate Environment
 # ---------------------
 
-if (( ! $+commands[eza] )); then
-    print -u2 "${__this_file}: [FATAL] Command not found: eza"
-    return 127
+if ((!$+commands[eza])); then
+	print -u2 "${__this_file}: [FATAL] Command not found: eza"
+	return 127
 fi
 
 local envvar
 for envvar in __eza_opts __eza_ignore_glob; do
-    if [[ ! -v "$envvar" ]]; then
-        print -u2 "${__this_file}: [ERROR] Variable not set: $envvar"
-        continue
-    fi
+	if [[ ! -v "$envvar" ]]; then
+		print -u2 "${__this_file}: [ERROR] Variable not set: $envvar"
+		continue
+	fi
 
-    if [[ "${(Pt)envvar}" != array* ]]; then
-        print -u2 "${__this_file}: [ERROR] Variable is not an array: $envvar"
-    fi
+	if [[ "${(Pt)envvar}" != array* ]]; then
+		print -u2 "${__this_file}: [ERROR] Variable is not an array: $envvar"
+	fi
 done
-
 
 # -----------------
 # Invocation Parse
 # -----------------
 
-local -a opts=( "${__eza_opts[@]}" )
+local -a opts=("${__eza_opts[@]}")
 local -a args=()
 local -i ignore=1
 local -i long=0
 
-while (( $# )); do
-    case "$1" in
-        -u|--unignore)
-            ignore=0
-            ;;
-        -l|--long)
-            long+=1
-            ;;
-        -T|--tree)
-            opts+=("$1" --git-ignore )
-            ;;
-        -*)
-            opts+=("$1")
-            ;;
-        *)
-            args+=("$1")
-            ;;
-    esac
-    shift
+while (($#)); do
+	case "$1" in
+	-u | --unignore)
+		ignore=0
+		;;
+	-l | --long)
+		long+=1
+		;;
+	-T | --tree)
+		opts+=("$1" --git-ignore)
+		;;
+	-*)
+		opts+=("$1")
+		;;
+	*)
+		args+=("$1")
+		;;
+	esac
+	shift
 done
-
 
 # --------
 # Options
 # --------
 
-(( ignore )) && opts+=( "--ignore-glob" "${(j:|:)__eza_ignore_glob}" )
+((ignore)) && opts+=("--ignore-glob" "${(j:|:)__eza_ignore_glob}")
 
-if   (( long == 0 )); then;
-    opts+=( "--no-permissions" "--no-user" "--no-filesize" "--no-time")
-elif (( long == 1 )); then;
-    opts+=( "--header" "--mounts" "--no-user")
-elif (( long >  1 )); then;
-    opts+=( "--header" "--mounts" "--extended" "--group" "--smart-group" )
+if ((long == 0)); then
+	opts+=("--no-permissions" "--no-user" "--no-filesize" "--no-time")
+elif ((long == 1)); then
+	opts+=("--header" "--mounts" "--no-user")
+elif ((long > 1)); then
+	opts+=("--header" "--mounts" "--extended" "--group" "--smart-group")
 else
-    print -u2 "${__this_file}: Variable 'long' is somehow negative"
+	print -u2 "${__this_file}: Variable 'long' is somehow negative"
 fi
 
-
 # ---------
-# Argument 
+# Argument
 # ---------
 
-(( ${#args} == 0 )) && args+=( "${PWD}" )
+((${#args} == 0)) && args+=("${PWD}")
 
 # Always resolve to absolute paths, so headers stay stable regardless of cwd
 typeset -a paths=()
 local p
 for p in "${args[@]}"; do
-    paths+=( "${p:a}" )
+	paths+=("${p:a}")
 done
-
 
 # --------
 # Execute

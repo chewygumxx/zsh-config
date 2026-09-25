@@ -1,22 +1,24 @@
 #!/bin/false
 # vim:set expandtab shiftwidth=4 filetype=zsh:
 # SPDX-License-Identifier: GPL-3.0-only
+
 #
 #
 # ~chewygumxx/zsh-config.git
 # ::: :/env/zsh_dirs.env.zsh
 #
 #
+
 typeset -gA zsh_dirs
 zsh_dirs=(
     [conf]="$XDG_CONFIG_HOME/zsh"
-     [env]="$XDG_CONFIG_HOME/zsh/env"
+    [env]="$XDG_CONFIG_HOME/zsh/env"
 
     [comp]="$XDG_CONFIG_HOME/zsh/comp"
     [func]="$XDG_CONFIG_HOME/zsh/func"
     [wrap]="$XDG_CONFIG_HOME/zsh/wrap"
 
-      [rc]="$XDG_CONFIG_HOME/zsh/rc"
+    [rc]="$XDG_CONFIG_HOME/zsh/rc"
     [util]="$XDG_CONFIG_HOME/zsh/util"
     [spec]="$XDG_CONFIG_HOME/zsh/spec"
 
@@ -38,7 +40,7 @@ init_dirs="$XDG_CACHE_HOME/.zsh_dirs_initialised"
 # Re-mkdir zsh directories if either:
 #  - Missing
 #  - Older than this file
-if  ! [[ "$init_dirs" -nt "${0}" ]]; then
+if ! [[ "$init_dirs" -nt "${0}" ]]; then
     print "Creating zsh directories"
     mkdir -p "${(v)zsh_dirs[@]}"
     touch "$init_dirs"

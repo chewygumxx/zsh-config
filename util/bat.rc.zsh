@@ -10,8 +10,8 @@
 # https://github.com/sharkdp/bat
 #
 
-[[ -o interactive  ]] || return
-(( $+commands[bat] )) || return
+[[ -o interactive ]] || return
+(($+commands[bat])) || return
 
 # Command --help Colorisation
 

@@ -14,19 +14,12 @@
 
 autoload -Uz add-zsh-hook
 
-unsetopt single_line_zle  # For >>Right PS1
+unsetopt single_line_zle # For >>Right PS1
 
-setopt prompt_subst       # Prompt subject to parameter expansion, command
-                          # substitution, and arithmetic expansion
+setopt prompt_subst # Prompt subject to parameter expansion, command
+# substitution, and arithmetic expansion
 
-setopt prompt_percent     # %-Based escape sequences
-
-
-
-# Escape sequences must be enclosed within `%{...%}` such that cursor position calculation is
-# not affected by zero width sequences
-# https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html#Visual-effects
-
+setopt prompt_percent
 () {
     local blink="%{"$'\e[5m'"%}"
     local none="%{"$'\e[0m'"%}"
@@ -41,23 +34,23 @@ setopt prompt_percent     # %-Based escape sequences
         "%F{#626262}]%f"
     )
     local caret_privilege=(
-        "%(#."                              # If user is root
-            $blink "%F{red}%#%f" $none      #   Caret is a blinking red '#'
-        "."                                 # Else
-            "%F{#4db380}>%f"                #   Caret is green '>'
+        "%(#." # If user is root
+        $blink "%F{red}%#%f" $none # Caret is a blinking red '#'
+        "." # Else
+        "%F{#4db380}>%f" # Caret is green '>'
         ")"
     )
 
     # Don't consider the herdr parent shell
     # If in a `herdr` pane, increase the SHLVL condition by one and decrease the level printed by one
     local herdr_offset=${+HERDR_ENV}
-    local shell_level="%($(( 2 + herdr_offset ))L.%F{#ec5f66} <$(( SHLVL - herdr_offset ))>%f.)"
+    local shell_level="%($((2 + herdr_offset))L.%F{#ec5f66} <$((SHLVL - herdr_offset))>%f.)"
 
-    local curr_work_dir=" %F{magenta}%(#.%d.%~)%f"   # If root, /absolute/path, otherwise ~named/path
+    local curr_work_dir=" %F{magenta}%(#.%d.%~)%f" # If root, /absolute/path, otherwise ~named/path
     local background_jobs="%(1j.%F{2} [%B%j%b].)"
-    local exit_code="%(?..%F{red}%B %?%b%f)"        # Exit Code (if not zero)
+    local exit_code="%(?..%F{red}%B %?%b%f)" # Exit Code (if not zero)
 
-    local -a __ps1_mods=( 
+    local -a __ps1_mods=(
         "${(j::)clock}"
 
         "$shell_level"
@@ -71,7 +64,6 @@ setopt prompt_percent     # %-Based escape sequences
     PS1="${(j::)__ps1_mods}"
 }
 
-
 function __preexec_rps1() {
     time_invoked=$SECONDS
 }
@@ -79,13 +71,13 @@ add-zsh-hook preexec __preexec_rps1
 
 function __format_duration() {
     local total=$1
-    local h=$(( total / 3600 ))
-    local m=$(( (total % 3600) / 60 ))
-    local s=$(( total % 60 ))
+    local h=$((total / 3600))
+    local m=$(((total % 3600) / 60))
+    local s=$((total % 60))
 
-    if (( h > 0 )); then
+    if ((h > 0)); then
         printf '%dh %dm %ds' "$h" "$m" "$s"
-    elif (( m > 0 )); then
+    elif ((m > 0)); then
         printf '%dm %ds' "$m" "$s"
     else
         printf '%ds' "$s"
@@ -96,7 +88,7 @@ function __precmd_rps1() {
     RPS1=""
 
     if [[ -n $time_invoked ]]; then
-        local time_exec=$(( $SECONDS - $time_invoked ))
+        local time_exec=$(($SECONDS - $time_invoked))
         if [[ $time_exec -gt 10 ]]; then
             RPS1="%F{blue}$(__format_duration $time_exec)%f"
         fi

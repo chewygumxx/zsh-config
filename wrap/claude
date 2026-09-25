@@ -17,13 +17,12 @@
 # https://code.claude.com/docs/en/cli-reference
 #
 
-(( $+commands[claude] )) || return 127
+(($+commands[claude])) || return 127
 
 emulate -L zsh
 setopt localoptions extended_glob
 
 local __this_file="${(D)${${(%):-%N}:A}}"
-
 
 # ------------
 # Directories
@@ -52,16 +51,14 @@ if [[ ! -v CLAUDE_CODE_PROJECT_DIR_NAME ]]; then
     local -x CLAUDE_CODE_PROJECT_DIR_NAME="$git_slug"
 fi
 
-
 # ----------
 # Utilities
 # ----------
 
-if (( $+commands[rg] )); then
+if (($+commands[rg])); then
     # Locally installed is almost certainly more up-to-date
     local -x USE_BUILTIN_RIPGREP="${USE_BUILTIN_RIPGREP:-0}"
 fi
-
 
 # ----------
 # Telemetry
@@ -71,7 +68,6 @@ local -x DO_NOT_TRACK="${DO_NOT_TRACK:-1}"
 local -x DISABLE_TELEMETRY="${DISABLE_TELEMETRY:-1}"
 local -x DISABLE_GROWTHBOOK="${DISABLE_GROWTHBOOK:-1}"
 local -x CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="${CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC:-1}"
-
 
 # --------
 # Execute

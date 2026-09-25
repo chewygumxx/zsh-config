@@ -7,8 +7,8 @@
 # ::: :/util/systemd.rc.zsh
 #
 #
-[[ -o interactive        ]] || return
-(( $+commands[systemctl] )) || return
+[[ -o interactive ]] || return
+(($+commands[systemctl])) || return
 
 setopt aliases
 

@@ -1,0 +1,33 @@
+# vim:set expandtab shiftwidth=4 filetype=toml:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/.shuck.toml
+#
+#
+
+# https://ewhauser.github.io/shuck/docs/configuration/
+# https://ewhauser.github.io/shuck/docs/settings/
+
+[per-file-shell]
+".zshenv" = "zsh"
+".zshrc" = "zsh"
+"func/*" = "zsh"
+"wrap/*" = "zsh"
+"comp/*" = "zsh"
+"util/*" = "zsh"
+"spec/*" = "zsh"
+"rc/*" = "zsh"
+"env/*" = "zsh"
+
+[format]
+never-split = false
+indent-style = "space"
+indent-width = 4
+keep-padding = true
+space-redirects = true
+binary-next-line = false
+switch-case-indent = true
+function-next-line = false

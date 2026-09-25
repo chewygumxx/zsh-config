@@ -1,21 +1,20 @@
 #!/bin/false
 # vim:set expandtab shiftwidth=4 filetype=zsh:
 # SPDX-License-Identifier: GPL-3.0-only
+
 #
 #
 # ~chewygumxx/zsh-config.git
 # ::: :/wrap/man
 #
 #
+
+#
 # Shadow function of man
 #
 
 local -x MANPAGER='nvim +Man!'
-local -x MANWIDTH=$(( (COLUMNS - 5) < 100 ? (COLUMNS - 5) : 100 ))
+local -x MANWIDTH=$(((COLUMNS - 5) < 100 ? (COLUMNS - 5) : 100))
 local -x MANOPT='--no-justification --no-hyphenation'
-
-if (( $+commands[batman] )); then
-#    batman "$@"
-fi
 
 command man "$@"

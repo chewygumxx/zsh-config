@@ -1,24 +1,23 @@
 #!/bin/false
 # vim:set expandtab shiftwidth=4 filetype=zsh:
 # SPDX-License-Identifier: GPL-3.0-only
+
 #
 #
 # ~chewygumxx/zsh-config.git
 # ::: :/wrap/nb
 #
 #
-# Shadow zsh function for environment variable configuration of nb.
-# Intended for autoload from fpath directory.
+
+#
+# Zsh wrapper function intended for autoload as configuration for nb.
 #
 # https://xwmx.github.io/nb
 # https://xwmx.github.io/nb/#-variables
 # https://github.com/xwmx/nb
 #
 
-if [[ -z "$commands[nb]" ]]; then
-    echo "command 'nb' not found" >&2
-    return 127
-fi
+(($+commands[nb])) || return 127
 
 local -x NB_DIR="$HOME/doc"
 #local -x NBRC_PATH=
@@ -66,8 +65,6 @@ local -x NB_GUI_BROWSER="$BROWSER"
 local -x NB_MARKDOWN_TOOL="glow"
 local -x NB_SYNTAX_THEME="chewyansi"
 
-
 local -x NB_BROWSE_SUPPORT_LINKS=0
-
 
 command nb "$@"

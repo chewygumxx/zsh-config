@@ -14,10 +14,9 @@
 # Currently, this exists entirely for default `--indent 4`
 #
 
-(( $+commands[jq] )) || return 127
+(($+commands[jq])) || return 127
 
-
-if ! (( $+@[--indent] )); then
+if ! (($+@[--indent])); then
     command jq --indent 4 "$@"
 else
     command jq "$@"

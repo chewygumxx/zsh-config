@@ -12,20 +12,20 @@
 # https://github.com/junegunn/fzf#environment-variables
 #
 
-[[ -o interactive  ]] || return
-(( $+commands[fzf] )) || return
+[[ -o interactive ]] || return
+(($+commands[fzf])) || return
 
 typeset -g __fzf_rc_file="$(\builtin print -D ${${(%):-%N}:A})"
 
-function __fzf_shell_integration () {
+function __fzf_shell_integration() {
     local ctx="${__fzf_rc_file}: (${(%):-%N})"
     unset __fzf_rc_file
     unset -f "${(%):-%N}"
 
     local data_dir
-    if   [[ -d "/usr/share/fzf"    ]]; then  # Arch Linux
+    if [[ -d "/usr/share/fzf" ]]; then # Arch Linux
         data_dir="/usr/share/fzf"
-    elif [[ -d "$PREFIX/share/fzf" ]]; then  # Termux
+    elif [[ -d "$PREFIX/share/fzf" ]]; then # Termux
         data_dir="$PREFIX/share/fzf"
     else
         print -u2 "$ctx fzf data directory not found at '/usr/share/fzf' or '\$PREFIX/share/fzf'"
@@ -98,7 +98,7 @@ function __fzf_shell_integration () {
 
     # Plugin 'fzf-tab' loaded:
     # Do not source fzf/completion.zsh. Do not overwrite keybind '^I' (Tab).
-    (( $+widgets[fzf-tab-complete] )) && return
+    (($+widgets[fzf-tab-complete])) && return
 
     if [[ ! -r "$data_dir/completion.zsh" ]]; then
         print -u2 "$ctx Not found: $data_dir/completion.zsh"
@@ -119,7 +119,7 @@ function __fzf_shell_integration () {
     # TODO(@chewygumxx): (Priority: Low)
     #function _fzf_comprun() {
     #    local command=$1; shift
-    #    
+    #
     #    case "$command" in
     #        cd)           fzf --preview 'tree -C {} | head -200'   "$@" ;;
     #        export|unset) fzf --preview "eval 'echo \$'{}"         "$@" ;;

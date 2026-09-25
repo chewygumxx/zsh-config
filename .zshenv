@@ -16,7 +16,6 @@ typeset -ga zshenvs
 zshenvs=(
     "$ZDOTDIR/env/"*.env.zsh
 )
-
 () {
     local source
     for source in $zshenvs; do

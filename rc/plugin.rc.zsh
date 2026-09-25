@@ -1,39 +1,37 @@
-#!/bin/false
-# vim: expandtab:shiftwidth=4:filetype=zsh:
+#!/usr/bin/env zsh
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
 
-# 
-# 
+#
+#
 # ~chewygumxx/zsh-config.git
 # ::: :/rc/plugin.rc.zsh
-# 
-# 
+#
+#
 
-typeset -ga plugins
-plugins=(
-    "marlonrichert/zsh-autocomplete"
-    "zdharma-continuum/fast-syntax-highlighting"
-    "zsh-users/zsh-autosuggestions"
-    "jeffreytse/zsh-vi-mode"
-    "chewygumxx/zsh-als"
-)
+local __this_file="${(D)${${(%):-%N}:A}}"
+() {
+    local spec
+    for spec in $zsh_dirs[spec]/*(N.); do
+        local slug enabled
+        source "$spec" 2> /dev/null
 
-for slug in $plugins; do
-    local plugin="${slug##*/}"
+        if [[ ! -v slug ]]; then
+            print -u2 -f '%s: [%s] %s' "$__this_file" "ERROR" \
+                "No slug provided within: $spec"
+            continue
+        fi
 
-    if [[ ! -d "$zsh_dirs[plugin]/$plugin" ]]; then
-        git clone "https://github.com/$slug.git" "$zsh_dirs[plugin]/$plugin"
-    fi
-    
-    if [[ -f "$zsh_dirs[conf]/spec/$plugin.rc.zsh" ]]; then
-        source "$zsh_dirs[conf]/spec/$plugin.rc.zsh" 2>/dev/null
-    fi
+        [[ "$enabled" == "false" ]] && continue
 
-    if [[ ! -v PLUGIN_DISABLE ]]; then # Set in above ~zsh/rc/$plugin.ec.zsh
-        source "$zsh_dirs[plugin]/$plugin/$plugin.plugin.zsh" 2>/dev/null
-    else
-        plugins=(${plugins:#$slug})
-    fi
-    unset PLUGIN_DISABLE
-done
+        if [[ ! -d "$zsh_dirs[plugin]/${slug#*/}" ]]; then
+            command git clone \
+                "https://github.com/$slug.git" \
+                "$zsh_dirs[plugin]/${slug#*/}"
+        fi
 
-unset slug
+        source "$zsh_dirs[plugin]/$plugin/$plugin.plugin.zsh" 2> /dev/null
+    done
+}
+
+unset __this_file

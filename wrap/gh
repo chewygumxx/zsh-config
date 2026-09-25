@@ -9,10 +9,9 @@
 #
 #
 
-(( $+commands[gh] )) || return 127
+(($+commands[gh])) || return 127
 
 local __this_file="${(D)${${(%):-%N}:A}}"
-
 
 # ------------------------------
 # ** Configuration: Zsh Wrapper
@@ -21,8 +20,6 @@ local __this_file="${(D)${${(%):-%N}:A}}"
 # Can be set to null to disable automatic local cloning
 local GH_GIST_DIR="${GH_GIST_DIR-$HOME/dev/_gist}"
 
-
-
 # --------------------------
 # Configuration: GitHub CLI
 # --------------------------
@@ -30,16 +27,15 @@ local GH_GIST_DIR="${GH_GIST_DIR-$HOME/dev/_gist}"
 local -x GH_TELEMETRY="false"
 local -x GH_BROWSER="firefox --new-tab"
 
-
 # ----------
 # Functions
 # ----------
 
 local -a int_funcs # Internal function short names
 
-int_funcs+=( "main" )
+int_funcs+=("main")
 __gh_main() {
-    if (( $# == 0 )) || [[ "$1" == "help" ]] || (( $@[(Ie)--help] )); then
+    if (($# == 0)) || [[ "$1" == "help" ]] || (($@[(Ie)--help])); then
         __gh_help "$@"
         return
     fi
@@ -80,22 +76,22 @@ __gh_main() {
     esac
 }
 
-int_funcs+=( "help" )
+int_funcs+=("help")
 __gh_help() {
-    if   [[ -n "${HELPPAGER:-}" ]]; then
+    if [[ -n "${HELPPAGER:-}" ]]; then
         command gh "$@" | $HELPPAGER
-    elif (( $+commands[bat] )); then
+    elif (($+commands[bat])); then
         command gh "$@" | command bat --language=help
     elif [[ -n "${PAGER:-}" ]]; then
         command gh "$@" | $PAGER
-    elif (( $+commands[less] )); then
+    elif (($+commands[less])); then
         command gh "$@" | command less --raw-control-characters --quit-if-one-screen
     else
         command gh "$@"
     fi
 }
 
-int_funcs+=( "gist_create" )
+int_funcs+=("gist_create")
 __gh_gist_create() {
     local gist_{url,id,json,created,files}
 
@@ -106,7 +102,7 @@ __gh_gist_create() {
 
     # If null, local cloning disabled
     [[ -z "$GH_GIST_DIR" ]] && return
-    (( $+commands[jq] )) || {
+    (($+commands[jq])) || {
         print -u2 "${__this_file}: [ERROR] Command not found: jq"
         return 127
     }
@@ -115,13 +111,12 @@ __gh_gist_create() {
     gist_id="${gist_url##*/}"
     gist_json="$(command gh api "gists/$gist_id")" || return
     gist_created="$(command jq -r '.created_at' <<< "$gist_json")" || return
-    gist_files=( "${(@0)$(command jq -j '.files[].filename | . + "\u0000"' <<< "$gist_json")}" ) || return
+    gist_files=("${(@0)$(command jq -j '.files[].filename | . + "\u0000"' <<< "$gist_json")}") || return
 
     # Local clone
     command gh gist clone "$gist_id" \
         "$GH_GIST_DIR/${gist_created%%T*}_${(j:_:)gist_files}" || return
 }
-
 
 # --------
 # Execute

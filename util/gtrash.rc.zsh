@@ -15,20 +15,18 @@
 # https://github.com/umlx5h/gtrash/blob/main/doc/configuration.md
 #
 
-[[ -o interactive     ]] || return
-(( $+commands[gtrash] )) || return
-
+[[ -o interactive ]] || return
+(($+commands[gtrash])) || return
 
 # -----------------
 # Validate Wrapper
 # -----------------
 
-if (( ! $+functions[gtrash] )); then
+if ((!$+functions[gtrash])); then
     print -u2 -f "%s: [%s] %s\n" \
         "${(D)${${(%):-%N}:a}}" "WARN" \
         "Unable to resolve gtrash wrapper function"
 fi
-
 
 # ------
 # Alias

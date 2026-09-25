@@ -19,11 +19,11 @@ SAVEHIST=21000000
 # Records both time invoked and execution time
 setopt inc_append_history_time
 
-# Despite Zsh documentation of the INC_APPEND_HISTORY_TIME        
-# inferring a following setopt EXTENDED_HISTORY is redundant, it                                  
+# Despite Zsh documentation of the INC_APPEND_HISTORY_TIME
+# inferring a following setopt EXTENDED_HISTORY is redundant, it
 # seems (somehow?) it does need to be setopt-ed for timestamping.
-setopt extended_history         
-                                
+setopt extended_history
+
 # Upon SHELL exit: Append to history file, rather than rewrite
 #setopt append_history
 

@@ -5,10 +5,10 @@
 #
 #
 # ~chewygumxx/zsh-config.git
-# ::: :/func/gs
+# ::: :/spec/zsh-autosuggestions.spec.zsh
 #
 #
 
-(($+commands[git])) || return 127
+[[ -o interactive ]] || return
 
-git status "$@"
+local slug="zsh-users/zsh-autosuggestions"

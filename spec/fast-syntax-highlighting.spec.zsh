@@ -5,10 +5,10 @@
 #
 #
 # ~chewygumxx/zsh-config.git
-# ::: :/func/gs
+# ::: :/spec/fast-syntax-highlighting.spec.zsh
 #
 #
 
-(($+commands[git])) || return 127
+[[ -o interactive ]] || return
 
-git status "$@"
+local slug="zdharma-continuum/fast-syntax-highlighting"

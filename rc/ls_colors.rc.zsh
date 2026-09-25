@@ -14,19 +14,19 @@ autoload -Uz colors && colors
 
 typeset -Tg LS_COLORS ls_colors ':'
 ls_colors=(
-    "di=$color[bold];$color[blue]"      # Directory
-    "fi=$color[none]"                   # Ordinary file
-    "ex=$color[bold];$color[green]"     # Executable
+    "di=$color[bold];$color[blue]" # Directory
+    "fi=$color[none]" # Ordinary file
+    "ex=$color[bold];$color[green]" # Executable
 
-    "so=$color[bold];$color[red]"       # Socket
-    "pi=$color[yellow]"                 # Named pipe (FIFO)
-    "bd=$color[bold];$color[yellow]"    # Block device
-    "cd=$color[bold];$color[yellow]"    # Character device
+    "so=$color[bold];$color[red]" # Socket
+    "pi=$color[yellow]" # Named pipe (FIFO)
+    "bd=$color[bold];$color[yellow]" # Block device
+    "cd=$color[bold];$color[yellow]" # Character device
 
-    "ln=$color[italic];$color[cyan]"    # Symlink
-    "or=$color[italic];$color[blink];$color[reverse];$color[red]"   # Broken symlink
+    "ln=$color[italic];$color[cyan]" # Symlink
+    "or=$color[italic];$color[blink];$color[reverse];$color[red]" # Broken symlink
 
-    "tc=$color[faint];$color[magenta]"   # Filetype trailing character
+    "tc=$color[faint];$color[magenta]" # Filetype trailing character
 )
 
 # Archive
@@ -60,5 +60,6 @@ for ext in "avi" "m4v" "mkv" "mov" "mp4" "mpeg" "mpg" "webm"; do
 done
 
 typeset -gx  LS_COLORS
+
 typeset -gx ZLS_COLORS="$LS_COLORS"
 typeset -gx EZA_COLORS="$LS_COLORS"

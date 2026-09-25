@@ -1,31 +1,30 @@
 #!/bin/false
 # vim: expandtab:shiftwidth=4:filetype=zsh:
 
-# 
-# 
+#
+#
 # ~chewygumxx/zsh-config.git
 # ::: :/util/eza.rc.zsh
-# 
-# 
+#
+#
 
 #
 # Zsh source file to prepare interactive utility 'eza'
 # Optionally dependent on configurable wrapper function
 #
 
-[[ -o interactive  ]] || return
-(( $+commands[eza] )) || return
-
+[[ -o interactive ]] || return
+(($+commands[eza])) || return
 
 # -----------------
 # Validate Wrapper
 # -----------------
 
-if (( ! $+functions[eza] )); then
+if ((!$+functions[eza])); then
     print -u2 -n "${(D)${${(%):-%N}:a}}: [WARN] "
-    print -u2    "Unable to resolve eza wrapper function"
-fi
+print -u2    "Unable to resolve eza wrapper function"
 
+fi
 
 # --------
 # Options
@@ -66,14 +65,14 @@ alias lla="ll --all"
 alias llla='lll --all'
 
 # Tree ^-^
-alias lt="l --tree" 
+alias lt="l --tree"
 alias llt='ll --tree'
 alias lllt='lll --tree'
 
 alias ldt='ld --tree'
 alias lldt='lld --tree'
 alias llldt='llld --tree --follow-symlinks'
-    
-alias lat="la --tree" 
+
+alias lat="la --tree"
 alias llat='lla --tree'
 alias lllat='llla --tree'

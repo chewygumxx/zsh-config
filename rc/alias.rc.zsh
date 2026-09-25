@@ -31,9 +31,7 @@ alias grep='grep --color=auto -i'
 # Fix for bash/zsh completion when executing aliases via sudo
 # https://wiki.archlinux.org/title/Sudo#Passing_aliases
 alias sudo="sudo "
-
-# Neovim/Editor
-(( $+commands[nvim] )) && () {
+(($+commands[nvim])) && () {
     local alias
     for alias in e ed edit v vi vim nivm hx kak nano emacs; do
         alias "$alias=nvim"
@@ -41,34 +39,33 @@ alias sudo="sudo "
 }
 
 # Git
-if (( $+commands[git] )); then
+if (($+commands[git])); then
     alias ga='git add'
     alias gs='git status' # Overwrites 'gs' of ghostscript. Never use it
 fi
 
-(( $+commands[gh] )) && alias gist='gh gist create'
+(($+commands[gh])) && alias gist='gh gist create'
 
-(( $+commands[yazi] )) && alias y=yazi
+(($+commands[yazi])) && alias y=yazi
 
 # Proton Pass
-(( $+commands[pass-cli] )) && alias pass='pass-cli'
+(($+commands[pass-cli])) && alias pass='pass-cli'
 
 # SQLite
-(( $+commands[sqlite3] )) && alias sqlite='sqlite3'
+(($+commands[sqlite3])) && alias sqlite='sqlite3'
 
-    # Package Manager
-(( $+commands[yay] )) && alias pacman="yay"
-    
-    
-if (( $+commands[kdeconnect-cli] )); then
+# Package Manager
+(($+commands[yay])) && alias pacman="yay"
+
+if (($+commands[kdeconnect-cli])); then
     alias kdecon="kdeconnect-cli --device 1396134ad80c4647aa7c6b1f76d823e3"
     alias kdecon-clip="kdecon --send-clipboard"
 fi
-    
+
 # Network
-(( $+commands[impala]  )) && alias impala='sudo impala'
-(( $+commands[bluetui] )) && alias bt="bluetui"
-    
+(($+commands[impala])) && alias impala='sudo impala'
+(($+commands[bluetui])) && alias bt="bluetui"
+
 if [[ -v TERMUX_VERSION ]]; then
     # Print Dimensions
     alias st='stty size'
@@ -76,10 +73,10 @@ if [[ -v TERMUX_VERSION ]]; then
     # Package Manager
     alias pki="pkg install"
     alias pks="pkg search"
-    
+
     # Clipboard
     alias wl-copy="termux-clipboard-set"
     alias wl-paste="termux-clipboard-get"
 
-    (( $+commands[trash-put] )) && alias del="trash-put"
+    (($+commands[trash-put])) && alias del="trash-put"
 fi
