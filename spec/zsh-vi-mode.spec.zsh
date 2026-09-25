@@ -5,7 +5,7 @@
 #
 #
 # ~chewygumxx/zsh-config.git
-# ::: :/spec/zsh-vi-mode.rc.zsh
+# ::: :/spec/zsh-vi-mode.spec.zsh
 #
 #
 

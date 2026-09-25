@@ -5,7 +5,7 @@
 #
 #
 # ~chewygumxx/zsh-config.git
-# ::: :/spec/zsh-autocomplete.rc.zsh
+# ::: :/spec/zsh-autocomplete.spec.zsh
 #
 #
 
