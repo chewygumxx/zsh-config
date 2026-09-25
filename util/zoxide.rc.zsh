@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~chewygumxx/dotfiles.git
-# ::: :/home/dot_config/zsh/util/zoxide.rc.zsh
+# ~chewygumxx/zsh-config.git
+# ::: :/util/zoxide.rc.zsh
 #
 #
 # Fuzzy frecency directory jumper

@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~chewygumxx/dotfiles.git
-# ::: :/home/dot_config/zsh/func/pkglist
+# ~chewygumxx/zsh-config.git
+# ::: :/func/pkglist
 #
 #
 if [[ -z "$TERMUX_VERSION" ]]; then

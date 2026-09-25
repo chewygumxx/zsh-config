@@ -3,8 +3,8 @@
 
 # 
 # 
-# ~chewygumxx/dotfiles.git
-# ::: :/home/dot_config/zsh/util/eza.rc.zsh
+# ~chewygumxx/zsh-config.git
+# ::: :/util/eza.rc.zsh
 # 
 # 
 

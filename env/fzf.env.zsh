@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~chewygumxx/dotfiles.git
-# ::: :/home/dot_config/zsh/env/fzf.env.zsh
+# ~chewygumxx/zsh-config.git
+# ::: :/env/fzf.env.zsh
 #
 #
 # FZF_DEFAULT_COMMAND

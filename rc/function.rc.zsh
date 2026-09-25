@@ -3,8 +3,8 @@
 
 #
 #
-# ~chewygumxx/dotfiles.git
-# ::: :/home/dot_config/zsh/rc/function.rc.zsh
+# ~chewygumxx/zsh-config.git
+# ::: :/rc/function.rc.zsh
 #
 #
 

@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~chewygumxx/dotfiles.git
-# ::: :/home/dot_config/zsh/wrap/systemd-run
+# ~chewygumxx/zsh-config.git
+# ::: :/wrap/systemd-run
 #
 #
 (( $+commands[systemd-run] )) || return 127

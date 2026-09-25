@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~chewygumxx/dotfiles.git
-# ::: :/home/dot_config/zsh/env/zsh_dirs.env.zsh
+# ~chewygumxx/zsh-config.git
+# ::: :/env/zsh_dirs.env.zsh
 #
 #
 typeset -gA zsh_dirs

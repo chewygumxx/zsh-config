@@ -3,8 +3,8 @@
 
 #
 #
-# ~chewygumxx/dotfiles.git
-# ::: :/home/dot_config/zsh/util/gtrash.rc.zsh
+# ~chewygumxx/zsh-config.git
+# ::: :/util/gtrash.rc.zsh
 #
 #
 

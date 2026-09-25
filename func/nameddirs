@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~chewygumxx/dotfiles.git
-# ::: :/home/dot_config/zsh/func/nameddirs
+# ~chewygumxx/zsh-config.git
+# ::: :/func/nameddirs
 #
 #
 # Overwrites 'named' system command for DNS (I never invoke it interactively)

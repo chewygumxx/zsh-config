@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~chewygumxx/dotfiles.git
-# ::: :/home/dot_config/zsh/rc/prompt.rc.zsh
+# ~chewygumxx/zsh-config.git
+# ::: :/rc/prompt.rc.zsh
 #
 #
 # https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html

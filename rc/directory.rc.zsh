@@ -4,8 +4,8 @@
 
 #
 #
-# ~chewygumxx/dotfiles.git
-# ::: :/home/dot_config/zsh/rc/directory.rc.zsh
+# ~chewygumxx/zsh-config.git
+# ::: :/rc/directory.rc.zsh
 #
 #
 

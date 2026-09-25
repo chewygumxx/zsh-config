@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~chewygumxx/dotfiles.git
-# ::: :/home/dot_config/zsh/func/unicode-search-fonts
+# ~chewygumxx/zsh-config.git
+# ::: :/func/unicode-search-fonts
 #
 #
 local UNICODE=$1 # U+0123

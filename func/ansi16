@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~chewygumxx/dotfiles.git
-# ::: :/home/dot_config/zsh/func/ansi16
+# ~chewygumxx/zsh-config.git
+# ::: :/func/ansi16
 #
 #
 local __ansi16_fg=(

@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~chewygumxx/dotfiles.git
-# ::: :/home/dot_config/zsh/spec/zsh-autocomplete.rc.zsh
+# ~chewygumxx/zsh-config.git
+# ::: :/spec/zsh-autocomplete.rc.zsh
 #
 #
 PLUGIN_DISABLE=1

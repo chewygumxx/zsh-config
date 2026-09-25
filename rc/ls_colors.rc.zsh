@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~chewygumxx/dotfiles.git
-# ::: :/home/dot_config/zsh/rc/ls_colors.rc.zsh
+# ~chewygumxx/zsh-config.git
+# ::: :/rc/ls_colors.rc.zsh
 #
 #
 # Provides for `rc/completion.rc.zsh` and `rc/util/eza.rc.zsh`

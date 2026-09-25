@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~chewygumxx/dotfiles.git
-# ::: :/home/dot_config/zsh/util/systemd.rc.zsh
+# ~chewygumxx/zsh-config.git
+# ::: :/util/systemd.rc.zsh
 #
 #
 [[ -o interactive        ]] || return

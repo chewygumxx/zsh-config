@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 #
 #
-# ~chewygumxx/dotfiles.git
-# ::: :/home/dot_config/zsh/rc/history.rc.zsh
+# ~chewygumxx/zsh-config.git
+# ::: :/rc/history.rc.zsh
 #
 #
 [[ -o interactive ]] || return
