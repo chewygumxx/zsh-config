@@ -10,11 +10,14 @@
 #
 
 local __this_file="${(D)${${(%):-%N}:A}}"
-() {
-    local spec
-    for spec in $zsh_dirs[spec]/*(N.); do
+local spec
+for spec in $zsh_dirs[spec]/*(N.); do
+
+    () {
         local slug enabled
         source "$spec" 2> /dev/null
+
+        [[ "$enabled" == "false" ]] && continue
 
         if [[ ! -v slug ]]; then
             print -u2 -f '%s: [%s] %s' "$__this_file" "ERROR" \
@@ -22,16 +25,14 @@ local __this_file="${(D)${${(%):-%N}:A}}"
             continue
         fi
 
-        [[ "$enabled" == "false" ]] && continue
+        local plugin="${slug#*/}"
 
-        if [[ ! -d "$zsh_dirs[plugin]/${slug#*/}" ]]; then
+        if [[ ! -d "$zsh_dirs[plugin]/$plugin" ]]; then
             command git clone \
                 "https://github.com/$slug.git" \
-                "$zsh_dirs[plugin]/${slug#*/}"
+                "$zsh_dirs[plugin]/$plugin"
         fi
 
         source "$zsh_dirs[plugin]/$plugin/$plugin.plugin.zsh" 2> /dev/null
-    done
-}
-
-unset __this_file
+    }
+done
