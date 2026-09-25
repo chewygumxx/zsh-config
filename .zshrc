@@ -20,7 +20,7 @@ setopt re_match_pcre
 setopt interactive_comments
 setopt globdots # Match names preceeded by a dot
 
-local -ga zshrcs
+typeset -ga zshrcs
 zshrcs=("$zsh_dirs[rc]"/*.rc.zsh)
 
 zshrcs=(
