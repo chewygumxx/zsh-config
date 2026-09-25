@@ -25,7 +25,7 @@ function __init_zoxide() {
 
     local _zo_fzf_opts=(
         "$FZF_DEFAULT_OPTS"
-        --preview-window=right,wrap
+        "--preview-window=right,wrap"
         --reverse
         --border
         --height 40%

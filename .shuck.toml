@@ -31,3 +31,22 @@ space-redirects = true
 binary-next-line = false
 switch-case-indent = true
 function-next-line = false
+
+[lint]
+ignore = [
+  "C001",  # Variable is assigned but never used
+  "C002",  # Source path is built at runtime
+  "C003",  # Sourced file is not available to this analysis
+]
+
+# zsh_dirs is a global associative array assigned in
+# env/zsh_dirs.env.zsh, which .zshenv sources before anything in rc/,
+# util/, func/, or wrap/ runs. Every file that reads it does so
+# without ever assigning it, so shuck's own analysis flags it as
+# referenced before assignment (C006).
+[[lint.contracts.custom]]
+id = "zsh-dirs"
+when = "always"
+
+[lint.contracts.custom.provides]
+variables = ["zsh_dirs"]

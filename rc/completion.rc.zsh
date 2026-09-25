@@ -50,8 +50,10 @@ setopt list_types extended_glob
 if [[ -n "$zsh_dirs[cache]"(Nmh-24) ]]; then
 compinit -C -d  "${zsh_dirs[cache]}/zcompdump"
 
+
 else
 compinit -d     "${zsh_dirs[cache]}/zcompdump"
+
 
 fi
 
@@ -65,6 +67,7 @@ zstyle ':completion:*' cache-path "$zsh_dirs[cache_zstylecomp]"
 zstyle ':completion:*' group-name ''
 zstyle ':completion:*' list-dirs-first true
 zstyle ':completion:*:*:-command-:*:*' group-order aliases functions builtins commands
+# shuck: disable=C006
 zstyle ":completion:*" list-colors $ls_colors
 
 if (($+commands[fzf])); then
@@ -83,6 +86,7 @@ if (($+commands[fzf])); then
     # To allow fzf-tab to capture the unambiguous prefix: Force zsh not to show completion menu
     zstyle ':completion:*' menu no
     # Preview directory's content with eza when completing cd
+    # shuck: disable=C005
     zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza --all --oneline --color=always --group-directories-first --long --git --no-permissions --no-filesize --no-user --no-time --ignore-glob="[0-9a-f][0-9a=f]|.obsidian|.zettel-notes" $realpath'
 
     # Custom fzf flags
