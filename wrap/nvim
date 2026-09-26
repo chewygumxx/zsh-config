@@ -58,6 +58,13 @@ if [[ -d "$target" ]]; then
     return
 fi
 
+# zstat is a builtin of the zsh/stat module, which is not loaded by default.
+# Without this the test raised `command not found: zstat` plus a `bad math
+# expression` on every edit of an existing file, and the redirect to sudoedit
+# below could never trigger. -F b:zstat loads that one builtin only, so the
+# module's own `stat` builtin cannot shadow /usr/bin/stat for the session.
+zmodload -F zsh/stat b:zstat
+
 if (( $(zstat +uid "$target") == 0 )); then
     SUDO_EDITOR=nvim command sudoedit "$target"
     return
