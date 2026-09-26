@@ -15,13 +15,21 @@ alias lint-toml="tombi lint"
 alias lint-yaml="yamllint"
 
 alias lint-css="stylelint"
-alias lint-js=""
+
+# TODO(@chewygumxx): (Priority: Low)
+# No JavaScript or TypeScript linter is settled on yet. These were previously
+# defined as empty aliases, which is worse than leaving them undefined: alias
+# expansion removes the alias word entirely, so `lint-js foo.js` ran `foo.js` as
+# the command and reported `command not found: foo.js`. Undefined, the same call
+# reports `command not found: lint-js`, which is at least true.
+#alias lint-js=""
 
 alias lint-lua="luacheck"
 alias lint-py="ruff"
 
 alias lint-sql="sqruff lint"
-alias lint-ts=""
+# See the lint-js note above.
+#alias lint-ts=""
 
 alias lint-systemd="systemd-analyze verify"
 alias lint-tldr="tldr-lint"
