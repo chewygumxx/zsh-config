@@ -18,7 +18,10 @@ function print_help () {
         "Usage: $this_file [options] [message]" \
 
     print -f "\n%s\n" "Options:"
-    print -f "    %-5s %s\n" \
+    # -- terminates print's own option parsing. Without it the "-e" argument
+    # below is consumed as a print flag and the entire options table is replaced
+    # by `bad option: -e`.
+    print -f "    %-5s %s\n" -- \
         "-e " "Reuse and edit last commit message and author time, ignores -f and message" \
         "-f " "Same as -e, except don't edit the commit message" \
         "-q " "Quiet" \
