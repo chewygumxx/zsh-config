@@ -47,7 +47,13 @@ done
 # Invocation Parse
 # -----------------
 
-local -a opts=("${__eza_opts[@]}")
+# $__eza_opts, not "${__eza_opts[@]}". Unlike bash, zsh expands the quoted [@]
+# form of an unset array to a single empty string, which was passed through to
+# eza as an empty argument and rejected as `"": No such file or directory`. The
+# unquoted form yields no words at all here and, since zsh does not word-split
+# parameters, still preserves any element containing spaces.
+# shuck: disable=C006
+local -a opts=($__eza_opts)
 local -a args=()
 local -i ignore=1
 local -i long=0
@@ -77,7 +83,11 @@ done
 # Options
 # --------
 
-((ignore)) && opts+=("--ignore-glob" "${(j:|:)__eza_ignore_glob}")
+# Appended only when the join is non-empty. An unset or empty __eza_ignore_glob
+# otherwise passes a bare `--ignore-glob ""` through to eza, which rejects the
+# empty pattern with `"": No such file or directory`.
+((ignore)) && [[ -n "${(j:|:)__eza_ignore_glob}" ]] &&
+	opts+=("--ignore-glob" "${(j:|:)__eza_ignore_glob}")
 
 if ((long == 0)); then
 	opts+=("--no-permissions" "--no-user" "--no-filesize" "--no-time")
