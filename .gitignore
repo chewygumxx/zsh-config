@@ -9,3 +9,7 @@
 #
 
 node_modules/
+
+# Machine-local mise tool and task overrides
+mise.local.toml
+.mise.local.toml
