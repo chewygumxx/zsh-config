@@ -23,34 +23,7 @@ local __this_file="${(D)${${(%):-%N}:A}}"
 # Validate Environment
 # ---------------------
 
-if [[ ! -v zsh_dirs ]]; then
-    print -u2 -f '%s: [%s] %s\n' "$__this_file" "CRITICAL" \
-        "Variable not set: zsh_dirs"
-    return 1
-fi
-
-if [[ ! "${(t)zsh_dirs}" == association* ]]; then
-    print -u2 -f '%s: [%s] %s\n' "$__this_file" "CRITICAL" \
-        "Variable is not an associative array: zsh_dirs"
-    return 1
-fi
-
-local dir err=0
-for dir in func wrap; do
-    if [[ ! -v zsh_dirs[$dir] ]]; then
-        print -u2 -f '%s: [%s] %s\n' "$__this_file" "ERROR" \
-            "zsh_dirs key '$dir' not set"
-        err=1
-        continue
-    fi
-    if [[ ! -d "${zsh_dirs[$dir]}" ]]; then
-        print -u2 -f '%s: [%s] %s\n%s\n' "$__this_file" "ERROR" \
-            "zsh_dirs key '$dir' is not a directory:" \
-            "zsh_dirs[$dir]=${(qqq)zsh_dirs[$dir]}"
-        err=1
-    fi
-done
-((err)) && return 1
+zsh_dirs_require "$__this_file" func wrap || return 1
 
 # ------------------
 # Prepare Functions

@@ -73,3 +73,50 @@ if ! [[ "$init_dirs" -nt "${0}" ]]; then
     touch "$init_dirs"
 fi
 unset init_dirs zsh_conf zsh_cache zsh_share zsh_state
+
+# Shared validator for every consumer of this array. It is defined here, beside
+# the declaration, so that anything sourced after .zshenv can rely on it being
+# present exactly whenever zsh_dirs itself is. Callers pass a label for the
+# diagnostic followed by the keys they intend to read:
+#
+#   zsh_dirs_require "$__this_file" rc util || return 1
+#
+function zsh_dirs_require() {
+    emulate -L zsh
+
+    local caller="$1"
+    shift
+
+    if [[ ! -v zsh_dirs ]]; then
+        print -u2 -f '%s: [%s] %s\n' "$caller" "CRITICAL" \
+            "Variable not set: zsh_dirs"
+        return 1
+    fi
+
+    if [[ ! "${(t)zsh_dirs}" == association* ]]; then
+        print -u2 -f '%s: [%s] %s\n' "$caller" "CRITICAL" \
+            "Variable is not an associative array: zsh_dirs"
+        return 1
+    fi
+
+    local key
+    local -i err=0
+
+    for key in "$@"; do
+        if [[ ! -v zsh_dirs[$key] ]]; then
+            print -u2 -f '%s: [%s] %s\n' "$caller" "ERROR" \
+                "zsh_dirs key '$key' not set"
+            err=1
+            continue
+        fi
+
+        if [[ ! -d "${zsh_dirs[$key]}" ]]; then
+            print -u2 -f '%s: [%s] %s\n%s\n' "$caller" "ERROR" \
+                "zsh_dirs key '$key' is not a directory:" \
+                "zsh_dirs[$key]=${(qqq)zsh_dirs[$key]}"
+            err=1
+        fi
+    done
+
+    return $err
+}
