@@ -1,0 +1,166 @@
+# vim:set expandtab shiftwidth=4 filetype=toml:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/.mise.toml
+#
+#
+
+# https://mise.jdx.dev/configuration.html
+# https://mise.jdx.dev/tasks/
+
+
+# ------
+# Tools
+# ------
+
+[tools]
+
+# Pinned to the major that .github/workflows/commitlint.yaml installs, so
+# `npm ci` here resolves the same tree CI does.
+node = "22"
+
+# Workflow linter. The registry alias resolves to aqua:rhysd/actionlint.
+actionlint = "1.7.12"
+
+# Zsh linter and formatter; reads .shuck.toml. Not carried in the mise
+# registry, so it is pulled from its GitHub releases directly. The release
+# assets are named shuck-cli-*, so the binary has to be named explicitly.
+"github:ewhauser/shuck" = { version = "0.2.3", exe = "shuck" }
+
+
+# --------------
+# Task settings
+# --------------
+
+[env]
+
+# Lets the tasks below invoke commitlint, prettier and tsc as bare commands
+# instead of paying an npx resolution on each call.
+_.path = ["{{config_root}}/node_modules/.bin"]
+
+[task_config]
+
+# Every task globs repo-relative paths, so pin them to the repo root rather
+# than to whichever directory `mise run` was invoked from.
+dir = "{{config_root}}"
+
+
+# -------
+# Set up
+# -------
+
+[tasks.setup]
+description = "Install the Node dev dependencies and the Husky commit-msg hook"
+run = "npm ci"
+
+[tasks.commit]
+description = "Compose a Conventional Commit through Commitizen"
+run = "cz"
+
+
+# -------
+# Checks
+# -------
+
+[tasks.lint]
+description = "Run every non-interactive check over the repository"
+depends = [
+    "lint:zsh",
+    "lint:syntax",
+    "lint:actions",
+    "lint:types",
+    "lint:format",
+]
+
+[tasks."lint:zsh"]
+description = "Lint the shell sources with shuck, per .shuck.toml"
+run = "shuck check"
+
+[tasks."lint:syntax"]
+description = "Parse every shell file with zsh -n"
+shell = "zsh -c"
+run = '''
+() {
+    emulate -L zsh
+    setopt null_glob
+
+    local -a files
+    files=(
+        .zshenv
+        .zshrc
+        env/*.env.zsh
+        rc/*.rc.zsh
+        util/*.rc.zsh
+        spec/*.spec.zsh
+        comp/*.zsh
+        func/*(.)
+        wrap/*(.)
+    )
+
+    # `zsh -n` parses without executing, so the `typeset -gA zsh_dirs`
+    # preceding the array literal never runs and the subscripted
+    # assignment is read as a direct array assignment, reporting a bad
+    # subscript. The file is correct at runtime and shuck covers it, so it
+    # is dropped from this list.
+    files=(${files:#env/zsh_dirs.env.zsh})
+
+    local file
+    local -i failed=0
+
+    for file in $files; do
+        zsh -n -- $file || failed=1
+    done
+
+    return $failed
+}
+'''
+
+[tasks."lint:actions"]
+description = "Lint the GitHub Actions workflows"
+
+# The two ignores cover a single known actionlint false positive, already
+# annotated in .github/workflows/sync-repo-metadata.yaml: actionlint reads a
+# stale input list for actions/create-github-app-token@v3, where `client-id`
+# is valid and `app-id` is not required.
+run = '''
+actionlint \
+    -ignore 'missing input "app-id".+create-github-app-token' \
+    -ignore 'input "client-id" is not defined.+create-github-app-token'
+'''
+
+[tasks."lint:types"]
+description = "Typecheck .commitlintrc.mts"
+run = "tsc"
+
+[tasks."lint:format"]
+description = "Check that neither formatter would rewrite anything"
+
+# The read-only counterpart to the fmt task, in the same order.
+run = [
+    "shuck format --check",
+    "prettier --check .",
+]
+
+[tasks."lint:commit"]
+description = "Lint the most recent commit message against Conventional Commits"
+run = "commitlint --last --verbose"
+
+
+# -----------
+# Formatting
+# -----------
+
+[tasks.fmt]
+description = "Format every file in place"
+depends = ["fmt:zsh", "fmt:prettier"]
+
+[tasks."fmt:zsh"]
+description = "Format the shell sources with shuck, per .shuck.toml"
+run = "shuck format"
+
+[tasks."fmt:prettier"]
+description = "Format the non-shell files with Prettier"
+run = "prettier --write ."
