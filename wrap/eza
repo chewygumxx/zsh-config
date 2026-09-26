@@ -15,7 +15,12 @@
 #
 
 local __this_file="${(D)${${(%):-%N}:a}}"
-local __eza_ignore_glob=($__eza_ignore_glob)
+
+# A `local __eza_ignore_glob=($__eza_ignore_glob)` shadow used to stand here. It
+# brought the name into existence before the validation loop below ran, so the
+# -v test could never fail for it and only __eza_opts was ever really checked.
+# The array is read once, at the --ignore-glob line, and never modified, so no
+# local copy is needed.
 
 # ---------------------
 # Validate Environment
