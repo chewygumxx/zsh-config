@@ -39,10 +39,13 @@ alias sudo="sudo "
 }
 
 # Git
-if (($+commands[git])); then
-    alias ga='git add'
-    alias gs='git status' # Overwrites 'gs' of ghostscript. Never use it
-fi
+#
+# ga and gs are provided by func/ga and func/gs, which carry the same commands
+# behind a $+commands[git] guard. Aliases are expanded at parse time, before the
+# shell looks for a function of the same name, so defining them here made both
+# of those autoloaded functions permanently unreachable dead code.
+#
+# gs overwrites 'gs' of ghostscript. Never use it.
 
 (($+commands[gh])) && alias gist='gh gist create'
 
