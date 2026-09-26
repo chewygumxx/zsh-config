@@ -47,17 +47,29 @@ _comp_options+=(globdots)
 
 autoload -Uz compinit
 setopt list_types extended_glob
+local __zcompdump="${zsh_dirs[cache]}/zcompdump"
+
+# Two faults were corrected here.
+#
+# The freshness test is evaluated through an array assignment rather than inside
+# [[ ]]. Zsh performs no filename generation within [[ ]], so the glob qualifier
+# was never expanded there and `-n` simply tested a non-empty literal string:
+# the condition was unconditionally true, compinit -C ran on every startup, and
+# the dump was never rebuilt no matter how old it became.
+#
+# It also now measures the dump file itself rather than the cache directory
+# holding it, since a directory's mtime only moves when entries are added or
+# removed and says nothing about the age of the dump inside it.
+#
 # Glob explanation:
 #   N      Return an empty list if nothing found, instead of an error
-#   mh-24  Return files less than 24 hours old.
-if [[ -n "$zsh_dirs[cache]"(Nmh-24) ]]; then
-compinit -C -d  "${zsh_dirs[cache]}/zcompdump"
+#   mh-24  Match only if modified less than 24 hours ago
+local -a __zcompdump_fresh=("$__zcompdump"(Nmh-24))
 
-
+if (( $#__zcompdump_fresh )); then
+    compinit -C -d "$__zcompdump"
 else
-compinit -d     "${zsh_dirs[cache]}/zcompdump"
-
-
+    compinit -d "$__zcompdump"
 fi
 
 # ---------------
