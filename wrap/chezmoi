@@ -103,4 +103,15 @@ __dispatch () {
     esac
 }
 
-__dispatch "$@"
+# Wrapped as in wrap/gh. zsh defines functions globally, so every helper above
+# otherwise stayed in the interactive namespace after the first call. `always`
+# runs on every path out of the block, and the status is captured and re-returned
+# so the cleanup cannot mask the wrapped command's exit code.
+local return_code
+{
+    __dispatch "$@"
+} always {
+    return_code=$?
+    unset -f __help_pager __help_main __alias_help __alias_main __dispatch
+    return "$return_code"
+}
