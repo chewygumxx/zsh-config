@@ -9,34 +9,49 @@
 #
 #
 
+# The XDG variables are supplied by systemd, as the sister file
+# ~/.config/environment.d/base.conf, and systemd's user environment is not
+# applied in every context: a bare TTY login, a rescue shell or a container can
+# all leave them unset. Without a fallback every path below collapses to a
+# root-relative one such as /zsh, and the mkdir -p at the foot of this file then
+# fails with permission denied on every single shell start.
+#
+# The cache fallback deliberately mirrors the non-standard location set in
+# base.conf rather than the XDG default of ~/.cache, so that an unset variable
+# cannot silently strand a second cache tree elsewhere.
+zsh_conf="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
+zsh_cache="${XDG_CACHE_HOME:-$HOME/.local/cache}"
+zsh_share="${XDG_DATA_HOME:-$HOME/.local/share}/zsh"
+zsh_state="${XDG_STATE_HOME:-$HOME/.local/state}/zsh"
+
 typeset -gA zsh_dirs
 zsh_dirs=(
-    [conf]="$XDG_CONFIG_HOME/zsh"
-    [env]="$XDG_CONFIG_HOME/zsh/env"
+    [conf]="$zsh_conf"
+    [env]="$zsh_conf/env"
 
-    [comp]="$XDG_CONFIG_HOME/zsh/comp"
-    [func]="$XDG_CONFIG_HOME/zsh/func"
-    [wrap]="$XDG_CONFIG_HOME/zsh/wrap"
+    [comp]="$zsh_conf/comp"
+    [func]="$zsh_conf/func"
+    [wrap]="$zsh_conf/wrap"
 
-    [rc]="$XDG_CONFIG_HOME/zsh/rc"
-    [util]="$XDG_CONFIG_HOME/zsh/util"
-    [spec]="$XDG_CONFIG_HOME/zsh/spec"
+    [rc]="$zsh_conf/rc"
+    [util]="$zsh_conf/util"
+    [spec]="$zsh_conf/spec"
 
-    [cache]="$XDG_CACHE_HOME/zsh"
-    [cache_comp]="$XDG_CACHE_HOME/zsh/completions"
-    [cache_init]="$XDG_CACHE_HOME/zsh/init"
-    [cache_zstylecomp]="$XDG_CACHE_HOME/zsh/zstylecomp"
-    [cache_zvm]="$XDG_CACHE_HOME/zsh/zsh-vi-mode"
+    [cache]="$zsh_cache/zsh"
+    [cache_comp]="$zsh_cache/zsh/completions"
+    [cache_init]="$zsh_cache/zsh/init"
+    [cache_zstylecomp]="$zsh_cache/zsh/zstylecomp"
+    [cache_zvm]="$zsh_cache/zsh/zsh-vi-mode"
 
-    [share]="$XDG_DATA_HOME/zsh"
-    [share_func]="$XDG_DATA_HOME/zsh/functions"
-    [share_comp]="$XDG_DATA_HOME/zsh/completions"
-    [plugin]="$XDG_DATA_HOME/zsh/plugins"
+    [share]="$zsh_share"
+    [share_func]="$zsh_share/functions"
+    [share_comp]="$zsh_share/completions"
+    [plugin]="$zsh_share/plugins"
 
-    [state]="$XDG_STATE_HOME/zsh"
+    [state]="$zsh_state"
 )
 
-init_dirs="$XDG_CACHE_HOME/.zsh_dirs_initialised"
+init_dirs="$zsh_cache/.zsh_dirs_initialised"
 # Re-mkdir zsh directories if either:
 #  - Missing
 #  - Older than this file
@@ -48,4 +63,4 @@ if ! [[ "$init_dirs" -nt "${0}" ]]; then
     mkdir -p "${(v)zsh_dirs[@]}"
     touch "$init_dirs"
 fi
-unset init_dirs
+unset init_dirs zsh_conf zsh_cache zsh_share zsh_state
