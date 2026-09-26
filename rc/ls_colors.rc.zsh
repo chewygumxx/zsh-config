@@ -67,5 +67,6 @@ done
 
 typeset -gx  LS_COLORS
 
+
 typeset -gx ZLS_COLORS="$LS_COLORS"
 typeset -gx EZA_COLORS="$LS_COLORS"

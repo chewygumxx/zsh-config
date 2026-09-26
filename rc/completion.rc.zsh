@@ -66,7 +66,7 @@ local __zcompdump="${zsh_dirs[cache]}/zcompdump"
 #   mh-24  Match only if modified less than 24 hours ago
 local -a __zcompdump_fresh=("$__zcompdump"(Nmh-24))
 
-if (( $#__zcompdump_fresh )); then
+if (($#__zcompdump_fresh)); then
     compinit -C -d "$__zcompdump"
 else
     compinit -d "$__zcompdump"
