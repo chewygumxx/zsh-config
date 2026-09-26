@@ -26,7 +26,7 @@ if [[ ! -s "$init_cache" ]] ||
     [[ "$init_cache" -ot "$commands[luarocks]" ]] ||
     [[ "$init_cache" -ot "${0}" ]] ||
     [[ "$init_cache" -ot "$zsh_dirs[env]/base.env.zsh" ]]; then
-    echo "Regenerating luarocks source cache"
+    print -u2 "Regenerating luarocks source cache"
     luarocks --lua-version $version path --bin >| "$init_cache"
 fi
 

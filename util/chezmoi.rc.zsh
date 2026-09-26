@@ -50,7 +50,7 @@ alias czd="cz destory"
     if [[ ! -r "$comp_file" ]] ||
         [[ "$comp_file" -ot "$commands[chezmoi]" ]] ||
         [[ "$comp_file" -ot "${${(%):-%N}:A}" ]]; then
-        print "Regenerating chezmoi completion file"
+        print -u2 "Regenerating chezmoi completion file"
         \builtin command chezmoi completion zsh >| "$comp_file"
     fi
 }

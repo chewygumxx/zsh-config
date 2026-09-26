@@ -45,7 +45,7 @@ function __init_zoxide() {
     if [[ ! -f "$__init_cache" ]] ||
         [[ "$__init_cache" -ot "$commands[zoxide]" ]] ||
         [[ "$__init_cache" -ot "$__this_file" ]]; then
-        echo "Regenerating zoxide source cache"
+        print -u2 "Regenerating zoxide source cache"
         zoxide init zsh --cmd cd --hook pwd >| "$__init_cache"
     fi
 
