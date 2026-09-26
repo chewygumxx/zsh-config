@@ -29,6 +29,12 @@ ls_colors=(
     "tc=$color[faint];$color[magenta]" # Filetype trailing character
 )
 
+# Declared for the extension loops below, which otherwise leave a stray global
+# $ext behind in the interactive shell, holding whichever extension came last.
+# .zshrc sources each rc file inside an anonymous function, so a top-level
+# `local` is in scope here, as it is in rc/function.rc.zsh.
+local ext
+
 # Archive
 for ext in "7z" "gz" "rar" "tar" "zip" "xz"; do
     ls_colors+=("*.$ext=$color[red]")
