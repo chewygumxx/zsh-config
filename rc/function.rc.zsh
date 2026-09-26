@@ -10,8 +10,12 @@
 #
 
 #
-# Appends functions directory to array variable 'fpath', marks zsh function
-# files for autoload, and maps aliases to respective wrapper functions.
+# Appends the func and wrap directories to array variable 'fpath' and marks the
+# files in them for autoload.
+#
+# No aliases are created here. Files in wrap/ are named directly after the
+# command they wrap, and a defined function already takes precedence over a
+# same-named external binary, so no alias is needed to make the wrapper win.
 #
 # Dependent upon associative array variable 'zsh_dirs' set in advance.
 #

@@ -7,7 +7,7 @@
 # ::: :/func/__bg_jobs_summary
 #
 #
-# ~/.config/zsh/functions/_bg_jobs_summary  (autoload from fpath, matches your convention)
+# Autoloaded from fpath as __bg_jobs_summary, per rc/function.rc.zsh
 
 #
 # To enable, call this function without argument

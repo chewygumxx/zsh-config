@@ -7,7 +7,8 @@
 # ::: :/util/linters.rc.zsh
 #
 #
-# Depends on alias_def function
+# Plain aliases; no helper is involved. This previously claimed a dependency on
+# an `alias_def` function, which does not exist anywhere in the repository.
 #
 
 alias lint-json="json-glib-validate"

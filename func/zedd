@@ -15,7 +15,7 @@ local __this_file="${(D)${${(%):-%N}:a}}"
 local func_name="$1"
 
 if [[ -z "$func_name" ]]; then
-    print -u2 "${__this_file}: Usage: zed <function-name>"
+    print -u2 "${__this_file}: Usage: zedd <function-name>"
     return 1
 fi
 
