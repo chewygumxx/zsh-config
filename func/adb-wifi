@@ -24,8 +24,10 @@ fi
 
 local temp_port=$1
 
-CHEWYTELE_IP=$2 ; : ${CHEWYTELE_IP:="192.168.4.22"}
-CUSTOM_PORT=$3  ; : ${CUSTOM_PORT:="55555"}
+# Declared local. Without it both names were assigned into the global namespace
+# and persisted in the interactive session after every call.
+local CHEWYTELE_IP="${2:-192.168.4.22}"
+local CUSTOM_PORT="${3:-55555}"
 
 command adb connect "${CHEWYTELE_IP}:${temp_port}"
 command adb tcpip   "${CUSTOM_PORT}"
