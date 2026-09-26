@@ -2,7 +2,11 @@
     "name": "zsh-config",
     "description": "My Zsh shell configuration dotfiles",
     "private": true,
-    "keywords": ["dotfiles", "zsh-config", "config"],
+    "keywords": [
+        "dotfiles",
+        "zsh-config",
+        "config"
+    ],
     "license": "GPL-3.0-only",
     "homepage": "https://github.com/chewygumxx/zsh-config",
     "repository": "github:chewygumxx/zsh-config",

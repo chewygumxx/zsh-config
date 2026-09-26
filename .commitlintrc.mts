@@ -96,7 +96,8 @@ const scopes: { delimiters: string[]; enum: Enumerable[] } = {
         {
             name: "rc",
             fullName: "RC",
-            description: "Core interactive setup: aliases, completion, prompt, history",
+            description:
+                "Core interactive setup: aliases, completion, prompt, history",
         },
         {
             name: "util",
