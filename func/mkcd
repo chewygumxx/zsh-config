@@ -7,5 +7,17 @@
 # ::: :/func/mkcd
 #
 #
-\builtin command mkdir -p "$1"
-\builtin cd "$1"
+#
+# Make a directory and change into it
+#
+
+# Called with no argument this ran `mkdir -p ""`, which errors, and then
+# `cd ""`, which silently succeeds as a no-op: the caller was left in place with
+# no indication of what went wrong.
+if (( $# != 1 )); then
+    print -u2 -- "${0}: Usage: $0 <directory>"
+    return 2
+fi
+
+\builtin command mkdir -p -- "$1" || return
+\builtin cd -- "$1"
