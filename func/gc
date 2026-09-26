@@ -31,7 +31,12 @@ if (( $# == 0 )) && (( $+commands[nvim] )); then
         # `undefined signal` and installed nothing, leaking the message file on
         # every call. Set inside a function, an EXIT trap runs when the function
         # returns, which is the scope wanted here.
-        trap 'command rm -f -- "$tempfile"' EXIT
+        #
+        # The path is interpolated now, not deferred: single quotes would put
+        # off expanding $tempfile until the trap fires, by which point the local
+        # is out of scope and the removal silently targets an empty path. (q)
+        # keeps the result safe should the path ever contain whitespace.
+        trap "command rm -f -- ${(q)tempfile}" EXIT
         command nvim "$tempfile"
         # Negated. `-s` is true when the file exists and is non-empty, so the
         # unnegated test aborted whenever a message HAD been written and fell
