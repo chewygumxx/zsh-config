@@ -19,8 +19,9 @@
 [tools]
 
 # Pinned to the major that .github/workflows/commitlint.yaml installs, so
-# `npm ci` here resolves the same tree CI does.
-node = "22"
+# `npm ci` here resolves the same tree CI does. 24 is the floor set by
+# .github/workflows/CLAUDE.md.
+node = "24"
 
 # Workflow linter. The registry alias resolves to aqua:rhysd/actionlint.
 actionlint = "1.7.12"
