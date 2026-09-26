@@ -17,6 +17,12 @@ local PASS_URI_OPENROUTER_APIKEY="${PASS_URI_OPENROUTER_APIKEY:-"pass://J-xaaVbs
 
 local __this_file="${(D)${${(%):-%N}:A}}"
 
+# `log` is an unusually collision-prone name to leave defined in an interactive
+# shell, and zsh defines functions globally, so without this it persisted after
+# the first call and shadowed anything else named log. An EXIT trap set inside a
+# function runs when that function returns.
+trap 'unset -f log' EXIT
+
 function log () {
     if [[ "$2" == "--" ]]; then
         local ctx="$1"; shift 2
