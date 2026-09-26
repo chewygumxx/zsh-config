@@ -24,7 +24,11 @@ fi
 if (( $# == 0 )) && (( $+commands[nvim] )); then
     local tempfile
     if tempfile="$(mktemp "$TMPDIR/git-commit-message.XXXXXXXXXX")"; then
-        trap EXIT 'command rm -rf -- "$tempfile"'
+        # zsh's order is `trap ACTION SIGNAL`. Reversed, it reported
+        # `undefined signal` and installed nothing, leaking the message file on
+        # every call. Set inside a function, an EXIT trap runs when the function
+        # returns, which is the scope wanted here.
+        trap 'command rm -f -- "$tempfile"' EXIT
         command nvim "$tempfile"
         if [[ -s "$tempfile" ]]; then
             print -f '%s: %s "%s" %s' "$__this_file" "Empty file" "$tempfile" "no commit made"
