@@ -20,8 +20,11 @@ setopt re_match_pcre
 setopt interactive_comments
 setopt globdots # Match names preceeded by a dot
 
+# (N) sets null_glob per pattern. Without it an empty rc/ or util/ raises
+# `no matches found`, which aborts the entire array literal below and leaves the
+# interactive shell with no aliases, no prompt and no history configuration.
 typeset -ga zshrcs
-zshrcs=("$zsh_dirs[rc]"/*.rc.zsh)
+zshrcs=("$zsh_dirs[rc]"/*.rc.zsh(N))
 
 zshrcs=(
     ${(M)zshrcs:#*ls_colors*} # Provides for completion
@@ -30,7 +33,7 @@ zshrcs=(
 
     ${zshrcs:#*(ls_colors|completion|function)*}
 
-    "${zsh_dirs[util]}"/*.rc.zsh
+    "${zsh_dirs[util]}"/*.rc.zsh(N)
 )
 () {
     local source
