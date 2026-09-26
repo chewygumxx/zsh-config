@@ -11,5 +11,5 @@
 
 [[ -o interactive ]] || return
 
-local spec="chewygumxx/zsh-als"
+local slug="chewygumxx/zsh-als"
 local enabled=false
