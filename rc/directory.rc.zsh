@@ -21,8 +21,11 @@ hash -d share="${XDG_DATA_HOME:-$HOME/.local/share}"
     emulate -L zsh
     setopt local_options no_glob_dots
 
+    # (N) matters here because no_glob_dots is set just above: a $HOME holding
+    # only dot-directories matches nothing and would otherwise abort the loop
+    # with `no matches found`.
     local dir
-    for dir in "$HOME"/*(/:t); do
+    for dir in "$HOME"/*(N/:t); do
         hash -d "${dir:0:3}=$HOME/$dir"
     done
 }
