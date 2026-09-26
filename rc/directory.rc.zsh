@@ -10,6 +10,7 @@
 #
 
 [[ -o interactive ]] || return
+local __this_file="${(D)${${(%):-%N}:A}}"
 
 # -----
 # Home
@@ -21,12 +22,37 @@ hash -d share="${XDG_DATA_HOME:-$HOME/.local/share}"
     emulate -L zsh
     setopt local_options no_glob_dots
 
+    # Keys remain the first three characters of each $HOME subdirectory, and are
+    # lengthened one character at a time only where that would collide with a
+    # key already assigned. Previously every key was a bare ${dir:0:3}, so two
+    # directories sharing a three-character prefix (Docker and Documents, say)
+    # silently overwrote one another's hash -d entry, and which of the two
+    # survived depended on glob order.
+    #
+    # Existing shortcuts are unaffected whenever prefixes are already distinct.
+    #
     # (N) matters here because no_glob_dots is set just above: a $HOME holding
     # only dot-directories matches nothing and would otherwise abort the loop
     # with `no matches found`.
-    local dir
+    local dir key
+    local -A taken
+
     for dir in "$HOME"/*(N/:t); do
-        hash -d "${dir:0:3}=$HOME/$dir"
+        key="${dir:0:3}"
+
+        # Grow the key until it is unique, stopping once the whole name is used.
+        while [[ -n "${taken[$key]}" && "$key" != "$dir" ]]; do
+            key="${dir:0:$((${#key} + 1))}"
+        done
+
+        if [[ -n "${taken[$key]}" ]]; then
+            print -u2 -f '%s: [%s] %s\n' "$__this_file" "WARN" \
+                "Named directory ~$key is taken by '${taken[$key]}', skipping '$dir'"
+            continue
+        fi
+
+        taken[$key]="$dir"
+        hash -d "$key=$HOME/$dir"
     done
 }
 
