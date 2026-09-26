@@ -23,7 +23,10 @@ fi
 
 if (( $# == 0 )) && (( $+commands[nvim] )); then
     local tempfile
-    if tempfile="$(mktemp "$TMPDIR/git-commit-message.XXXXXXXXXX")"; then
+    # TMPDIR is not set in this configuration, interactive or otherwise, so the
+    # bare form expanded to /git-commit-message.XXXXXXXXXX and mktemp failed
+    # with permission denied at the filesystem root on every call.
+    if tempfile="$(mktemp "${TMPDIR:-/tmp}/git-commit-message.XXXXXXXXXX")"; then
         # zsh's order is `trap ACTION SIGNAL`. Reversed, it reported
         # `undefined signal` and installed nothing, leaking the message file on
         # every call. Set inside a function, an EXIT trap runs when the function
