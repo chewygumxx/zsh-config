@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/bin/false
 # vim:set expandtab shiftwidth=4 filetype=zsh:
 # SPDX-License-Identifier: GPL-3.0-only
 
