@@ -19,7 +19,10 @@ function print_help () {
         "Usage: $this_file [options] [command] [args]" \
 
     print -f "\n%s\n" "Options:"
-    print -f "    %-10s %s\n" \
+    # -- terminates print's own option parsing. Without it the "-u|--unit"
+    # argument below is read as print's `-u fd` flag, which then demands a
+    # numeric descriptor and aborts with `number expected after -u`.
+    print -f "    %-10s %s\n" -- \
         "-u|--unit " "Unit name, default is the command and first two arguments" \
         ""           "underscore concatenated" \
         ""           "For example 'urun cclip -S -t "image/png" -t ...' -> 'cclipd_-S_-t'" \
