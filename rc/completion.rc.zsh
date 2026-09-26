@@ -30,7 +30,7 @@ function __download_plugin() {
 __download_plugin "zsh-users/zsh-completions"
 fpath+=(
     "$zsh_dirs[share_comp]"
-    "$zsh_dirs[user_comp]"
+    "$zsh_dirs[comp]"
     "$zsh_dirs[plugin]/zsh-completions/src"
 )
 
