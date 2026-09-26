@@ -10,6 +10,9 @@
 #
 
 local __this_file="${(D)${${(%):-%N}:A}}"
+
+zsh_dirs_require "$__this_file" spec plugin || return 1
+
 local spec
 for spec in "$zsh_dirs[spec]"/*(N.); do
 

@@ -20,6 +20,11 @@ setopt re_match_pcre
 setopt interactive_comments
 setopt globdots # Match names preceeded by a dot
 
+# This file's own header promises zsh_dirs is set in advance, so check it rather
+# than trusting it. The label is expanded inline because .zshrc is sourced at top
+# level, where `local` is not available.
+zsh_dirs_require "${(D)${${(%):-%N}:A}}" rc util || return 1
+
 # (N) sets null_glob per pattern. Without it an empty rc/ or util/ raises
 # `no matches found`, which aborts the entire array literal below and leaves the
 # interactive shell with no aliases, no prompt and no history configuration.

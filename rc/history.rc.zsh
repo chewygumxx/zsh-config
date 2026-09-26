@@ -8,6 +8,9 @@
 #
 #
 [[ -o interactive ]] || return
+local __this_file="${(D)${${(%):-%N}:A}}"
+
+zsh_dirs_require "$__this_file" state || return 1
 
 HISTFILE="$zsh_dirs[state]/history"
 
