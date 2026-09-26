@@ -26,12 +26,17 @@ setopt globdots # Match names preceeded by a dot
 typeset -ga zshrcs
 zshrcs=("$zsh_dirs[rc]"/*.rc.zsh(N))
 
+# Each pattern is anchored to the final path component with */ and the full
+# filename. Matching a bare substring such as *completion* tests the whole
+# absolute path, so any config directory containing "completion", "function" or
+# "ls_colors" anywhere in its name would misclassify every file beneath it, and
+# a file matching two of the three patterns would be sourced twice.
 zshrcs=(
-    ${(M)zshrcs:#*ls_colors*} # Provides for completion
-    ${(M)zshrcs:#*completion*} # Minimise fpath for completion index
-    ${(M)zshrcs:#*function*} # Provide function dependencies
+    ${(M)zshrcs:#*/ls_colors.rc.zsh} # Provides for completion
+    ${(M)zshrcs:#*/completion.rc.zsh} # Minimise fpath for completion index
+    ${(M)zshrcs:#*/function.rc.zsh} # Provide function dependencies
 
-    ${zshrcs:#*(ls_colors|completion|function)*}
+    ${zshrcs:#*/(ls_colors|completion|function).rc.zsh}
 
     "${zsh_dirs[util]}"/*.rc.zsh(N)
 )
