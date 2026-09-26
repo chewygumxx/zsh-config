@@ -12,9 +12,12 @@ if [[ -z "$TERMUX_VERSION" ]]; then
     return 1
 fi
 
-# Localise internally declared functions, do not persist post-execution
+# Do not persist the helpers below post-execution. `local +h functions` was used
+# for this and does not work: zsh defines functions globally regardless, so both
+# helpers were left behind in the interactive namespace. An EXIT trap set inside
+# a function runs when that function returns, which does achieve it.
 zmodload -e zsh/parameter || zmodload zsh/parameter
-local +h functions 
+trap 'unset -f wrap_desc print_pkglist' EXIT
 
 function wrap_desc () {
     local text="$1" width="${2:-70}" indent="${3:-'    '}"

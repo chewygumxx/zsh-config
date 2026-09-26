@@ -9,7 +9,12 @@
 #
 (( $+commands[systemd-run] )) || return 127
 
-local +h functions
+# `local +h functions` used to stand here as an attempt to scope the helper
+# below. It does not work: zsh defines functions globally regardless. An EXIT
+# trap set inside a function runs when that function returns, so this removes the
+# helper on every path out, early returns included.
+trap 'unset -f print_help' EXIT
+
 local this_file="$0"
 local unit
 

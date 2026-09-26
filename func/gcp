@@ -7,11 +7,14 @@
 # ::: :/func/gcp
 #
 #
-# Locally scope internally declared functions
-#zmodload -e zsh/parameter || zmodload zsh/parameter
-local +h functions 
-
+# `local +h functions` used to stand here, commented as locally scoping the
+# functions declared below. It does not: zsh defines functions globally
+# regardless, and print_help was left behind in the interactive namespace after
+# the first call. An EXIT trap set inside a function runs when that function
+# returns, so this removes the helper on every path out, early returns included.
 local this_file="${(%):-%N}"
+trap 'unset -f print_help' EXIT
+
 function print_help () {
     print -f "%s\n" \
         "git add, commit and push for the lazy" \
