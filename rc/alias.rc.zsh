@@ -1,5 +1,5 @@
 #!/bin/false
-# vim: expandtab:tabstop=4:shiftwidth=4:tw=0
+# vim:set expandtab shiftwidth=4 filetype=zsh:
 
 #
 #
