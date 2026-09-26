@@ -41,7 +41,10 @@ init_dirs="$XDG_CACHE_HOME/.zsh_dirs_initialised"
 #  - Missing
 #  - Older than this file
 if ! [[ "$init_dirs" -nt "${0}" ]]; then
-    print "Creating zsh directories"
+    # This file is sourced by .zshenv for every zsh invocation, interactive or
+    # not, so anything written to stdout corrupts the stream that scp, rsync,
+    # sftp and git over ssh read as protocol data. Report on stderr only.
+    print -u2 "Creating zsh directories"
     mkdir -p "${(v)zsh_dirs[@]}"
     touch "$init_dirs"
 fi
