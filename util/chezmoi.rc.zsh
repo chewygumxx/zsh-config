@@ -24,6 +24,7 @@ if ((!$+functions[chezmoi])); then
     print -u2 -n "${(D)${${(%):-%N}:a}}: [WARN] "
 print -u2    "Unable to resolve chezmoi wrapper function"
 
+
 fi
 
 # ------

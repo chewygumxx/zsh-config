@@ -14,8 +14,8 @@
 local __this_file="${(D)${${(%):-%N}:A}}"
 
 # Variable ls_colors is declared elsewhere, in rc/ls_colors.rc.zsh
-zsh_dirs_require "$__this_file" cache cache_zstylecomp comp share_comp plugin \
-    || return 1
+zsh_dirs_require "$__this_file" cache cache_zstylecomp comp share_comp plugin ||
+    return 1
 
 # ---------------
 # Populate fpath

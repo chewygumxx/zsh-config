@@ -46,8 +46,7 @@ for spec in "$zsh_dirs[spec]"/*(N.); do
         if [[ ! -r "$plugin_file" ]]; then
             if ! command git clone \
                 "https://github.com/$slug.git" \
-                "$plugin_dir"
-            then
+                "$plugin_dir"; then
                 print -u2 -f '%s: [%s] %s\n' "$__this_file" "ERROR" \
                     "Failed to clone plugin: $slug"
                 continue
