@@ -13,3 +13,7 @@ node_modules/
 # Machine-local mise tool and task overrides
 mise.local.toml
 .mise.local.toml
+
+# Claude Code Remember plugin session state. The plugin drops its own nested
+# .gitignore, but naming it here keeps the exclusion independent of that.
+.remember/
