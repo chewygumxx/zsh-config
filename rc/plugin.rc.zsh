@@ -22,8 +22,11 @@ for spec in "$zsh_dirs[spec]"/*(N.); do
 
         [[ "$enabled" == "false" ]] && continue
 
-        if [[ ! -v slug ]]; then
-            print -u2 -f '%s: [%s] %s' "$__this_file" "ERROR" \
+        # Tested with -z, not -v. The `local slug` above already brings the
+        # parameter into existence, so -v is unconditionally true and this
+        # branch could never be reached.
+        if [[ -z "$slug" ]]; then
+            print -u2 -f '%s: [%s] %s\n' "$__this_file" "ERROR" \
                 "No slug provided within: $spec"
             continue
         fi
