@@ -48,4 +48,8 @@ fi
 
 : ${unit:=${(j:_:)@:1:3}}
 
-systemd-run --user --unit="${unit:gs/\//_/}" "$@"
+# `command` is required: this function is named systemd-run and autoloaded, so a
+# bare call resolves back to the function rather than the binary. It recursed,
+# re-entered the option parser with --user as $1, and exited 127 reporting
+# `Command not found: --user`, so this wrapper never once ran systemd-run.
+command systemd-run --user --unit="${unit:gs/\//_/}" "$@"
