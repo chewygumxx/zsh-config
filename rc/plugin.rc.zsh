@@ -18,7 +18,11 @@ for spec in "$zsh_dirs[spec]"/*(N.); do
 
     () {
         local slug enabled
-        source "$spec" 2> /dev/null
+
+        # Errors are deliberately not discarded here. Redirecting them to
+        # /dev/null meant a spec with a syntax error, or a plugin that failed to
+        # load, was skipped in complete silence on every shell start.
+        source "$spec"
 
         [[ "$enabled" == "false" ]] && continue
 
@@ -39,6 +43,6 @@ for spec in "$zsh_dirs[spec]"/*(N.); do
                 "$zsh_dirs[plugin]/$plugin"
         fi
 
-        source "$zsh_dirs[plugin]/$plugin/$plugin.plugin.zsh" 2> /dev/null
+        source "$zsh_dirs[plugin]/$plugin/$plugin.plugin.zsh"
     }
 done
