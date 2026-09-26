@@ -29,8 +29,12 @@ zsh_cache="${XDG_CACHE_HOME:-$HOME/.local/cache}"
 zsh_share="${XDG_DATA_HOME:-$HOME/.local/share}/zsh"
 zsh_state="${XDG_STATE_HOME:-$HOME/.local/state}/zsh"
 
-typeset -gA zsh_dirs
-zsh_dirs=(
+# Declared and assigned as a single statement on purpose. Split across two, the
+# subscripted keys below are only valid once `typeset -gA` has actually run, so
+# `zsh -n` (which parses without executing) misreads them as a direct array
+# assignment and rejects the file. Combined, it parses and this file needs no
+# exemption from the lint:syntax task.
+typeset -gA zsh_dirs=(
     [conf]="$zsh_conf"
     [env]="$zsh_conf/env"
 

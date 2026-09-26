@@ -100,13 +100,6 @@ run = '''
         wrap/*(.)
     )
 
-    # `zsh -n` parses without executing, so the `typeset -gA zsh_dirs`
-    # preceding the array literal never runs and the subscripted
-    # assignment is read as a direct array assignment, reporting a bad
-    # subscript. The file is correct at runtime and shuck covers it, so it
-    # is dropped from this list.
-    files=(${files:#env/zsh_dirs.env.zsh})
-
     local file
     local -i failed=0
 
