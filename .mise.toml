@@ -59,6 +59,13 @@ _.path = [
     "{{config_root}}/.bin",
 ]
 
+# Redirected because revolver defaults this to ${ZDOTDIR:-$HOME}/.revolver, and
+# ZDOTDIR here is the live configuration directory, which is itself a checkout of
+# this repository. Left alone, running zunit without --tap drops state files into
+# it and they surface as untracked noise in the wrong clone. The test task passes
+# --tap and so never starts revolver at all, but a bare `zunit run` does.
+REVOLVER_DIR = "{{config_root}}/tests/_output/revolver"
+
 [task_config]
 
 # Every task globs repo-relative paths, so pin them to the repo root rather

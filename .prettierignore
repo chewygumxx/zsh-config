@@ -22,5 +22,8 @@ package-lock.json
 # it globs a directory, and only errors when one is named explicitly.
 tests/_output/
 
+# revolver spinner state; see the note in .gitignore
+.revolver/
+
 # Claude Code Remember plugin session state
 .remember/
