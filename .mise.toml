@@ -116,7 +116,14 @@ run = '''
         comp/*.zsh
         func/*(.)
         wrap/*(.)
+        tests/_support/*.zsh
     )
+
+    # The test files themselves are absent on purpose, and this is the one
+    # carve-out in this task. A .zunit file is not valid zsh: `@test 'name' {`
+    # is zunit's own syntax, and zsh -n rejects it with a parse error at the
+    # closing brace. The helpers under tests/_support are ordinary zsh and are
+    # checked above.
 
     local file
     local -i failed=0
@@ -163,6 +170,20 @@ run = "commitlint --last --verbose"
 # ------
 # Tests
 # ------
+
+[tasks.test]
+description = "Run the zunit suite against a throwaway HOME"
+depends = ["test:deps"]
+
+# Deliberately not a dependency of the lint task, and lint is not a dependency
+# of this one. lint reads the working tree and nothing else, whereas this spawns
+# real shells against a scratch HOME, so the two are worth being able to run
+# apart. The pre-commit hook runs both.
+#
+# --tap rather than the default reporter. Without it zunit drives an animated
+# spinner through revolver, which redraws over itself when stdout is not a
+# terminal and leaves a hook or a CI log unreadable.
+run = "zunit run --tap tests"
 
 [tasks."test:deps"]
 description = "Fetch the pinned zunit and revolver test binaries"
