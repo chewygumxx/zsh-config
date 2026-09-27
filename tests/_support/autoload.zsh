@@ -47,7 +47,12 @@ function load_shell_function() {
 
     # Dropped first so a name already defined by an earlier test, or by the
     # outer interactive shell, cannot mask the file being tested.
-    (( $+functions[$name] )) && unfunction -- "$name"
+    #
+    # Written without spaces inside the double parentheses, as the rest of the
+    # repository writes it. Spaced out as `(( $+functions[...] ))`, shuck format
+    # rewrites it to `(($ + functions[...]))`, which is not the same expression:
+    # it is true when the function is absent and false when it is present.
+    (($+functions[$name])) && unfunction -- "$name"
 
     autoload -Uz -- "$name"
 }
@@ -73,8 +78,15 @@ function stub_command() {
 
     # Written as sh rather than zsh: a stub wants to start fast and has no
     # reason to read anything of this configuration.
+    #
+    # The single quotes below are the whole point, so the two C005 warnings
+    # about expansions staying literal are suppressed rather than fixed. These
+    # are the stub's own parameters and have to reach the file unexpanded;
+    # expanding them here would bake this function's arguments into the stub.
     print -r -- '#!/bin/sh' > "$dir/$name" || return 1
+    # shuck: disable=C005
     print -r -- 'printf "stub:%s argc:%s\n" "$0" "$#" >&2' >> "$dir/$name"
+    # shuck: disable=C005
     print -r -- 'for arg; do printf "%s\n" "$arg"; done' >> "$dir/$name"
 
     chmod 0755 -- "$dir/$name" || return 1

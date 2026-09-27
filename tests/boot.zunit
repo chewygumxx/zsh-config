@@ -1,0 +1,144 @@
+#!/usr/bin/env zunit
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/tests/boot.zunit
+#
+#
+
+#
+# Startup regressions: the assertions the "Verifying changes" section of
+# CLAUDE.md sets out in prose, made executable.
+#
+# Each runs against a throwaway HOME. A plain `zsh -ic` on this machine loads
+# the live ~/.config/zsh rather than this checkout, so it proves nothing at all
+# about a change made here.
+#
+# The shebang above is required by zunit and has to be the very first line: it
+# reads only line one when deciding whether a file is a test file. Everything
+# below it follows the usual header convention.
+#
+
+@setup {
+    load _support/sandbox
+
+    SANDBOX="$(sandbox_create)"
+    sandbox_warm "$SANDBOX"
+}
+
+@teardown {
+    sandbox_destroy "$SANDBOX"
+}
+
+@test 'An interactive shell starts with nothing on stderr' {
+    run sandbox_zsh_stderr "$SANDBOX" -i -c exit
+
+    assert "$output" is_empty
+}
+
+@test 'A non-interactive shell writes no byte to stdout' {
+    # Counted in bytes rather than compared as a string. A lone newline
+    # corrupts the stream that scp, rsync, sftp and git over ssh read as
+    # protocol data just as surely as a sentence does, and a command
+    # substitution would strip that newline before any assertion saw it.
+    local -i bytes
+    bytes=$(sandbox_zsh_stdout "$SANDBOX" -c exit | wc -c)
+
+    assert $bytes equals 0
+}
+
+@test 'No element of fpath is empty' {
+    # An empty entry on fpath makes zsh autoload out of the current working
+    # directory. The count is taken through a parameter expansion because zsh
+    # drops empty words from an unquoted array expansion, which would hide
+    # exactly what is being looked for.
+    run sandbox_zsh_stdout "$SANDBOX" -i -c 'print -r -- ${#${(M)fpath:#}}'
+
+    assert "$output" equals 0
+}
+
+@test 'zsh_dirs is an associative array' {
+    # same_as, never equals. zunit's `equals` compares with [[ -eq ]], which is
+    # arithmetic: zsh evaluates each side as a math expression, bare words
+    # become parameters, and two unset parameters are both zero. So
+    # `assert association equals banana` passes. Every string comparison in
+    # this suite uses same_as for that reason.
+    run sandbox_zsh_stdout "$SANDBOX" -i -c 'print -r -- ${(t)zsh_dirs}'
+
+    assert "$output" same_as association
+}
+
+@test 'zsh_dirs carries every documented key' {
+    # Spelled out rather than counted, so adding a key is a deliberate edit
+    # here and not a number that quietly drifts.
+    local expected="cache cache_comp cache_init cache_zstylecomp cache_zvm"
+    expected+=" comp conf env func plugin rc share share_comp share_func spec"
+    expected+=" state util wrap"
+
+    run sandbox_zsh_stdout "$SANDBOX" -i -c 'print -r -- ${(ko)zsh_dirs}'
+
+    assert "$output" same_as "$expected"
+}
+
+@test 'Every zsh_dirs value is an existing directory' {
+    # Reading an undefined key yields an empty string in silence, which is how
+    # an empty entry once reached fpath in the first place.
+    run sandbox_zsh_stdout "$SANDBOX" -i -c '
+        for key value in "${(kv)zsh_dirs[@]}"; do
+            [[ -d "$value" ]] || print -r -- "$key=$value"
+        done
+    '
+
+    assert "$output" is_empty
+}
+
+@test 'Source keys follow ZDOTDIR and state keys do not' {
+    # The split env/zsh_dirs.env.zsh exists to maintain: a checkout sourced
+    # from anywhere loads its own files, while cache, data and state stay
+    # per-user rather than becoming part of the checkout.
+    run sandbox_zsh_stdout "$SANDBOX" -i -c '
+        for key in conf env comp func wrap rc util spec; do
+            [[ "$zsh_dirs[$key]" == "$ZDOTDIR"* ]] ||
+                print -r -- "expected under ZDOTDIR: $key"
+        done
+
+        for key in cache share plugin state; do
+            [[ "$zsh_dirs[$key]" == "$ZDOTDIR"* ]] &&
+                print -r -- "expected outside ZDOTDIR: $key"
+        done
+
+        true
+    '
+
+    assert "$output" is_empty
+}
+
+@test 'Every enabled spec is loaded' {
+    sandbox_plugin_source > /dev/null ||
+        skip 'No local plugin clones; set ZSH_TEST_PLUGIN_DIR'
+
+    run sandbox_zsh_stdout "$SANDBOX" -i -c '
+        for name in _zsh_autosuggest_start zvm_init -fast-highlight-process; do
+            (( $+functions[$name] )) || print -r -- "not loaded: $name"
+        done
+    '
+
+    assert "$output" is_empty
+}
+
+@test 'A spec marked enabled=false is not loaded' {
+    sandbox_plugin_source > /dev/null ||
+        skip 'No local plugin clones; set ZSH_TEST_PLUGIN_DIR'
+
+    # spec/zsh-autocomplete.spec.zsh sets enabled=false, and its clone is
+    # present in the borrowed plugin cache, so nothing but the flag stops it
+    # loading. rc/plugin.rc.zsh reaches its `continue` from inside an anonymous
+    # function, which is worth pinning rather than assuming.
+    run sandbox_zsh_stdout "$SANDBOX" -i -c \
+        'print -r -- $(( $+functions[autocomplete.async] ))'
+
+    assert "$output" equals 0
+}

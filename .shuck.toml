@@ -22,6 +22,16 @@
 "rc/*" = "zsh"
 "env/*" = "zsh"
 
+# Required for correctness rather than tidiness. Left unmapped, shuck reads
+# these as sh, where `$+functions[...]` means nothing, and `shuck format`
+# rewrites it to `(($ + functions[...]))`: an expression that is true when the
+# function is absent and false when it is present.
+#
+# The test files themselves are deliberately absent. A .zunit file is not valid
+# zsh, because `@test 'name' { ... }` is zunit's own syntax and neither zsh -n
+# nor shuck can parse it.
+"tests/_support/*" = "zsh"
+
 [format]
 never-split = false
 indent-style = "space"

@@ -149,6 +149,28 @@ function sandbox_zsh() {
 }
 
 #
+# Start the sandbox once and discard both streams.
+#
+# A new sandbox has an empty cache, so its first interactive start legitimately
+# reports what it is populating: env/zsh_dirs.env.zsh announces "Creating zsh
+# directories", and util/chezmoi.rc.zsh, util/luarocks.rc.zsh and
+# util/zoxide.rc.zsh each announce the cache they are regenerating. All four are
+# by design, and all four correctly go to stderr rather than stdout.
+#
+# Throwing that first start away is what lets the suite treat anything a later
+# start reports as a genuine fault. The exit status is deliberately not
+# propagated: whether the configuration really loaded is what the assertions
+# themselves are for, and failing setup here would only obscure them.
+#
+function sandbox_warm() {
+    emulate -L zsh
+
+    sandbox_zsh "$1" -i -c exit > /dev/null 2>&1
+
+    return 0
+}
+
+#
 # Run zsh in a sandbox and print only what it wrote to stderr, discarding
 # stdout. The two startup assertions are each about one specific stream, so
 # they have to be captured apart.
@@ -156,7 +178,13 @@ function sandbox_zsh() {
 function sandbox_zsh_stderr() {
     emulate -L zsh
 
-    sandbox_zsh "$@" 2>&1 1>/dev/null
+    # The order is the mechanism, not a mistake, so C085 is suppressed. 2>&1
+    # first points stderr at wherever stdout currently goes, which is the
+    # caller's pipe; only then is stdout sent to /dev/null. Reversed, both
+    # streams would end up discarded and every assertion would see nothing and
+    # pass.
+    # shuck: disable=C085
+    sandbox_zsh "$@" 2>&1 1> /dev/null
 }
 
 #
@@ -165,5 +193,5 @@ function sandbox_zsh_stderr() {
 function sandbox_zsh_stdout() {
     emulate -L zsh
 
-    sandbox_zsh "$@" 2>/dev/null
+    sandbox_zsh "$@" 2> /dev/null
 }
