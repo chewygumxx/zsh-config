@@ -1,0 +1,131 @@
+#!/usr/bin/env zunit
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/tests/header.zunit
+#
+#
+
+#
+# Header block conformance.
+#
+# Every file here opens with the same block, and the `# ::: :/<path>` line names
+# the file's own location. That second property is the useful one: a file copied
+# from elsewhere in the repository arrives with the wrong path in its header, and
+# nothing else in the toolchain notices.
+#
+# Only the lines that are uniform across the whole tree are asserted on. A few
+# files differ further down the block, in the filler lines rather than the
+# content, and importing that as a failure would leave the suite red from the
+# first run without telling anyone anything new.
+#
+
+@setup {
+    load _support/autoload
+
+    # (N) throughout. Without it a missing or empty directory raises
+    # `no matches found`, which aborts the whole array literal and leaves the
+    # tests asserting over nothing at all.
+    SHELL_FILES=(
+        "$ZSH_CONFIG_ROOT"/.zshenv
+        "$ZSH_CONFIG_ROOT"/.zshrc
+        "$ZSH_CONFIG_ROOT"/env/*.env.zsh(N)
+        "$ZSH_CONFIG_ROOT"/rc/*.rc.zsh(N)
+        "$ZSH_CONFIG_ROOT"/util/*.rc.zsh(N)
+        "$ZSH_CONFIG_ROOT"/spec/*.spec.zsh(N)
+        "$ZSH_CONFIG_ROOT"/comp/*.zsh(N)
+        "$ZSH_CONFIG_ROOT"/func/*(N.)
+        "$ZSH_CONFIG_ROOT"/wrap/*(N.)
+        "$ZSH_CONFIG_ROOT"/tests/_support/*.zsh(N)
+    )
+
+    TEST_FILES=("$ZSH_CONFIG_ROOT"/tests/*.zunit(N))
+}
+
+@test 'The file list is not empty' {
+    # Guards every other test in this file. Were the globs above to match
+    # nothing, each loop below would pass without examining a single file.
+    assert ${#SHELL_FILES} is_greater_than 1
+
+    assert ${#TEST_FILES} is_greater_than 1
+}
+
+@test 'Every shell file refuses direct execution' {
+    # #!/bin/false rather than a real interpreter, because none of these files
+    # is ever run: they are sourced or autoloaded.
+    local file
+    local -a offenders=()
+
+    for file in $SHELL_FILES; do
+        [[ "$(head -n 1 -- "$file")" == '#!/bin/false' ]] ||
+            offenders+=("${file#$ZSH_CONFIG_ROOT/}")
+    done
+
+    if (( ${#offenders} )); then
+        fail "Wrong shebang: ${(j:, :)offenders}"
+    fi
+
+    assert ${#offenders} equals 0
+}
+
+@test 'Every test file carries the zunit shebang' {
+    # Required by zunit itself, and required on line one: it reads only the
+    # first line when deciding whether a file is a test file, and rejects the
+    # file outright with exit 126 when it does not match.
+    local file
+    local -a offenders=()
+
+    for file in $TEST_FILES; do
+        [[ "$(head -n 1 -- "$file")" == '#!/usr/bin/env zunit' ]] ||
+            offenders+=("${file#$ZSH_CONFIG_ROOT/}")
+    done
+
+    if (( ${#offenders} )); then
+        fail "Wrong shebang: ${(j:, :)offenders}"
+    fi
+
+    assert ${#offenders} equals 0
+}
+
+@test 'Every file carries the modeline and licence lines' {
+    local file
+    local -a lines offenders=()
+
+    for file in $SHELL_FILES $TEST_FILES; do
+        lines=("${(@f)$(head -n 3 -- "$file")}")
+
+        [[ "$lines[2]" == '# vim:set expandtab shiftwidth=4 filetype=zsh:' ]] ||
+            offenders+=("${file#$ZSH_CONFIG_ROOT/}:2")
+
+        [[ "$lines[3]" == '# SPDX-License-Identifier: GPL-3.0-only' ]] ||
+            offenders+=("${file#$ZSH_CONFIG_ROOT/}:3")
+    done
+
+    if (( ${#offenders} )); then
+        fail "Header deviates at: ${(j:, :)offenders}"
+    fi
+
+    assert ${#offenders} equals 0
+}
+
+@test 'Every header names its own path' {
+    local file relative
+    local -a offenders=()
+
+    for file in $SHELL_FILES $TEST_FILES; do
+        relative="${file#$ZSH_CONFIG_ROOT/}"
+
+        # -x for a whole line and -F for a literal, so nothing in the path is
+        # read as a pattern.
+        grep -qxF -- "# ::: :/$relative" "$file" || offenders+=("$relative")
+    done
+
+    if (( ${#offenders} )); then
+        fail "Header path does not match location: ${(j:, :)offenders}"
+    fi
+
+    assert ${#offenders} equals 0
+}
