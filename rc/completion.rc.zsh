@@ -66,10 +66,22 @@ local __zcompdump="${zsh_dirs[cache]}/zcompdump"
 #   mh-24  Match only if modified less than 24 hours ago
 local -a __zcompdump_fresh=("$__zcompdump"(Nmh-24))
 
+# -i skips any directory compaudit considers insecure, rather than asking what to
+# do about it.
+#
+# Without it, a single world-writable entry anywhere on fpath sends compinit to a
+# prompt, and a shell with no terminal to prompt on cannot answer. It then prints
+# `not interactive and can't open terminal` followed by
+# `compinit: initialization aborted` and gives up, which leaves the shell with no
+# completion at all and violates the stderr cleanliness this repo otherwise
+# holds to. One system directory outside this checkout is enough to cause it, so
+# it is not something a change here can otherwise prevent.
+#
+# -i rather than -u deliberately: an insecure directory is skipped, not trusted.
 if (($#__zcompdump_fresh)); then
-    compinit -C -d "$__zcompdump"
+    compinit -i -C -d "$__zcompdump"
 else
-    compinit -d "$__zcompdump"
+    compinit -i -d "$__zcompdump"
 fi
 
 # ---------------
