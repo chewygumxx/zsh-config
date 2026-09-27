@@ -25,6 +25,19 @@
 @setup {
     load _support/sandbox
 
+    # Guarded for the whole file, not test by test. Every assertion below starts
+    # a full interactive shell, and a full start makes rc/plugin.rc.zsh and
+    # rc/completion.rc.zsh clone anything missing, so without a cache of clones
+    # to borrow the entire suite would reach the network rather than only the
+    # handful of tests that mention a plugin by name.
+    #
+    # Skipping loudly is the point. The alternative is a suite that appears to
+    # pass while testing whatever GitHub served that minute.
+    sandbox_plugin_source > /dev/null ||
+        skip 'No plugin clones to borrow. Set ZSH_TEST_PLUGIN_DIR to a
+            directory of them, or run once with a populated
+            $XDG_DATA_HOME/zsh/plugins'
+
     SANDBOX="$(sandbox_create)"
     sandbox_warm "$SANDBOX"
 }
@@ -156,9 +169,6 @@
 }
 
 @test 'Every enabled spec is loaded' {
-    sandbox_plugin_source > /dev/null ||
-        skip 'No local plugin clones; set ZSH_TEST_PLUGIN_DIR'
-
     run sandbox_zsh_stdout "$SANDBOX" -i -c '
         for name in _zsh_autosuggest_start zvm_init -fast-highlight-process; do
             (( $+functions[$name] )) || print -r -- "not loaded: $name"
@@ -168,10 +178,22 @@
     assert "$output" is_empty
 }
 
-@test 'A spec marked enabled=false is not loaded' {
-    sandbox_plugin_source > /dev/null ||
-        skip 'No local plugin clones; set ZSH_TEST_PLUGIN_DIR'
+@test 'Starting the shell clones nothing over the network' {
+    # sandbox_create links each borrowed clone in individually, so every entry
+    # under the sandbox plugin directory should still be a symlink afterwards. A
+    # real directory there means something cloned during startup, which is the
+    # failure this guards: a suite that reaches the network tests whatever
+    # GitHub served that minute rather than this checkout.
+    local -a cloned=("$SANDBOX"/.local/share/zsh/plugins/*(N/^@))
 
+    if (( ${#cloned} )); then
+        fail "Cloned during startup: ${(j:, :)${cloned[@]:t}}"
+    fi
+
+    assert ${#cloned} equals 0
+}
+
+@test 'A spec marked enabled=false is not loaded' {
     # spec/zsh-autocomplete.spec.zsh sets enabled=false, and its clone is
     # present in the borrowed plugin cache, so nothing but the flag stops it
     # loading. rc/plugin.rc.zsh reaches its `continue` from inside an anonymous

@@ -38,20 +38,32 @@ ZSH_SANDBOX_PREFIX="zsh-config-test"
 function sandbox_plugin_source() {
     emulate -L zsh
 
-    local -a candidates=(
-        "$ZSH_TEST_PLUGIN_DIR"
-        "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins"
-    )
-
     local candidate
-    for candidate in $candidates; do
-        [[ -n "$candidate" && -d "$candidate" ]] || continue
 
-        print -r -- "$candidate"
-        return 0
-    done
+    # An explicitly set ZSH_TEST_PLUGIN_DIR is authoritative, with no fallback.
+    # Quietly reaching for the live cache when the named directory turns out to
+    # be unusable would test against different plugins than the caller asked
+    # for and report success either way.
+    if [[ -n "$ZSH_TEST_PLUGIN_DIR" ]]; then
+        candidate="$ZSH_TEST_PLUGIN_DIR"
+    else
+        candidate="${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins"
+    fi
 
-    return 1
+    [[ -d "$candidate" ]] || return 1
+
+    # A directory that exists but holds no clones is not a usable cache, and
+    # this check is the whole point of the function. Accepting an empty one
+    # leaves rc/plugin.rc.zsh and rc/completion.rc.zsh to clone every plugin
+    # over the network from inside the sandbox: slow, dependent on the network
+    # rather than on the code under test, and silent about it.
+    #
+    # Evaluated through an array because [[ ]] performs no filename generation,
+    # so a glob qualifier written inside it is never expanded.
+    local -a clones=("$candidate"/*(N/))
+    ((${#clones})) || return 1
+
+    print -r -- "$candidate"
 }
 
 #
