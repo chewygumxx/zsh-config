@@ -52,6 +52,44 @@
     assert "$output" is_empty
 }
 
+@test 'An insecure fpath entry does not abort completion' {
+    # Regression test for a real failure this suite found on CI, where one
+    # world-writable directory on the default system fpath was enough.
+    #
+    # Without `compinit -i`, compaudit sends compinit to a prompt, a shell with
+    # no terminal cannot answer, and it prints `not interactive and can't open
+    # terminal` then `compinit: initialization aborted` and gives up entirely.
+    # The shell is then left with no completion at all.
+    #
+    # share_comp is the vehicle because rc/completion.rc.zsh puts it on fpath
+    # directly. Group-writable is not enough to trigger this; it has to be
+    # writable by others.
+    #
+    # A sandbox of its own, left cold on purpose. compinit -C skips the audit
+    # altogether, so once a valid dump exists the check never runs again and the
+    # fault cannot reproduce. It needs an empty cache, which is the state CI is
+    # always in, and is why the shared warmed fixture is no use here.
+    local root
+    root="$(sandbox_create)"
+
+    mkdir -p -m 0777 -- "$root/.local/share/zsh/completions"
+    chmod 0777 -- "$root/.local/share/zsh/completions"
+
+    local diagnostics initialised
+    diagnostics="$(sandbox_zsh_stderr "$root" -i -c exit)"
+    initialised="$(sandbox_zsh_stdout "$root" -i -c \
+        'print -r -- $(( $+functions[_main_complete] ))')"
+
+    sandbox_destroy "$root"
+
+    # A cold start legitimately announces the caches it is creating, so only
+    # compinit's own diagnostics matter here.
+    assert "$diagnostics" does_not_contain compinit
+
+    # Completion has to be genuinely initialised, not merely quiet about failing.
+    assert "$initialised" equals 1
+}
+
 @test 'A non-interactive shell writes no byte to stdout' {
     # Counted in bytes rather than compared as a string. A lone newline
     # corrupts the stream that scp, rsync, sftp and git over ssh read as
