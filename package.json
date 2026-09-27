@@ -56,6 +56,12 @@
                 "options": {
                     "trailingComma": "none"
                 }
+            },
+            {
+                "files": ".zunit.yml",
+                "options": {
+                    "tabWidth": 2
+                }
             }
         ]
     }

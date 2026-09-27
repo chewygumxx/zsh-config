@@ -1,0 +1,41 @@
+# vim:set expandtab shiftwidth=2 filetype=yaml:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/.zunit.yml
+#
+#
+
+# https://zunit.xyz/docs/
+
+# Human readable output. Switching this on makes zunit emit TAP instead, which
+# is worth doing only if something downstream ever consumes it.
+tap: false
+
+# Two space indentation is required, not cosmetic: zunit parses this file with
+# a sed and awk pass that derives nesting from `length($1) / 2`.
+#
+# Both underscore prefixed names are load bearing. Test discovery skips any
+# path whose basename begins with an underscore, which is what keeps the
+# helpers and the generated logs from being treated as test files.
+directories:
+  tests: tests
+  output: tests/_output
+  support: tests/_support
+
+# Raised from the upstream default of 15. The boot suite spawns real shells,
+# each of which sources every enabled plugin, so a cold run is not quick.
+time_limit: 30
+
+# Deliberately off. The lesson this repository keeps relearning is that a
+# discarded error is an invisible one, so a run reports every failure rather
+# than stopping at the first.
+fail_fast: false
+
+# A risky test is one that asserts nothing. Left as an error rather than a
+# warning so an assertionless test cannot pass quietly.
+allow_risky: false
+
+verbose: false
