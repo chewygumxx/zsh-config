@@ -50,7 +50,14 @@ actionlint = "1.7.12"
 
 # Lets the tasks below invoke commitlint, prettier and tsc as bare commands
 # instead of paying an npx resolution on each call.
-_.path = ["{{config_root}}/node_modules/.bin"]
+#
+# .bin holds zunit and revolver, which the test:deps task fetches because
+# neither can come from the tools table above. It is listed second so a
+# genuinely installed tool always wins over a downloaded script.
+_.path = [
+    "{{config_root}}/node_modules/.bin",
+    "{{config_root}}/.bin",
+]
 
 [task_config]
 
@@ -151,6 +158,83 @@ run = [
 [tasks."lint:commit"]
 description = "Lint the most recent commit message against Conventional Commits"
 run = "commitlint --last --verbose"
+
+
+# ------
+# Tests
+# ------
+
+[tasks."test:deps"]
+description = "Fetch the pinned zunit and revolver test binaries"
+shell = "zsh -c"
+
+# Neither tool can come from the tools table. zunit is absent from the mise
+# registry and publishes one generic release asset rather than the
+# platform-tagged set the github: backend matches on, and revolver publishes no
+# release assets whatsoever. Both are single zsh scripts, so they are fetched
+# from a pinned tag and checked against a recorded sha256 rather than trusted:
+# a silently substituted test runner would mean silently wrong test results.
+#
+# revolver is not optional. zunit's entry point runs `type revolver` and exits
+# before it parses a single option, so it is required even with tap output.
+run = '''
+() {
+    emulate -L zsh
+
+    local -A source=(
+        [zunit]="https://github.com/zunit-zsh/zunit/releases/download/v0.8.2/zunit"
+        [revolver]="https://raw.githubusercontent.com/molovo/revolver/v0.2.3/revolver"
+    )
+
+    local -A checksum=(
+        [zunit]="8169b4df60da7b7a7d55a7b6ab44b068b318989b75e4cacf9aec27d8d3a9dd0f"
+        [revolver]="1deb124ae0b66ff3ee109ca64b20a72775ed12bde2ed0c192cf15e732b831966"
+    )
+
+    local bin="$PWD/.bin"
+    mkdir -p -- "$bin" || return 1
+
+    local tool dest want got
+    local -i failed=0
+
+    for tool in ${(ko)source}; do
+        dest="$bin/$tool"
+        want="$checksum[$tool]"
+
+        # Tested with -s rather than -e. An interrupted download leaves a
+        # zero-byte file behind, and treating that as installed is how a
+        # broken runner gets invoked in silence.
+        if [[ -s "$dest" ]]; then
+            got="$(sha256sum -- "$dest" | cut -d " " -f 1)"
+            [[ "$got" == "$want" ]] && continue
+        fi
+
+        print -u2 -- "test:deps: Fetching $tool"
+
+        if ! curl --fail --silent --show-error --location \
+            --output "$dest" -- "$source[$tool]"; then
+            print -u2 -- "test:deps: [ERROR] Download failed: $tool"
+            failed=1
+            continue
+        fi
+
+        got="$(sha256sum -- "$dest" | cut -d " " -f 1)"
+
+        if [[ "$got" != "$want" ]]; then
+            print -u2 -- "test:deps: [ERROR] Checksum mismatch: $tool"
+            print -u2 -- "  expected $want"
+            print -u2 -- "  actual   $got"
+            rm -f -- "$dest"
+            failed=1
+            continue
+        fi
+
+        chmod u+x -- "$dest" || failed=1
+    done
+
+    return $failed
+}
+'''
 
 
 # -----------

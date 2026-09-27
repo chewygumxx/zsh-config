@@ -14,5 +14,13 @@
 node_modules/
 package-lock.json
 
+# Test runner binaries fetched by the test:deps task
+.bin/
+
+# zunit writes its text and HTML result logs here. The .zunit test files
+# themselves need no entry: Prettier skips extensions it has no parser for when
+# it globs a directory, and only errors when one is named explicitly.
+tests/_output/
+
 # Claude Code Remember plugin session state
 .remember/

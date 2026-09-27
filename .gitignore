@@ -9,3 +9,9 @@
 #
 
 node_modules/
+
+# Test runner binaries fetched by the test:deps task
+.bin/
+
+# zunit writes its text and HTML result logs here
+tests/_output/
