@@ -1,0 +1,113 @@
+# vim:set expandtab shiftwidth=4 filetype=yaml:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/.github/workflows/lint.yaml
+#
+#
+
+name: Lint and Test
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+    workflow_dispatch: {}
+
+permissions:
+    contents: read
+
+jobs:
+    lint:
+        name: Lint
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+
+            # lint:syntax runs zsh -n over every shell file and lint:zsh runs
+            # shuck, so zsh has to be present. Installed explicitly rather than
+            # relied upon, because it is not guaranteed on the runner image.
+            - name: Install Zsh
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install --yes zsh
+
+            # Provides node, the pinned npm 12, actionlint and shuck straight
+            # from .mise.toml, so CI resolves the same versions a local run
+            # does and the npm pin needs no separate upgrade step.
+            - name: Setup Mise
+              uses: jdx/mise-action@v4
+
+            # npm below 12 ignores patchedDependencies in silence. .npmrc sets
+            # engine-strict so npm ci would fail rather than skip the patch, but
+            # printing the version makes a regression obvious in the log
+            # instead of only in an error.
+            - name: Report tool versions
+              run: |
+                  node --version
+                  npm --version
+                  zsh --version
+
+            - name: Install Node dependencies
+              run: mise run setup
+
+            - name: Lint
+              run: mise run lint
+
+    test:
+        name: Test
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+
+            - name: Install Zsh
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install --yes zsh
+
+            - name: Setup Mise
+              uses: jdx/mise-action@v4
+
+            - name: Install Node dependencies
+              run: mise run setup
+
+            # The suite borrows existing clones rather than letting the
+            # configuration fetch them, which is what keeps a test run offline
+            # and repeatable. Keyed on the files that decide which plugins are
+            # wanted, so adding a spec invalidates the cache.
+            - name: Cache plugin clones
+              id: plugins
+              uses: actions/cache@v6
+              with:
+                  path: ~/zsh-test-plugins
+                  key: zsh-plugins-${{ hashFiles('spec/*.spec.zsh', 'rc/completion.rc.zsh') }}
+
+            # zsh-completions and fzf-tab are cloned by rc/completion.rc.zsh
+            # rather than declared in spec/, and fzf-tab only when fzf is on
+            # PATH. It is cloned here regardless, so the result does not depend
+            # on whether the runner image happens to ship fzf.
+            - name: Clone plugins
+              if: steps.plugins.outputs.cache-hit != 'true'
+              run: |
+                  mkdir -p ~/zsh-test-plugins
+                  cd ~/zsh-test-plugins
+                  for slug in \
+                      zdharma-continuum/fast-syntax-highlighting \
+                      zsh-users/zsh-autosuggestions \
+                      jeffreytse/zsh-vi-mode \
+                      zsh-users/zsh-completions \
+                      aloxaf/fzf-tab; do
+                      git clone --depth 1 "https://github.com/$slug.git"
+                  done
+
+            # Read by tests/_support/sandbox.zsh, which symlinks each entry into
+            # the throwaway HOME one directory at a time.
+            - name: Test
+              run: ZSH_TEST_PLUGIN_DIR="$HOME/zsh-test-plugins" mise run test
