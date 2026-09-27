@@ -116,6 +116,45 @@
     assert "$output" is_empty
 }
 
+#
+# zsh_dirs_require lives in env/zsh_dirs.env.zsh beside the array it validates,
+# so it cannot be autoloaded the way func/ and wrap/ can. It is exercised here
+# rather than in func.zunit because .zshenv defines it for a non-interactive
+# shell too, which makes the sandbox above the cheapest way to reach it.
+#
+
+@test 'zsh_dirs_require accepts keys that exist' {
+    run sandbox_zsh "$SANDBOX" -c 'zsh_dirs_require probe rc util'
+
+    assert $state equals 0
+    assert "$output" is_empty
+}
+
+@test 'zsh_dirs_require reports a key that is not set' {
+    # Reading an undefined key yields an empty string in silence, which is the
+    # failure this validator exists to make loud.
+    run sandbox_zsh "$SANDBOX" -c 'zsh_dirs_require probe nosuchkey'
+
+    assert $state equals 1
+    assert "$output" contains '[ERROR]'
+    assert "$output" contains nosuchkey
+}
+
+@test 'zsh_dirs_require reports a key that is not a directory' {
+    run sandbox_zsh "$SANDBOX" -c \
+        'zsh_dirs[rc]=/nonexistent; zsh_dirs_require probe rc'
+
+    assert $state equals 1
+    assert "$output" contains 'is not a directory'
+}
+
+@test 'zsh_dirs_require reports an unset zsh_dirs as critical' {
+    run sandbox_zsh "$SANDBOX" -c 'unset zsh_dirs; zsh_dirs_require probe rc'
+
+    assert $state equals 1
+    assert "$output" contains '[CRITICAL]'
+}
+
 @test 'Every enabled spec is loaded' {
     sandbox_plugin_source > /dev/null ||
         skip 'No local plugin clones; set ZSH_TEST_PLUGIN_DIR'

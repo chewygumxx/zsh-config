@@ -62,19 +62,42 @@ function load_shell_function() {
 # be driven without invoking the tool it wraps. Wrappers in wrap/ reach the
 # binary through `command foo`, which honours PATH, so a stub is enough.
 #
-# The stub prints its own arguments one per line to stdout, and its name and
-# argument count to stderr, which is enough to assert on how a wrapper composed
-# its call.
+# Called with two arguments the stub prints its own arguments one per line to
+# stdout, which is enough to assert on how a wrapper composed its call. Any
+# further arguments replace that default body, one line of sh per argument,
+# which is how a wrapper's environment assembly can be observed: several
+# wrappers set `local -x` variables that only exist for the duration of the
+# call, so the wrapped command itself is the only place they can be read.
 #
 function stub_command() {
     emulate -L zsh
 
     local name="$1"
     local dir="$2"
+    shift 2
 
     [[ -n "$name" && -n "$dir" ]] || return 1
 
     mkdir -p -m 0755 -- "$dir" || return 1
+
+    if (($#)); then
+        print -r -- '#!/bin/sh' > "$dir/$name" || return 1
+
+        local line
+        for line in "$@"; do
+            print -r -- "$line" >> "$dir/$name" || return 1
+        done
+
+        chmod 0755 -- "$dir/$name" || return 1
+        path=("$dir" $path)
+
+        # Required after a PATH change. The $commands and $+commands lookups
+        # that every wrapper guards on read zsh's command hash table, not PATH,
+        # so without this a freshly written stub is invisible to them.
+        rehash
+
+        return 0
+    fi
 
     # Written as sh rather than zsh: a stub wants to start fast and has no
     # reason to read anything of this configuration.
@@ -92,4 +115,6 @@ function stub_command() {
     chmod 0755 -- "$dir/$name" || return 1
 
     path=("$dir" $path)
+
+    rehash
 }

@@ -1,0 +1,116 @@
+#!/usr/bin/env zunit
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/tests/func.zunit
+#
+#
+
+#
+# Unit tests for the autoloaded functions in func/.
+#
+# These files cannot be sourced: each is an autoload body with no
+# `function name { ... }` wrapper, so tests/_support/autoload.zsh puts func/ and
+# wrap/ on fpath and marks the name for autoload instead, which is what
+# rc/function.rc.zsh does for an interactive shell.
+#
+
+@setup {
+    load _support/autoload
+
+    TMP="$(mktemp -d -- "${TMPDIR:-/tmp}/zsh-config-unit.XXXXXXXX")"
+}
+
+@teardown {
+    if [[ -n "$TMP" && -d "$TMP" ]]; then
+        command rm -rf -- "$TMP"
+    fi
+}
+
+@test '__slugify lowercases and replaces anything unreserved' {
+    load_shell_function __slugify
+
+    run __slugify 'Hello World! 2024'
+
+    assert "$output" same_as hello_world_2024
+}
+
+@test '__slugify keeps dot, hyphen and underscore by default' {
+    load_shell_function __slugify
+
+    run __slugify 'a.b-c_d'
+
+    assert "$output" same_as 'a.b-c_d'
+}
+
+@test '__slugify -D drops the dot from the allowed set' {
+    load_shell_function __slugify
+
+    run __slugify -D 'a.b-c_d'
+
+    assert "$output" same_as 'a_b-c_d'
+}
+
+@test '__slugify -H drops the hyphen from the allowed set' {
+    load_shell_function __slugify
+
+    run __slugify -H 'a.b-c_d'
+
+    assert "$output" same_as 'a.b_c_d'
+}
+
+@test '__slugify -U cannot remove an underscore' {
+    # Pins a quirk rather than a feature. -U takes the underscore out of the
+    # allowed set, but the character every disallowed run is replaced with is
+    # itself an underscore, so an underscore in the input survives regardless
+    # and the flag has no visible effect on it.
+    load_shell_function __slugify
+
+    run __slugify -U 'a.b-c_d'
+
+    assert "$output" same_as 'a.b-c_d'
+}
+
+@test '__slugify collapses runs and trims the ends' {
+    load_shell_function __slugify
+
+    run __slugify '___lead   and   trail___'
+
+    assert "$output" same_as lead_and_trail
+}
+
+@test 'mkcd reports usage and returns 2 with no argument' {
+    # Called with no argument this once ran `mkdir -p ""`, which errors, then
+    # `cd ""`, which silently succeeds as a no-op, leaving the caller where it
+    # started with no indication of what had gone wrong.
+    load_shell_function mkcd
+
+    run mkcd
+
+    assert $state equals 2
+    assert "$output" contains 'Usage'
+}
+
+@test 'mkcd creates a nested path and changes into it' {
+    load_shell_function mkcd
+
+    # Run through a command substitution so the directory change stays in the
+    # subshell rather than moving the shell running this suite.
+    local result
+    result="$(cd -- "$TMP" && mkcd deep/nested > /dev/null && print -r -- "$PWD")"
+
+    assert "$result" same_as "${TMP:A}/deep/nested"
+    assert "$TMP/deep/nested" is_dir
+}
+
+@test 'mkdirt creates every argument with a .keep inside' {
+    load_shell_function mkdirt
+
+    ( cd -- "$TMP" && mkdirt one two/three )
+
+    assert "$TMP/one/.keep" is_file
+    assert "$TMP/two/three/.keep" is_file
+}

@@ -1,0 +1,126 @@
+#!/usr/bin/env zunit
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/tests/wrap.zunit
+#
+#
+
+#
+# Unit tests for the command wrappers in wrap/.
+#
+# Each wrapper shadows a same-named binary, so what is tested is the guard and
+# the way the call is composed, never the real tool. A stub placed earlier on
+# PATH is enough for that, because every wrapper reaches its binary through
+# `command foo`, which honours PATH.
+#
+
+@setup {
+    load _support/autoload
+
+    TMP="$(mktemp -d -- "${TMPDIR:-/tmp}/zsh-config-wrap.XXXXXXXX")"
+}
+
+@teardown {
+    if [[ -n "$TMP" && -d "$TMP" ]]; then
+        command rm -rf -- "$TMP"
+    fi
+}
+
+@test 'man derives MANWIDTH from COLUMNS' {
+    # MANWIDTH is set with `local -x`, so it exists only while the wrapped
+    # command runs. Reading it from inside the stub is the only place it can be
+    # observed at all.
+    stub_command man "$TMP/bin" 'printf "MANWIDTH=%s\n" "$MANWIDTH"'
+    load_shell_function man
+
+    COLUMNS=80 run man ls
+
+    assert "$output" same_as 'MANWIDTH=75'
+}
+
+@test 'man caps MANWIDTH at 100 on a wide terminal' {
+    stub_command man "$TMP/bin" 'printf "MANWIDTH=%s\n" "$MANWIDTH"'
+    load_shell_function man
+
+    COLUMNS=200 run man ls
+
+    assert "$output" same_as 'MANWIDTH=100'
+}
+
+@test 'man sets nvim as the pager' {
+    stub_command man "$TMP/bin" 'printf "MANPAGER=%s\n" "$MANPAGER"'
+    load_shell_function man
+
+    run man ls
+
+    assert "$output" contains 'nvim'
+}
+
+@test 'rm refuses to delete when gtrash and the del alias are present' {
+    # The safety critical path in this repository. Both conditions are
+    # required: the wrapper only nudges when a trash tool is installed and the
+    # `del` alias actually exists to be suggested.
+    stub_command gtrash "$TMP/bin"
+    load_shell_function rm
+    alias del='gtrash put'
+
+    print 'content' > "$TMP/victim"
+
+    run rm "$TMP/victim"
+
+    unalias del
+
+    assert "$output" contains 'gtrash'
+    assert "$TMP/victim" is_file
+}
+
+@test 'rm deletes when no trash helper is aliased' {
+    load_shell_function rm
+
+    # No `del` alias, so the guard cannot fire whatever is installed and the
+    # wrapper has to fall through to the real binary.
+    if (($+aliases[del])); then
+        unalias del
+    fi
+
+    print 'content' > "$TMP/doomed"
+
+    run rm "$TMP/doomed"
+
+    # zunit offers exists but no negation of it, so absence is counted through
+    # an array assignment. That is also the only way a glob qualifier is
+    # expanded at all: [[ ]] performs no filename generation, so testing
+    # [[ -z "$file"(N) ]] would compare a literal string and always be false.
+    local -a leftover=("$TMP"/doomed(N))
+
+    assert ${#leftover} equals 0
+}
+
+#
+# The three tests below are skipped on purpose. Each records a defect found
+# while this suite was being written, so the finding lives in the repository
+# rather than in a conversation. Remove the skip with the fix.
+#
+
+@test 'jq does not override an --indent given by the caller' {
+    skip 'wrap/jq:19 tests (($+@[--indent])), which is not a valid subscript
+        idiom: it raises "bad math expression" on stderr for every single jq
+        call and is never true, so --indent 4 is injected ahead of whatever the
+        caller passed'
+}
+
+@test 'chezmoi names itself in its command-not-found diagnostic' {
+    skip 'wrap/chezmoi:20 assigns __this__file with two underscores while
+        line 23 interpolates __this_file, so the FATAL message is emitted with
+        an empty prefix'
+}
+
+@test 'sv names itself in its termux-only diagnostic' {
+    skip 'wrap/sv:16 assigns __this_file while line 24 interpolates
+        __this__file with two underscores, so the message is emitted with an
+        empty prefix. The exact mirror of the wrap/chezmoi defect'
+}
