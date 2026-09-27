@@ -1,0 +1,31 @@
+#!/usr/bin/env sh
+# vim:set expandtab shiftwidth=4 filetype=sh:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/.husky/pre-commit
+#
+#
+
+# Everything goes through `mise run` on purpose. Husky invokes this under
+# `sh -e` and prepends only node_modules/.bin to PATH, so mise's own tool
+# directories are absent: shuck, actionlint and zunit are all unreachable by
+# name here and calling one directly would exit 127.
+#
+# Reported rather than skipped. A hook that quietly passes when its tooling is
+# missing is worse than no hook, because it reads as a green check.
+if ! command -v mise > /dev/null 2>&1; then
+    printf '%s\n' 'pre-commit: mise not found in PATH, cannot lint or test' >&2
+    exit 1
+fi
+
+# Both run over the whole working tree rather than the staged files alone, which
+# is how the lint task already behaves: every glob inside it is repo-wide.
+# Neither rewrites anything, so a commit is never altered from under you; use
+# `mise run fmt` for that.
+#
+# sh -e is in force, so the first failure here ends the hook and the commit.
+mise run lint
+mise run test
