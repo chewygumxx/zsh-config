@@ -108,10 +108,35 @@
 #
 
 @test 'jq does not override an --indent given by the caller' {
-    skip 'wrap/jq:19 tests (($+@[--indent])), which is not a valid subscript
-        idiom: it raises "bad math expression" on stderr for every single jq
-        call and is never true, so --indent 4 is injected ahead of whatever the
-        caller passed'
+    stub_command jq "$TMP/bin"
+    load_shell_function jq
+
+    run jq --indent 2 .
+
+    assert "$output" does_not_contain 'bad math expression'
+
+    local result
+    result="$(jq --indent 2 . 2> /dev/null)"
+
+    local -a lines=("${(@f)result}")
+
+    assert ${#lines} equals 3
+    assert "$lines[1]" same_as --indent
+    assert "$lines[2]" equals 2
+}
+
+@test 'jq indents by four when the caller does not say' {
+    stub_command jq "$TMP/bin"
+    load_shell_function jq
+
+    local result
+    result="$(jq . 2> /dev/null)"
+
+    local -a lines=("${(@f)result}")
+
+    assert ${#lines} equals 3
+    assert "$lines[1]" same_as --indent
+    assert "$lines[2]" equals 4
 }
 
 @test 'chezmoi names itself in its command-not-found diagnostic' {
