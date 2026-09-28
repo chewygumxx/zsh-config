@@ -9,9 +9,11 @@
 #
 local UNICODE=$1 # U+0123
 if ! [[ $UNICODE =~ '^U\+[0-9ABCDEFabcdef]{4}$' ]]; then
-    echo "Usage: $0 <unicode>"
-    echo "       $0 U+1234"
-    return
+    # On stderr and with status 2, like the other usage errors in func/. It was
+    # printed on stdout and returned 0, so a caller could not tell it failed.
+    print -u2 -- "Usage: $0 <unicode>"
+    print -u2 -- "       $0 U+1234"
+    return 2
 fi
 
 fd -e ttf -e otf . '/usr/share/fonts' --exec echo $UNICODE | parallel \
