@@ -271,3 +271,12 @@
     assert "${lines[3]%% *}" equals 0
     assert "${lines[3]##* }" is_greater_than 0
 }
+
+@test 'Menu selection gets vi motions when fzf is absent' {
+    # rc/completion.rc.zsh only binds these on the branch without fzf-tab.
+    (($+commands[fzf])) && skip 'fzf is installed, so fzf-tab owns the menu'
+
+    run sandbox_zsh_stdout "$SANDBOX" -i -c 'bindkey -M menuselect "^h"'
+
+    assert "$output" contains vi-backward-char
+}

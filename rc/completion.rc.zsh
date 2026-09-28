@@ -127,13 +127,14 @@ else
     zstyle ':completion:*' menu select
 
     # Dependant on `zmodload zsh/complist` before compinit
-    [[ ! -v bindkey_calls ]] && typeset -ga bindkey_calls
-    bindkey_calls+=(
-        "-M menuselect '^h' vi-backward-char"
-        "-M menuselect '^k' vi-up-line-or-history"
-        "-M menuselect '^j' vi-down-line-or-history"
-        "-M menuselect '^l' vi-forward-char"
-    )
+    #
+    # Bound directly. These used to be queued onto a bindkey_calls array that
+    # nothing anywhere in the configuration ever read, so none of the four
+    # bindings was ever made.
+    bindkey -M menuselect '^h' vi-backward-char
+    bindkey -M menuselect '^k' vi-up-line-or-history
+    bindkey -M menuselect '^j' vi-down-line-or-history
+    bindkey -M menuselect '^l' vi-forward-char
 fi
 
 unset -f __download_plugin
