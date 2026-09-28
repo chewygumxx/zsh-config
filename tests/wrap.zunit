@@ -258,3 +258,14 @@
     assert $state equals 0
     assert "$output" contains "$TMP/job"
 }
+
+@test 'pacman runs yay when it is installed' {
+    stub_command yay "$TMP/bin"
+    stub_command pacman "$TMP/bin"
+    load_shell_function pacman
+
+    run pacman -Syu
+
+    assert "$output" contains 'stub:'
+    assert "$output" contains '/yay argc:1'
+}

@@ -59,7 +59,10 @@ alias sudo="sudo "
 (($+commands[sqlite3])) && alias sqlite='sqlite3'
 
 # Package Manager
-(($+commands[yay])) && alias pacman="yay"
+#
+# pacman is routed through yay by wrap/pacman. It was an alias here, which
+# `alias sudo="sudo "` above expanded after sudo as well, handing yay a root
+# invocation it refuses.
 
 if (($+commands[kdeconnect-cli])); then
     alias kdecon="kdeconnect-cli --device 1396134ad80c4647aa7c6b1f76d823e3"
