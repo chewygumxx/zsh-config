@@ -344,13 +344,11 @@ archived.
 Both underscore-prefixed directory names are load-bearing, not stylistic:
 zunit's discovery skips any path whose basename begins with an underscore.
 
-Three tests in `tests/wrap.zunit` are `skip`ped on purpose, each recording a
-defect found while the suite was being written: `wrap/jq` tests
-`(($+@[--indent]))`, which is not a valid subscript idiom and raises
-`bad math expression` on stderr for every `jq` call while never being true, so
-`--indent 4` is injected ahead of whatever the caller passed; `wrap/chezmoi`
-assigns `__this__file` but interpolates `__this_file`; `wrap/sv` does the exact
-reverse. Remove the skip along with the fix.
+No test is `skip`ped to record a known defect. Three once were, in
+`tests/wrap.zunit`, for `wrap/jq`, `wrap/chezmoi` and `wrap/sv`; each skip was
+removed along with its fix, and that remains the rule for any future one. The
+only skips left are conditional: the plugin-cache guard on `tests/boot.zunit`,
+and a test whose subject is absent on the machine running it.
 
 ### Sandboxing
 
@@ -433,6 +431,11 @@ Each of these cost real time here:
   present.
 - **`shuck format` caches its results.** After an edit it can reformat from
   stale content, so `--no-cache` is the reliable check.
+- **`shuck format` deletes comments above an anonymous function.** A comment
+  block directly above `() {` is removed, along with the blank line before it;
+  at the top of a file that takes the whole header block with it. Put the
+  comment inside the function body instead, which is why several files open an
+  anonymous function straight after the preceding statement.
 - **revolver writes into `$ZDOTDIR`.** Its state directory defaults to
   `${REVOLVER_DIR:-${ZDOTDIR:-$HOME}/.revolver}`, and `ZDOTDIR` on this machine
   is the live configuration, itself a checkout of this repository, so a
@@ -452,6 +455,10 @@ Each of these cost real time here:
   directories silently fall back to defaults. Prettier would impose four,
   following `.editorconfig`, so `package.json` carries a `tabWidth: 2` override
   for that one file.
+- **A failing command outside `run` fails the test with no message.** zunit
+  runs test bodies with the shell stopping on an error, so capturing a
+  deliberately failing call as `x="$(cmd)"` ends the test there and reports an
+  empty failure. Add `|| true`, or capture it through `run`.
 - `skip` exits 48, `fail` exits 1 and `error` exits 78. With
   `allow_risky: false`, a test that passes having asserted nothing is an error,
   so pair a `fail` message with an assertion rather than relying on `pass`.
