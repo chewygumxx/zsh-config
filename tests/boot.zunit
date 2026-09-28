@@ -207,13 +207,28 @@
 }
 
 @test 'Every enabled spec is loaded' {
+    # Derived from spec/ itself, so a new spec is covered the moment it lands.
+    # This used to check three function names written out by hand, which a
+    # fourth plugin would never have been added to.
     run sandbox_zsh_stdout "$SANDBOX" -i -c '
-        for name in _zsh_autosuggest_start zvm_init -fast-highlight-process; do
-            (( $+functions[$name] )) || print -r -- "not loaded: $name"
+        local spec
+        local -a expected=()
+        for spec in $zsh_dirs[spec]/*(N.); do
+            () {
+                local slug enabled
+                source "$spec"
+                [[ "$enabled" == false ]] || expected+=("$slug")
+            }
         done
+        print -r -- "${(j: :)${(@o)expected}}"
+        print -r -- "${(j: :)${(@o)zsh_plugins_loaded}}"
     '
 
-    assert "$output" is_empty
+    local -a lines=("${(@f)output}")
+
+    assert ${#lines} equals 2
+    assert "$lines[1]" is_not_empty
+    assert "$lines[2]" same_as "$lines[1]"
 }
 
 @test 'Starting the shell clones nothing over the network' {
