@@ -49,7 +49,10 @@ while true; do
     esac
 done
 
-if ! (( $+commands[$1] )); then
+# A path is accepted as well as a name. $commands only knows names found on
+# PATH, so `systemd-run ./script` and `systemd-run /usr/bin/foo` were rejected
+# as not found even though systemd-run itself runs both.
+if [[ -z "$1" ]] || ! { (( $+commands[$1] )) || [[ "$1" == */* && -x "$1" ]] }; then
     print -u2 "${0}: Command not found: $1"
     return 127
 fi

@@ -22,10 +22,9 @@
 # -----------------
 
 if ((!$+functions[eza])); then
-    print -u2 -n "${(D)${${(%):-%N}:a}}: [WARN] "
-print -u2    "Unable to resolve eza wrapper function"
-
-
+    print -u2 -f "%s: [%s] %s\n" \
+        "${(D)${${(%):-%N}:a}}" "WARN" \
+        "Unable to resolve eza wrapper function"
 fi
 
 # --------

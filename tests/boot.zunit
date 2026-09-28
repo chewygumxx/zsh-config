@@ -207,13 +207,28 @@
 }
 
 @test 'Every enabled spec is loaded' {
+    # Derived from spec/ itself, so a new spec is covered the moment it lands.
+    # This used to check three function names written out by hand, which a
+    # fourth plugin would never have been added to.
     run sandbox_zsh_stdout "$SANDBOX" -i -c '
-        for name in _zsh_autosuggest_start zvm_init -fast-highlight-process; do
-            (( $+functions[$name] )) || print -r -- "not loaded: $name"
+        local spec
+        local -a expected=()
+        for spec in $zsh_dirs[spec]/*(N.); do
+            () {
+                local slug enabled
+                source "$spec"
+                [[ "$enabled" == false ]] || expected+=("$slug")
+            }
         done
+        print -r -- "${(j: :)${(@o)expected}}"
+        print -r -- "${(j: :)${(@o)zsh_plugins_loaded}}"
     '
 
-    assert "$output" is_empty
+    local -a lines=("${(@f)output}")
+
+    assert ${#lines} equals 2
+    assert "$lines[1]" is_not_empty
+    assert "$lines[2]" same_as "$lines[1]"
 }
 
 @test 'Starting the shell clones nothing over the network' {
@@ -240,4 +255,139 @@
         'print -r -- $(( $+functions[autocomplete.async] ))'
 
     assert "$output" equals 0
+}
+
+@test 'The luarocks cache leaves the rest of PATH alone' {
+    # A stub stands in for luarocks. Its `path` output ends in the same
+    # `export PATH=` line the real one prints, holding a frozen snapshot that
+    # must never reach the shell.
+    local bin="$SANDBOX/stub-bin"
+    mkdir -p -- "$bin"
+
+    print -rl -- '#!/bin/sh' \
+        'case "$*" in' \
+        "    *--lr-bin*) printf '%s\n' /stub/rocks/bin:/usr/bin ;;" \
+        "    *) printf '%s\n' \"export LUA_PATH='stub'\" \"export PATH='/frozen'\" ;;" \
+        'esac' > "$bin/luarocks"
+    chmod 0755 -- "$bin/luarocks"
+
+    local PATH="$bin:$PATH"
+
+    run sandbox_zsh_stdout "$SANDBOX" -i -c '
+        print -r -- "$LUA_PATH"
+        print -r -- "$path[1]"
+        print -r -- "${path[(Ie)/frozen]} ${path[(Ie)$HOME/.local/bin]}"
+    '
+
+    local -a lines=("${(@f)output}")
+
+    assert "$lines[1]" same_as stub
+    assert "$lines[2]" same_as /stub/rocks/bin
+    assert "${lines[3]%% *}" equals 0
+    assert "${lines[3]##* }" is_greater_than 0
+}
+
+@test 'Menu selection gets vi motions when fzf is absent' {
+    # rc/completion.rc.zsh only binds these on the branch without fzf-tab.
+    (($+commands[fzf])) && skip 'fzf is installed, so fzf-tab owns the menu'
+
+    run sandbox_zsh_stdout "$SANDBOX" -i -c 'bindkey -M menuselect "^h"'
+
+    assert "$output" contains vi-backward-char
+}
+
+@test 'Generated completions are on fpath' {
+    run sandbox_zsh_stdout "$SANDBOX" -i -c \
+        'print -r -- ${fpath[(Ie)$zsh_dirs[cache_comp]]}'
+
+    assert "$output" is_greater_than 0
+}
+
+@test 'The chezmoi aliases name real subcommands' {
+    local bin="$SANDBOX/stub-bin"
+    mkdir -p -- "$bin"
+    print -rl -- '#!/bin/sh' 'exit 0' > "$bin/chezmoi"
+    chmod 0755 -- "$bin/chezmoi"
+
+    local PATH="$bin:$PATH"
+
+    run sandbox_zsh_stdout "$SANDBOX" -i -c 'print -r -- $aliases[czd]'
+
+    assert "$output" same_as 'cz destroy'
+}
+
+@test 'The bat help pager leaves a human-readable -h alone' {
+    local bin="$SANDBOX/stub-bin"
+    mkdir -p -- "$bin"
+    print -rl -- '#!/bin/sh' 'exit 0' > "$bin/bat"
+    chmod 0755 -- "$bin/bat"
+
+    local PATH="$bin:$PATH"
+
+    # zle is shadowed by a no-op, so the widget can be driven outside the line
+    # editor and its rewrite of BUFFER read back.
+    run sandbox_zsh_stdout "$SANDBOX" -i -c '
+        function zle() { : }
+        for BUFFER in "df -h" "sudo du -h" "git -h" "git --help"; do
+            _zle_accept_line_help_bat
+            print -r -- "$BUFFER"
+        done
+    '
+
+    local -a lines=("${(@f)output}")
+
+    assert "$lines[1]" same_as 'df -h'
+    assert "$lines[2]" same_as 'sudo du -h'
+    assert "$lines[3]" same_as 'git -h 2>&1 | bat --language=help'
+    assert "$lines[4]" same_as 'git --help 2>&1 | bat --language=help'
+}
+
+@test 'Named directories that do not exist stay undefined' {
+    # util/systemd.rc.zsh once redefined ~sysu and ~envd without checking for
+    # the directories, overriding rc/directory.rc.zsh, which does check.
+    local bin="$SANDBOX/stub-bin"
+    mkdir -p -- "$bin"
+    print -rl -- '#!/bin/sh' 'exit 0' > "$bin/systemctl"
+    chmod 0755 -- "$bin/systemctl"
+
+    local PATH="$bin:$PATH"
+
+    run sandbox_zsh_stdout "$SANDBOX" -i -c \
+        'print -r -- ${nameddirs[sysu]-unset} ${nameddirs[envd]-unset}'
+
+    assert "$output" same_as 'unset unset'
+}
+
+@test 'Completion matches dotfiles by its own options' {
+    run sandbox_zsh_stdout "$SANDBOX" -i -c \
+        'print -r -- ${_comp_options[(Ie)globdots]}'
+
+    assert "$output" is_greater_than 0
+}
+
+@test 'An interactive shell writes no byte to stdout' {
+    local -i bytes
+    bytes=$(sandbox_zsh_stdout "$SANDBOX" -i -c exit | wc -c)
+
+    assert $bytes equals 0
+}
+
+@test 'Every function file is marked for autoload' {
+    run sandbox_zsh_stdout "$SANDBOX" -i -c '
+        local name
+        for name in $zsh_dirs[func]/*(N.:t) $zsh_dirs[wrap]/*(N.:t); do
+            (($+functions[$name])) || print -r -- "not autoloaded: $name"
+        done
+    '
+
+    assert "$output" is_empty
+}
+
+@test 'Termux named directories hold clean paths' {
+    local -a SANDBOX_ENV=(TERMUX_VERSION=0.118)
+
+    run sandbox_zsh_stdout "$SANDBOX" -i -c \
+        'print -r -- $nameddirs[emul] $nameddirs[edl]'
+
+    assert "$output" same_as '/storage/emulated/0 /storage/emulated/0/Download'
 }

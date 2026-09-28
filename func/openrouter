@@ -31,18 +31,19 @@ function log () {
     case "$1" in
         FATAL|INFO|NOTICE|WARN|ERROR)
             local level="$1"; shift
-            local message="$@"
+            local message="$*"
             ;;
         *)
-            print -u2 -f "%s: [%s] %s" "$__this_file" FATAL \
+            print -u2 -f "%s: [%s] %s\n" "$__this_file" FATAL \
                 "${ctx:+"($ctx) "}Invalid log call: Level provided not INFO, NOTICE, WARN, ERROR or FATAL: $@"
-            print -u2 -f "%s: [%s] %s" "$__this_file" FATAL \
+            print -u2 -f "%s: [%s] %s\n" "$__this_file" FATAL \
                 "'log ${ctx:+"($ctx) -- "}$@"
             return 1
             ;;
     esac
 
-    print -u2 -f "%s: [%s] %s" "$__this_file" "$level" "${ctx:+"($ctx) "}$message"
+    # \n included. Without it consecutive messages ran together on one line.
+    print -u2 -f "%s: [%s] %s\n" "$__this_file" "$level" "${ctx:+"($ctx) "}$message"
 }
 
 local command_not_found=0
@@ -63,9 +64,23 @@ if [[ "$PASS_URI_OPENROUTER_APIKEY" != "pass://"* ]]; then
     return 1
 fi
 
-local OPENROUTER_APIKEY="$(pass-cli item show "$PASS_URI_OPENROUTER_APIKEY")"
+# Assigned apart from the declaration. `local x="$(...)"` reports the status of
+# local itself, so a failed lookup went unnoticed and the request was sent with
+# an empty bearer token.
+local OPENROUTER_APIKEY
+if ! OPENROUTER_APIKEY="$(pass-cli item show "$PASS_URI_OPENROUTER_APIKEY")" ||
+    [[ -z "$OPENROUTER_APIKEY" ]]; then
+    log FATAL "Unable to read the API key from: $PASS_URI_OPENROUTER_APIKEY"
+    return 1
+fi
+
+# The header is handed to curl through a file descriptor, never as an
+# argument. Arguments are readable by every local user through
+# /proc/<pid>/cmdline for as long as curl runs, and `-H "Authorization: ..."`
+# put the key there. `-H @file` reads headers from a file (curl 7.55 and
+# later), and process substitution gives it a /proc/self/fd path instead.
 \builtin command curl --fail-with-body --silent --show-error \
-        'https://openrouter.ai/api/v1/chat/completions' \
-        -H 'Content-Type: application/json' \
-        -H "Authorization: Bearer $OPENROUTER_APIKEY" \
-        --data-raw "$1"
+    'https://openrouter.ai/api/v1/chat/completions' \
+    -H 'Content-Type: application/json' \
+    -H @<(print -r -- "Authorization: Bearer $OPENROUTER_APIKEY") \
+    --data-raw "$1"

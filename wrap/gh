@@ -78,12 +78,15 @@ __gh_main() {
 
 int_funcs+=("help")
 __gh_help() {
+    # Split with ${=...}. zsh does not word-split parameters, so a pager given
+    # with arguments, such as PAGER="less -R", was run as one command named
+    # "less -R" and failed with command not found.
     if [[ -n "${HELPPAGER:-}" ]]; then
-        command gh "$@" | $HELPPAGER
+        command gh "$@" | ${=HELPPAGER}
     elif (($+commands[bat])); then
         command gh "$@" | command bat --language=help
     elif [[ -n "${PAGER:-}" ]]; then
-        command gh "$@" | $PAGER
+        command gh "$@" | ${=PAGER}
     elif (($+commands[less])); then
         command gh "$@" | command less --raw-control-characters --quit-if-one-screen
     else

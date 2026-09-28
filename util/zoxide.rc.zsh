@@ -39,10 +39,14 @@ function __init_zoxide() {
     local __init_cache="$zsh_dirs[cache_init]/zoxide.init.zsh"
 
     # Regenerate init cache if:
-    #  - Missing
+    #  - Missing or empty
     #  - Older than binary
     #  - Older than this file
-    if [[ ! -f "$__init_cache" ]] ||
+    #
+    # -s rather than -f, as in util/luarocks.rc.zsh. A failed `zoxide init`
+    # still leaves the empty file that >| created, and -f accepted it, so the
+    # shell went on sourcing nothing until the binary or this file changed.
+    if [[ ! -s "$__init_cache" ]] ||
         [[ "$__init_cache" -ot "$commands[zoxide]" ]] ||
         [[ "$__init_cache" -ot "$__this_file" ]]; then
         print -u2 "Regenerating zoxide source cache"

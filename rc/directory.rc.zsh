@@ -107,7 +107,10 @@ fi
 [[ -d "$HOME/net/firefox" ]] && hash -d ff="$HOME/net/firefox"
 () {
     [[ ! -v TERMUX_VERSION ]] && return
-    local emulated="/storage/emulated/0/"
+    # No trailing slash. With one, ~emul never matched a path for %~ in the
+    # prompt, and every name below held a doubled slash, as in
+    # /storage/emulated/0//Download, so none of them ever matched either.
+    local emulated="/storage/emulated/0"
 
     hash -d pref="${PREFIX:-/data/data/com.termux/files/usr}"
     hash -d emul="$emulated"

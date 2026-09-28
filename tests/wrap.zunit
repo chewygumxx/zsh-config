@@ -74,6 +74,7 @@
 
     unalias del
 
+    assert $state equals 1
     assert "$output" contains 'gtrash'
     assert "$TMP/victim" is_file
 }
@@ -107,20 +108,209 @@
 #
 
 @test 'jq does not override an --indent given by the caller' {
-    skip 'wrap/jq:19 tests (($+@[--indent])), which is not a valid subscript
-        idiom: it raises "bad math expression" on stderr for every single jq
-        call and is never true, so --indent 4 is injected ahead of whatever the
-        caller passed'
+    stub_command jq "$TMP/bin"
+    load_shell_function jq
+
+    run jq --indent 2 .
+
+    assert "$output" does_not_contain 'bad math expression'
+
+    local result
+    result="$(jq --indent 2 . 2> /dev/null)"
+
+    local -a lines=("${(@f)result}")
+
+    assert ${#lines} equals 3
+    assert "$lines[1]" same_as --indent
+    assert "$lines[2]" equals 2
+}
+
+@test 'jq indents by four when the caller does not say' {
+    stub_command jq "$TMP/bin"
+    load_shell_function jq
+
+    local result
+    result="$(jq . 2> /dev/null)"
+
+    local -a lines=("${(@f)result}")
+
+    assert ${#lines} equals 3
+    assert "$lines[1]" same_as --indent
+    assert "$lines[2]" equals 4
 }
 
 @test 'chezmoi names itself in its command-not-found diagnostic' {
-    skip 'wrap/chezmoi:20 assigns __this__file with two underscores while
-        line 23 interpolates __this_file, so the FATAL message is emitted with
-        an empty prefix'
+    load_shell_function chezmoi
+
+    # PATH is emptied inside a helper so it is restored on return, and the
+    # command hash cleared on both sides so neither lookup is stale.
+    function __probe_no_chezmoi() {
+        local PATH="$TMP/empty"
+        hash -r
+        chezmoi
+    }
+
+    run __probe_no_chezmoi
+
+    unfunction __probe_no_chezmoi
+    hash -r
+
+    assert $state equals 127
+    assert "$output" contains 'chezmoi: [FATAL] Command not found: chezmoi'
 }
 
 @test 'sv names itself in its termux-only diagnostic' {
-    skip 'wrap/sv:16 assigns __this_file while line 24 interpolates
-        __this__file with two underscores, so the message is emitted with an
-        empty prefix. The exact mirror of the wrap/chezmoi defect'
+    load_shell_function sv
+
+    local TERMUX_VERSION
+    unset TERMUX_VERSION
+
+    run sv
+
+    assert $state equals 1
+    assert "$output" contains 'sv: This function is termux exclusive'
+}
+
+@test 'nvim passes a lone option straight through' {
+    stub_command nvim "$TMP/bin"
+    load_shell_function nvim
+
+    local result
+    result="$(cd -- "$TMP" && nvim --version 2> /dev/null)"
+
+    assert "$result" same_as --version
+}
+
+@test 'nvim reads stdin when given a lone dash' {
+    stub_command nvim "$TMP/bin"
+    load_shell_function nvim
+
+    local result
+    result="$(cd -- "$TMP" && nvim - < /dev/null 2> /dev/null)"
+
+    assert "$result" same_as -
+}
+
+@test 'eza keeps an option value beside its option' {
+    stub_command eza "$TMP/bin"
+    load_shell_function eza
+
+    local -a __eza_opts=() __eza_ignore_glob=()
+    local result
+    result="$(cd -- "$TMP" && eza --level 2 /tmp 2> /dev/null)"
+
+    local -a lines=("${(@f)result}")
+
+    assert "$lines[1]" same_as --level
+    assert "$lines[2]" same_as 2
+    assert "$lines[-1]" same_as /tmp
+    assert "$result" does_not_contain "$TMP/2"
+}
+
+@test 'eza counts the l in a cluster of short flags' {
+    stub_command eza "$TMP/bin"
+    load_shell_function eza
+
+    local -a __eza_opts=() __eza_ignore_glob=()
+    local result
+    result="$(cd -- "$TMP" && eza -la /tmp 2> /dev/null)"
+
+    local -a lines=("${(@f)result}")
+
+    assert "$lines[1]" same_as -a
+    assert "$result" contains --header
+}
+
+@test 'eza passes -u on to eza as --accessed' {
+    stub_command eza "$TMP/bin"
+    load_shell_function eza
+
+    local -a __eza_opts=() __eza_ignore_glob=()
+    local result
+    result="$(cd -- "$TMP" && eza -u /tmp 2> /dev/null)"
+
+    local -a lines=("${(@f)result}")
+
+    assert "$lines[1]" same_as -u
+}
+
+@test 'chezmoi help adds its own section exactly once' {
+    stub_command chezmoi "$TMP/bin" \
+        'printf "S1\n\nS2\n\nS3\n\nS4\n"'
+    stub_command bat "$TMP/bin" 'exec cat'
+    stub_command less "$TMP/bin" 'exec cat'
+    load_shell_function chezmoi
+
+    local result
+    result="$(chezmoi help 2> /dev/null)"
+
+    local -a sections=("${(@ps:\n\n:)result}")
+
+    assert "$sections[3]" same_as S3
+    assert "$sections[4]" contains '[cgxx] Alias management'
+    assert "$sections[5]" same_as S4
+    assert ${#sections} equals 5
+}
+
+@test 'gtrash falls back when XDG_DATA_HOME is unset' {
+    stub_command gtrash "$TMP/bin" \
+        'printf "%s\n" "$GTRASH_HOME_TRASH_DIR"'
+    load_shell_function gtrash
+
+    local HOME="$TMP/home" XDG_DATA_HOME
+    unset XDG_DATA_HOME
+
+    local result
+    result="$(gtrash 2> /dev/null)"
+
+    assert "$result" same_as "$TMP/home/.local/share/Trash"
+}
+
+@test 'gh help accepts a pager given with arguments' {
+    stub_command gh "$TMP/bin" 'printf "%s\n" "help text"'
+    load_shell_function gh
+
+    local HELPPAGER='sed s/^/paged:/'
+    run gh help
+
+    assert "$output" contains 'paged:help text'
+}
+
+@test 'claude starts quietly outside a git repository' {
+    stub_command claude "$TMP/bin" \
+        'printf "%s\n" "$CLAUDE_CODE_PROJECT_DIR_NAME"'
+    load_shell_function claude
+
+    local CLAUDE_CONFIG_DIR="$TMP/claude" CLAUDE_CODE_PROJECT_DIR_NAME
+    unset CLAUDE_CODE_PROJECT_DIR_NAME
+
+    local diagnostics
+    # shuck: disable=C085
+    diagnostics="$(cd -- "$TMP" && claude 2>&1 1> /dev/null)"
+
+    assert "$diagnostics" is_empty
+}
+
+@test 'systemd-run accepts a command given by path' {
+    stub_command systemd-run "$TMP/bin"
+    load_shell_function systemd-run
+
+    print -rl -- '#!/bin/sh' 'exit 0' > "$TMP/job"
+    chmod 0755 -- "$TMP/job"
+
+    run systemd-run "$TMP/job"
+
+    assert $state equals 0
+    assert "$output" contains "$TMP/job"
+}
+
+@test 'pacman runs yay when it is installed' {
+    stub_command yay "$TMP/bin"
+    stub_command pacman "$TMP/bin"
+    load_shell_function pacman
+
+    run pacman -Syu
+
+    assert "$output" contains 'stub:'
+    assert "$output" contains '/yay argc:1'
 }

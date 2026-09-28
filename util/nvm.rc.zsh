@@ -13,9 +13,10 @@
 [[ -o interactive ]] || return
 [[ -v TERMUX_VERSION ]] && return
 
-export NVM_DIR="$XDG_DATA_HOME/nvm"
-export NPM_CONFIG_CACHE="$XDG_CACHE_HOME/npm"
-export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
+# Read with the fallbacks env/zsh_dirs.env.zsh uses. Unset, NVM_DIR became /nvm.
+export NVM_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/nvm"
+export NPM_CONFIG_CACHE="${XDG_CACHE_HOME:-$HOME/.local/cache}/npm"
+export NPM_CONFIG_USERCONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/npm/npmrc"
 
 # --no-use    Load nvm only when called
 #

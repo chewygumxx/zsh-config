@@ -14,26 +14,29 @@
 local __this_file="${(D)${${(%):-%N}:A}}"
 
 # Variable ls_colors is declared elsewhere, in rc/ls_colors.rc.zsh
-zsh_dirs_require "$__this_file" cache cache_zstylecomp comp share_comp plugin ||
-    return 1
+zsh_dirs_require "$__this_file" \
+    cache cache_comp cache_zstylecomp comp share_comp plugin func || return 1
 
 # ---------------
 # Populate fpath
 # ---------------
 
-function __download_plugin() {
-    local slug="$1"
-    local plugin="${slug##*/}"
+# Loaded by path rather than through fpath. func/ is deliberately not on fpath
+# yet: rc/function.rc.zsh adds it after compinit has indexed a minimal one.
+#
+# This used to be a local __download_plugin that tested only whether the
+# directory existed, so an interrupted clone was treated as complete forever,
+# the same fault rc/plugin.rc.zsh had already been fixed for.
+autoload -Uz "$zsh_dirs[func]/__plugin_clone"
 
-    if [[ ! -d "$zsh_dirs[plugin]/$plugin" ]]; then
-        git clone "https://github.com/$slug.git" "$zsh_dirs[plugin]/$plugin"
-    fi
-}
-
-__download_plugin "zsh-users/zsh-completions"
+__plugin_clone "zsh-users/zsh-completions"
+# cache_comp holds completion functions generated from a tool's own output, such
+# as the _chezmoi that util/chezmoi.rc.zsh writes. It was never on fpath, so
+# those files were regenerated faithfully and never once loaded.
 fpath+=(
     "$zsh_dirs[share_comp]"
     "$zsh_dirs[comp]"
+    "$zsh_dirs[cache_comp]"
     "$zsh_dirs[plugin]/zsh-completions/src"
 )
 
@@ -43,7 +46,6 @@ fpath+=(
 
 # Provides 'menuselect' keymap. Must be loaded before compinit call
 zmodload zsh/complist
-_comp_options+=(globdots)
 
 autoload -Uz compinit
 setopt list_types extended_glob
@@ -88,6 +90,11 @@ fi
 # Post compinit
 # ---------------
 
+# After compinit, not before it. compinit assigns _comp_options outright, so an
+# addition made ahead of the call was discarded, and completion only offered
+# dotfiles because .zshrc happens to set globdots for the whole shell.
+_comp_options+=(globdots)
+
 zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path "$zsh_dirs[cache_zstylecomp]"
 
@@ -105,8 +112,8 @@ if (($+commands[fzf])); then
     # Do not source anything that overwrites <Tab> bindkey.
     # (Don't source junegunn/fzf/completion.zsh, only jungunn/fzf/key-bindings.zsh)
 
-    __download_plugin "aloxaf/fzf-tab"
-    source "$zsh_dirs[plugin]/fzf-tab/fzf-tab.plugin.zsh"
+    __plugin_clone "aloxaf/fzf-tab" &&
+        source "$zsh_dirs[plugin]/fzf-tab/fzf-tab.plugin.zsh"
 
     # Escape sequences, like '%F{blue}%d%f', will be ignored by fzf-tab
     zstyle ':completion:*:descriptions' format '[%d]'
@@ -114,7 +121,7 @@ if (($+commands[fzf])); then
     zstyle ':completion:*' menu no
     # Preview directory's content with eza when completing cd
     # shuck: disable=C005
-    zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza --all --oneline --color=always --group-directories-first --long --git --no-permissions --no-filesize --no-user --no-time --ignore-glob="[0-9a-f][0-9a=f]|.obsidian|.zettel-notes" $realpath'
+    zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza --all --oneline --color=always --group-directories-first --long --git --no-permissions --no-filesize --no-user --no-time --ignore-glob="[0-9a-f][0-9a-f]|.obsidian|.zettel-notes" $realpath'
 
     # Custom fzf flags
     # By default, fzf-tab does not follow FZF_DEFAULT_OPTS
@@ -127,13 +134,12 @@ else
     zstyle ':completion:*' menu select
 
     # Dependant on `zmodload zsh/complist` before compinit
-    [[ ! -v bindkey_calls ]] && typeset -ga bindkey_calls
-    bindkey_calls+=(
-        "-M menuselect '^h' vi-backward-char"
-        "-M menuselect '^k' vi-up-line-or-history"
-        "-M menuselect '^j' vi-down-line-or-history"
-        "-M menuselect '^l' vi-forward-char"
-    )
+    #
+    # Bound directly. These used to be queued onto a bindkey_calls array that
+    # nothing anywhere in the configuration ever read, so none of the four
+    # bindings was ever made.
+    bindkey -M menuselect '^h' vi-backward-char
+    bindkey -M menuselect '^k' vi-up-line-or-history
+    bindkey -M menuselect '^j' vi-down-line-or-history
+    bindkey -M menuselect '^l' vi-forward-char
 fi
-
-unset -f __download_plugin

@@ -59,8 +59,10 @@ leaves zero files sourced.
 ### `zsh_dirs`
 
 `env/zsh_dirs.env.zsh` defines the `zsh_dirs` associative array that nearly
-everything else depends on, and `mkdir -p`s those directories if stale or
-missing. Its keys are:
+everything else depends on, and creates whichever of those directories are
+missing on every start. It tests each one rather than trusting a stamp file: a
+stamp outside the tree survived the tree's deletion, so nothing was recreated
+and completion silently disappeared. Its keys are:
 
 - Source, derived from `${ZDOTDIR:-${XDG_CONFIG_HOME:-$HOME/.config}/zsh}`:
   `conf`, `env`, `comp`, `func`, `wrap`, `rc`, `util`, `spec`.
@@ -100,7 +102,10 @@ autoload out of the current working directory.
 ## Directory purposes
 
 - `env/` - `*.env.zsh`, sourced by `.zshenv`; safe for non-interactive shells
-  (env vars, `zsh_dirs`, fzf/ssh/claude env setup).
+  (env vars, `zsh_dirs`, fzf/ssh/claude env setup, and the per-tool XDG
+  relocations in `env/tools.env.zsh`). A variable that decides where a tool
+  keeps its state belongs here rather than in `rc/`, or scripts and
+  `ssh host cmd` see a different value from the interactive shell.
 - `rc/` - `*.rc.zsh`, interactive-only modules sourced by `.zshrc` (aliases,
   completion, directory hashes, function loading, history, ls_colors, plugin
   management, prompt).
@@ -140,12 +145,19 @@ readable, not merely when its directory exists. Testing the directory alone
 treated a clone interrupted part way as permanently complete, so the plugin
 silently never loaded again and was never re-cloned.
 
+Cloning is done by `func/__plugin_clone`, which clones into a staging directory
+beside the plugin and moves it into place only once the entry point is present.
+Cloning straight into the plugin directory cannot repair an interrupted clone,
+because `git clone` refuses a destination that exists and is not empty.
+
 Neither the spec nor the plugin is sourced with stderr redirected. Discarding
 those errors was the single largest reason breakage in this repo stayed
 invisible.
 
 `rc/completion.rc.zsh` clones `zsh-users/zsh-completions` and `aloxaf/fzf-tab`
-directly, bypassing `spec/` entirely.
+itself, bypassing `spec/` entirely, though through the same helper. It
+autoloads that helper by path, since `func/` is not on `fpath` until
+`rc/function.rc.zsh` runs after it.
 
 ## Conventions
 
@@ -317,6 +329,9 @@ archived.
 - `tests/boot.zunit` - startup regressions: clean stderr, byte-empty stdout, no
   empty `fpath` element, the shape and key set of `zsh_dirs`, the source versus
   state path split, `zsh_dirs_require`, and which specs load.
+- `tests/env.zunit` - what `.zshenv` and `env/` set up. It starts only
+  non-interactive shells, which never clone, so unlike `boot.zunit` it needs no
+  borrowed plugin clones and always runs.
 - `tests/func.zunit` and `tests/wrap.zunit` - unit tests for `func/` and
   `wrap/`.
 - `tests/header.zunit` - header block conformance, including that every
@@ -329,21 +344,22 @@ archived.
 Both underscore-prefixed directory names are load-bearing, not stylistic:
 zunit's discovery skips any path whose basename begins with an underscore.
 
-Three tests in `tests/wrap.zunit` are `skip`ped on purpose, each recording a
-defect found while the suite was being written: `wrap/jq` tests
-`(($+@[--indent]))`, which is not a valid subscript idiom and raises
-`bad math expression` on stderr for every `jq` call while never being true, so
-`--indent 4` is injected ahead of whatever the caller passed; `wrap/chezmoi`
-assigns `__this__file` but interpolates `__this_file`; `wrap/sv` does the exact
-reverse. Remove the skip along with the fix.
+No test is `skip`ped to record a known defect. Three once were, in
+`tests/wrap.zunit`, for `wrap/jq`, `wrap/chezmoi` and `wrap/sv`; each skip was
+removed along with its fix, and that remains the rule for any future one. The
+only skips left are conditional: the plugin-cache guard on `tests/boot.zunit`,
+and a test whose subject is absent on the machine running it.
 
 ### Sandboxing
 
 `sandbox_create` builds a scratch `HOME`, symlinks the checkout to
-`$XDG_CONFIG_HOME/zsh`, and sets every XDG variable. Setting `ZDOTDIR` alone is
-not enough, because `env/base.env.zsh` and `env/ssh.env.zsh` read
-`XDG_DATA_HOME` and `XDG_RUNTIME_DIR` with no fallback. Directories are created
-`0755` so that nothing the fixture makes is ever world-writable.
+`$XDG_CONFIG_HOME/zsh`, and sets every XDG variable, so that no value inherited
+from the calling shell can point the configuration at the live tree.
+`sandbox_zsh_bare` passes no XDG variable at all, which is how
+`tests/env.zunit` proves that every XDG read has a fallback: unset, those
+variables once collapsed paths to root-relative ones such as `/cargo/bin`.
+Directories are created `0755` so that nothing the fixture makes is ever
+world-writable.
 
 `rc/completion.rc.zsh` passes `compinit -i`, and that flag is load-bearing.
 Without it a single world-writable directory anywhere on `fpath`, including one
@@ -415,6 +431,11 @@ Each of these cost real time here:
   present.
 - **`shuck format` caches its results.** After an edit it can reformat from
   stale content, so `--no-cache` is the reliable check.
+- **`shuck format` deletes comments above an anonymous function.** A comment
+  block directly above `() {` is removed, along with the blank line before it;
+  at the top of a file that takes the whole header block with it. Put the
+  comment inside the function body instead, which is why several files open an
+  anonymous function straight after the preceding statement.
 - **revolver writes into `$ZDOTDIR`.** Its state directory defaults to
   `${REVOLVER_DIR:-${ZDOTDIR:-$HOME}/.revolver}`, and `ZDOTDIR` on this machine
   is the live configuration, itself a checkout of this repository, so a
@@ -434,6 +455,10 @@ Each of these cost real time here:
   directories silently fall back to defaults. Prettier would impose four,
   following `.editorconfig`, so `package.json` carries a `tabWidth: 2` override
   for that one file.
+- **A failing command outside `run` fails the test with no message.** zunit
+  runs test bodies with the shell stopping on an error, so capturing a
+  deliberately failing call as `x="$(cmd)"` ends the test there and reports an
+  empty failure. Add `|| true`, or capture it through `run`.
 - `skip` exits 48, `fail` exits 1 and `error` exits 78. With
   `allow_risky: false`, a test that passes having asserted nothing is an error,
   so pair a `fail` message with an assertion rather than relying on `pass`.

@@ -1,0 +1,25 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/wrap/pacman
+#
+#
+
+#
+# pacman, by way of yay whenever yay is installed
+#
+# A function rather than the alias this used to be. rc/alias.rc.zsh also defines
+# `alias sudo="sudo "`, whose trailing space alias-expands the word after it, so
+# `sudo pacman -Syu` became `sudo yay -Syu`, which yay refuses to run as root.
+# Functions are never expanded after sudo, so sudo reaches the real pacman.
+#
+
+if (( $+commands[yay] )); then
+    command yay "$@"
+else
+    command pacman "$@"
+fi

@@ -114,3 +114,132 @@
     assert "$TMP/one/.keep" is_file
     assert "$TMP/two/three/.keep" is_file
 }
+
+@test 'openrouter never puts the API key in an argument' {
+    stub_command pass-cli "$TMP/bin" 'printf "%s\n" sekrit'
+    stub_command curl "$TMP/bin" \
+        'for a; do case "$a" in' \
+        '    @*) printf "file:%s\n" "$(cat "${a#@}")" ;;' \
+        '    *) printf "arg:%s\n" "$a" ;;' \
+        'esac; done'
+    load_shell_function openrouter
+
+    local PASS_URI_OPENROUTER_APIKEY='pass://vault/item/field'
+    run openrouter '{}'
+
+    assert $state equals 0
+    assert "$output" contains 'file:Authorization: Bearer sekrit'
+    assert "$output" does_not_contain 'arg:Authorization'
+}
+
+@test 'openrouter stops when the API key cannot be read' {
+    stub_command pass-cli "$TMP/bin" 'exit 1'
+    stub_command curl "$TMP/bin"
+    load_shell_function openrouter
+
+    local PASS_URI_OPENROUTER_APIKEY='pass://vault/item/field'
+    run openrouter '{}'
+
+    assert $state equals 1
+    assert "$output" does_not_contain 'stub:'
+}
+
+#
+# __plugin_clone calls zsh_dirs_require, which env/zsh_dirs.env.zsh defines.
+# That file cannot be sourced here without creating directories under the real
+# XDG tree, so a stand-in accepting every key is defined for these tests alone.
+#
+
+@test '__plugin_clone repairs an interrupted clone' {
+    stub_command git "$TMP/bin" \
+        'for a; do dest="$a"; done' \
+        'mkdir -p "$dest" && : > "$dest/demo.plugin.zsh"'
+    load_shell_function __plugin_clone
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([plugin]="$TMP/plugins")
+
+    # What an interrupted clone leaves: the directory, but no entry point.
+    mkdir -p -- "$TMP/plugins/demo/.git"
+
+    run __plugin_clone owner/demo
+
+    unfunction zsh_dirs_require
+
+    assert $state equals 0
+    assert "$TMP/plugins/demo/demo.plugin.zsh" is_file
+}
+
+@test '__plugin_clone leaves the old directory when a clone fails' {
+    stub_command git "$TMP/bin" 'exit 128'
+    load_shell_function __plugin_clone
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([plugin]="$TMP/plugins")
+    mkdir -p -- "$TMP/plugins/demo/.git"
+
+    run __plugin_clone owner/demo
+
+    unfunction zsh_dirs_require
+
+    local -a staging=("$TMP"/plugins/demo.clone.*(N))
+
+    assert $state equals 1
+    assert "$output" contains 'Failed to clone plugin: owner/demo'
+    assert "$TMP/plugins/demo/.git" is_dir
+    assert ${#staging} equals 0
+}
+
+@test '__plugin_clone rejects a malformed slug' {
+    load_shell_function __plugin_clone
+
+    run __plugin_clone owner/
+
+    assert $state equals 1
+    assert "$output" contains 'Not an owner/repo slug'
+}
+
+@test '__slugify collapses runs without the caller setting extended_glob' {
+    setopt local_options no_extended_glob
+    load_shell_function __slugify
+
+    run __slugify 'a   b'
+
+    assert "$output" same_as a_b
+}
+
+@test 'gc joins its message words with spaces whatever IFS holds' {
+    stub_command git "$TMP/bin"
+    load_shell_function gc
+
+    local IFS=:
+    local result
+    result="$(gc two words 2> /dev/null)"
+
+    assert "$result" contains '--message=two words'
+}
+
+@test 'journal leaves no variable behind' {
+    load_shell_function journal
+
+    local HOME="$TMP/home"
+    mkdir -p -- "$HOME/doc/journal"
+
+    journal < /dev/null > /dev/null 2>&1
+
+    assert $+parameters[journal_dir] equals 0
+}
+
+@test 'unicode-search-fonts fails with usage on stderr' {
+    load_shell_function unicode-search-fonts
+
+    local printed
+    # || true: a failing command outside `run` fails the test outright.
+    printed="$(unicode-search-fonts nonsense 2> /dev/null)" || true
+
+    run unicode-search-fonts nonsense
+
+    assert $state equals 2
+    assert "$output" contains Usage
+    assert "$printed" is_empty
+}

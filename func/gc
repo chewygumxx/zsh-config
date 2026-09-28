@@ -17,7 +17,9 @@
 local __this_file="${(D)${${(%):-%N}:A}}"
 
 if (( $# >= 1 )); then
-    IFS=" " command git commit --message="${*:-}"
+    # Joined explicitly. An `IFS=" "` prefix used to stand before command, but
+    # "$*" is expanded with the caller's IFS before any such assignment applies.
+    command git commit --message="${(j: :)@}"
     return
 fi
 

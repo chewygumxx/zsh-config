@@ -63,7 +63,7 @@ while true; do
     esac
 done
 
-# This check is after getopt such that `g --help` still functions
+# This check is after getopt such that `gcp -h` still functions
 if ! git -C . rev-parse 2>/dev/null; then
     print -u2 "${0}: Not a git repository"
     return 1

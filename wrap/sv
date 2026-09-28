@@ -21,7 +21,7 @@ local __this_file="${(D)${${(%):-%N}:A}}"
 # ---------------------
 
 if [[ ! -v TERMUX_VERSION ]]; then
-    print -u2 "${__this__file}: This is function is termux exclusive"
+    print -u2 "${__this_file}: This function is termux exclusive"
     return 1
 fi
 
