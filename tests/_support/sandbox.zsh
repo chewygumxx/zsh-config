@@ -145,6 +145,11 @@ function sandbox_zsh() {
     # env -i rather than an inherited environment, so a variable set in the
     # caller's shell cannot quietly change the result. PATH is carried over
     # because the load path calls git and various optional binaries.
+    #
+    # A test that needs more in the environment declares a local SANDBOX_ENV
+    # array of NAME=value words, which reaches this function through dynamic
+    # scope and is appended after the defaults, so it can also override them.
+    # Unset, the plain $SANDBOX_ENV expansion yields no words at all.
     env -i \
         HOME="$root" \
         PATH="$PATH" \
@@ -156,6 +161,7 @@ function sandbox_zsh() {
         XDG_STATE_HOME="$root/.local/state" \
         XDG_RUNTIME_DIR="$root/run" \
         ZDOTDIR="$root/.config/zsh" \
+        $SANDBOX_ENV \
         zsh "$@"
 }
 
