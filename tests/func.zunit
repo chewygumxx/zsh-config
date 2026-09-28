@@ -114,3 +114,32 @@
     assert "$TMP/one/.keep" is_file
     assert "$TMP/two/three/.keep" is_file
 }
+
+@test 'openrouter never puts the API key in an argument' {
+    stub_command pass-cli "$TMP/bin" 'printf "%s\n" sekrit'
+    stub_command curl "$TMP/bin" \
+        'for a; do case "$a" in' \
+        '    @*) printf "file:%s\n" "$(cat "${a#@}")" ;;' \
+        '    *) printf "arg:%s\n" "$a" ;;' \
+        'esac; done'
+    load_shell_function openrouter
+
+    local PASS_URI_OPENROUTER_APIKEY='pass://vault/item/field'
+    run openrouter '{}'
+
+    assert $state equals 0
+    assert "$output" contains 'file:Authorization: Bearer sekrit'
+    assert "$output" does_not_contain 'arg:Authorization'
+}
+
+@test 'openrouter stops when the API key cannot be read' {
+    stub_command pass-cli "$TMP/bin" 'exit 1'
+    stub_command curl "$TMP/bin"
+    load_shell_function openrouter
+
+    local PASS_URI_OPENROUTER_APIKEY='pass://vault/item/field'
+    run openrouter '{}'
+
+    assert $state equals 1
+    assert "$output" does_not_contain 'stub:'
+}
