@@ -7,7 +7,7 @@
 # ::: :/rc/ls_colors.rc.zsh
 #
 #
-# Provides for `rc/completion.rc.zsh` and `rc/util/eza.rc.zsh`
+# Provides for `rc/completion.rc.zsh` and `util/eza.rc.zsh`
 #
 
 autoload -Uz colors && colors
