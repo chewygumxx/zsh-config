@@ -18,7 +18,9 @@
 
 setopt re_match_pcre
 setopt interactive_comments
-setopt globdots # Match names preceeded by a dot
+# Match names preceded by a dot. Deliberate, and worth remembering: with it a
+# bare * includes dotfiles, so `rm -rf *` in a checkout takes .git with it.
+setopt globdots
 
 # This file's own header promises zsh_dirs is set in advance, so check it rather
 # than trusting it. The label is expanded inline because .zshrc is sourced at top
