@@ -26,7 +26,9 @@ fi
 # Default is what the XDG Trash Specification defines, either:
 #   - "$XDG_DATA_HOME/Trash"
 #   - "$HOME/.local/share/Trash"
-local -x GTRASH_HOME_TRASH_DIR="$XDG_DATA_HOME/Trash"
+#
+# The fallback matters: unset, XDG_DATA_HOME made this /Trash.
+local -x GTRASH_HOME_TRASH_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/Trash"
 
 # Whether to always utilise home trash directory.
 # If true, disposed files of external media are first copied to home trash

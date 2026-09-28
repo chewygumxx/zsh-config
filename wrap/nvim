@@ -174,7 +174,7 @@ if (( $+commands[chezmoi] )); then
 fi
 
 if (( $#managed )); then
-    local -x TMPDIR="$XDG_CACHE_HOME/chezmoi"
+    local -x TMPDIR="${XDG_CACHE_HOME:-$HOME/.local/cache}/chezmoi"
     [[ ! -d "$TMPDIR" ]] && command mkdir -p "$TMPDIR"
     command nvim "$target"
     command chezmoi re-add "${managed[@]}" &!

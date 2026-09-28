@@ -206,3 +206,17 @@
     assert "$sections[5]" same_as S4
     assert ${#sections} equals 5
 }
+
+@test 'gtrash falls back when XDG_DATA_HOME is unset' {
+    stub_command gtrash "$TMP/bin" \
+        'printf "%s\n" "$GTRASH_HOME_TRASH_DIR"'
+    load_shell_function gtrash
+
+    local HOME="$TMP/home" XDG_DATA_HOME
+    unset XDG_DATA_HOME
+
+    local result
+    result="$(gtrash 2> /dev/null)"
+
+    assert "$result" same_as "$TMP/home/.local/share/Trash"
+}
