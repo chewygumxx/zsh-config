@@ -60,19 +60,33 @@ typeset -gA zsh_dirs=(
     [state]="$zsh_state"
 )
 
-init_dirs="$zsh_cache/.zsh_dirs_initialised"
-# Re-mkdir zsh directories if either:
-#  - Missing
-#  - Older than this file
-if ! [[ "$init_dirs" -nt "${0}" ]]; then
+unset zsh_conf zsh_cache zsh_share zsh_state
+() {
+    # Every directory is tested on every start, and only the missing ones are
+    # made. A stamp file used to stand in for this, recreating the tree only
+    # when the stamp was absent or older than this file. The stamp sat outside
+    # the cache tree it vouched for, so deleting that tree left the stamp
+    # behind, nothing was ever recreated, and zsh_dirs_require then failed in
+    # rc/completion.rc.zsh on every start, leaving the shell with no completion
+    # at all. A stat per entry costs next to nothing by comparison.
+    #
+    # The comment sits inside the function because shuck format deletes a
+    # comment block placed directly above an anonymous function.
+    local dir
+    local -a missing=()
+
+    for dir in "${(@v)zsh_dirs}"; do
+        [[ -d "$dir" ]] || missing+=("$dir")
+    done
+
+    (($#missing)) || return 0
+
     # This file is sourced by .zshenv for every zsh invocation, interactive or
     # not, so anything written to stdout corrupts the stream that scp, rsync,
     # sftp and git over ssh read as protocol data. Report on stderr only.
     print -u2 "Creating zsh directories"
-    mkdir -p "${(v)zsh_dirs[@]}"
-    touch "$init_dirs"
-fi
-unset init_dirs zsh_conf zsh_cache zsh_share zsh_state
+    mkdir -p -- "${missing[@]}"
+}
 
 # Shared validator for every consumer of this array. It is defined here, beside
 # the declaration, so that anything sourced after .zshenv can rely on it being

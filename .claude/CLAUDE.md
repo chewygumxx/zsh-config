@@ -59,8 +59,10 @@ leaves zero files sourced.
 ### `zsh_dirs`
 
 `env/zsh_dirs.env.zsh` defines the `zsh_dirs` associative array that nearly
-everything else depends on, and `mkdir -p`s those directories if stale or
-missing. Its keys are:
+everything else depends on, and creates whichever of those directories are
+missing on every start. It tests each one rather than trusting a stamp file: a
+stamp outside the tree survived the tree's deletion, so nothing was recreated
+and completion silently disappeared. Its keys are:
 
 - Source, derived from `${ZDOTDIR:-${XDG_CONFIG_HOME:-$HOME/.config}/zsh}`:
   `conf`, `env`, `comp`, `func`, `wrap`, `rc`, `util`, `spec`.
@@ -317,6 +319,9 @@ archived.
 - `tests/boot.zunit` - startup regressions: clean stderr, byte-empty stdout, no
   empty `fpath` element, the shape and key set of `zsh_dirs`, the source versus
   state path split, `zsh_dirs_require`, and which specs load.
+- `tests/env.zunit` - what `.zshenv` and `env/` set up. It starts only
+  non-interactive shells, which never clone, so unlike `boot.zunit` it needs no
+  borrowed plugin clones and always runs.
 - `tests/func.zunit` and `tests/wrap.zunit` - unit tests for `func/` and
   `wrap/`.
 - `tests/header.zunit` - header block conformance, including that every
