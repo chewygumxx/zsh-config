@@ -326,3 +326,19 @@
     assert "$lines[3]" same_as 'git -h 2>&1 | bat --language=help'
     assert "$lines[4]" same_as 'git --help 2>&1 | bat --language=help'
 }
+
+@test 'Named directories that do not exist stay undefined' {
+    # util/systemd.rc.zsh once redefined ~sysu and ~envd without checking for
+    # the directories, overriding rc/directory.rc.zsh, which does check.
+    local bin="$SANDBOX/stub-bin"
+    mkdir -p -- "$bin"
+    print -rl -- '#!/bin/sh' 'exit 0' > "$bin/systemctl"
+    chmod 0755 -- "$bin/systemctl"
+
+    local PATH="$bin:$PATH"
+
+    run sandbox_zsh_stdout "$SANDBOX" -i -c \
+        'print -r -- ${nameddirs[sysu]-unset} ${nameddirs[envd]-unset}'
+
+    assert "$output" same_as 'unset unset'
+}

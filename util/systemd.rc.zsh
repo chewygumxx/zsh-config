@@ -14,5 +14,8 @@ setopt aliases
 
 alias sysu="systemctl --user"
 
-hash -d sysu="$XDG_CONFIG_HOME/systemd/user"
-hash -d envd="$XDG_CONFIG_HOME/environment.d"
+# ~sysu and ~envd are defined by rc/directory.rc.zsh alone. They used to be
+# defined here as well, and since util/ is sourced last, these unconditional
+# copies replaced the ones there: that file prefers the chezmoi source tree and
+# only names a directory that exists, whereas these pointed at the deployed
+# tree regardless, and at /systemd/user whenever XDG_CONFIG_HOME was unset.
