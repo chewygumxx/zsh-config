@@ -207,3 +207,14 @@
 
     assert "$output" same_as a_b
 }
+
+@test 'gc joins its message words with spaces whatever IFS holds' {
+    stub_command git "$TMP/bin"
+    load_shell_function gc
+
+    local IFS=:
+    local result
+    result="$(gc two words 2> /dev/null)"
+
+    assert "$result" contains '--message=two words'
+}
