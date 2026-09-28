@@ -102,7 +102,10 @@ autoload out of the current working directory.
 ## Directory purposes
 
 - `env/` - `*.env.zsh`, sourced by `.zshenv`; safe for non-interactive shells
-  (env vars, `zsh_dirs`, fzf/ssh/claude env setup).
+  (env vars, `zsh_dirs`, fzf/ssh/claude env setup, and the per-tool XDG
+  relocations in `env/tools.env.zsh`). A variable that decides where a tool
+  keeps its state belongs here rather than in `rc/`, or scripts and
+  `ssh host cmd` see a different value from the interactive shell.
 - `rc/` - `*.rc.zsh`, interactive-only modules sourced by `.zshrc` (aliases,
   completion, directory hashes, function loading, history, ls_colors, plugin
   management, prompt).
