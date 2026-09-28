@@ -19,7 +19,12 @@ if (( ! $+commands[nvim] )); then
     print -u2 "${__this_file}: Command not found: nvim"
     return 127
 fi
-if (( $# != 1 )); then
+# Anything other than exactly one operand goes straight through. A lone option
+# counts as no operand at all: resolved with ${1:a} below, `nvim --version`
+# opened a new file called $PWD/--version, and `cmd | nvim -` opened one called
+# $PWD/- rather than reading stdin. Every editor alias in rc/alias.rc.zsh
+# inherited both.
+if (( $# != 1 )) || [[ "$1" == [-+]* ]]; then
     command nvim "$@"
     return
 fi

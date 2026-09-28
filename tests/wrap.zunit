@@ -124,3 +124,23 @@
         __this__file with two underscores, so the message is emitted with an
         empty prefix. The exact mirror of the wrap/chezmoi defect'
 }
+
+@test 'nvim passes a lone option straight through' {
+    stub_command nvim "$TMP/bin"
+    load_shell_function nvim
+
+    local result
+    result="$(cd -- "$TMP" && nvim --version 2> /dev/null)"
+
+    assert "$result" same_as --version
+}
+
+@test 'nvim reads stdin when given a lone dash' {
+    stub_command nvim "$TMP/bin"
+    load_shell_function nvim
+
+    local result
+    result="$(cd -- "$TMP" && nvim - < /dev/null 2> /dev/null)"
+
+    assert "$result" same_as -
+}
