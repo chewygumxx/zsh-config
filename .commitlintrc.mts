@@ -124,6 +124,11 @@ const scopes: { delimiters: string[]; enum: Enumerable[] } = {
             fullName: "Completion",
             description: "Completion dump/cache directory",
         },
+        {
+            name: "claude",
+            fullName: "Claude assets",
+            description: "Claude Code assets ie. hooks, skills, agents, etc.",
+        },
     ],
 };
 
