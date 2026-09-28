@@ -66,16 +66,113 @@ fi
 # module's own `stat` builtin cannot shadow /usr/bin/stat for the session.
 zmodload -F zsh/stat b:zstat
 
+# zstat follows symlinks, so a link to a root-owned file lands here too.
+# sudoedit refuses to open a path through a symlink unless sudoers sets
+# sudoedit_follow, so it is handed the resolved path instead.
 if (( $(zstat +uid "$target") == 0 )); then
-    SUDO_EDITOR=nvim command sudoedit "$target"
+    SUDO_EDITOR=nvim command sudoedit "${target:A}"
     return
 fi
 
-if (( $+commands[chezmoi] )) && [[ -n "$(command chezmoi managed "$target" 2>/dev/null)" ]]; then
+
+# ----------------------
+# chezmoi Managed Paths
+# ----------------------
+
+# `chezmoi managed <path>` builds the entire source state before it filters by
+# path: it reads every file under the source directory and renders every
+# template, password manager and command output lookups included. Asking about
+# one file therefore costs as much as listing all of them, and asked here, that
+# cost landed ahead of Neovim on every edit of an existing file.
+#
+# The full list is cached instead, and the lookup is a read of that file. The
+# cache is never rebuilt in the foreground. When anything under the source
+# directory, or the chezmoi config, is newer than it, the stale list answers
+# this launch and a rebuild runs in the background for the next one. A file
+# that became managed since the last rebuild is missed once, which only costs
+# the re-add below for that one edit.
+#
+# The source directory is recorded next to the cache by each rebuild, because
+# `chezmoi source-path` is itself a chezmoi process and asking it here would
+# reintroduce the wait. The default location stands in until a rebuild has
+# recorded the real one.
+local -a managed=()
+
+if (( $+commands[chezmoi] )); then
+    local cache_root="${XDG_CACHE_HOME:-$HOME/.local/cache}/zsh"
+    local cache_dir="${zsh_dirs[cache]:-$cache_root}/nvim"
+    local cache="$cache_dir/chezmoi-managed"
+    local source_dir="${XDG_DATA_HOME:-$HOME/.local/share}/chezmoi"
+
+    if [[ -s "$cache.source" ]]; then
+        source_dir="$(<"$cache.source")"
+    fi
+
+    # .git is pruned because commits and fetches change it without changing
+    # what chezmoi manages. The directories themselves are still compared, so
+    # a deleted source file shows up through its parent's mtime. -H follows the
+    # source directory itself when it is a symlink into a checkout elsewhere.
+    local stale
+    if [[ -e "$cache" ]]; then
+        stale="$(command find -H "$source_dir" \
+            "${XDG_CONFIG_HOME:-$HOME/.config}"/chezmoi/chezmoi.*(N) \
+            -path "$source_dir/.git" -prune \
+            -o -newer "$cache" -print -quit 2>/dev/null)"
+    else
+        stale=1
+    fi
+
+    if [[ -n "$stale" ]]; then
+        # stdin is detached so a template that asks for a passphrase cannot
+        # compete with Neovim for the terminal. Both lists are written to
+        # temporary files and moved into place, so a lookup never reads a half
+        # written cache and a failed rebuild leaves the previous one intact.
+        #
+        # The new cache takes the mtime of a stamp made before chezmoi started,
+        # so a source edit made while the rebuild ran still reads as newer.
+        {
+            local stamp tmp tmp_source
+
+            command mkdir -p -- "$cache_dir" \
+                && stamp="$(command mktemp -- "$cache.XXXXXXXX")" \
+                && tmp="$(command mktemp -- "$cache.XXXXXXXX")" \
+                && tmp_source="$(command mktemp -- "$cache.XXXXXXXX")" \
+                && command chezmoi managed --path-style absolute >| "$tmp" \
+                && command chezmoi source-path >| "$tmp_source" \
+                && command touch -r "$stamp" -- "$tmp" \
+                && command mv -f -- "$tmp_source" "$cache.source" \
+                && command mv -f -- "$tmp" "$cache"
+
+            command rm -f -- \
+                ${stamp:+"$stamp"} ${tmp:+"$tmp"} ${tmp_source:+"$tmp_source"}
+        } < /dev/null > /dev/null 2>&1 &!
+    fi
+
+    # Both the path as given and the one it resolves to are looked up. ${1:a}
+    # above only tidies the path and leaves symlinks alone, so a link to a
+    # managed file, or a file reached through a linked directory, never
+    # matched the list on its own. The given path is still kept: chezmoi can
+    # manage the link itself, and Neovim is still opened on the path as typed.
+    # Every match is re-added below, since editing through a managed link
+    # writes to its target, which may be managed in its own right.
+    if [[ -s "$cache" ]]; then
+        local -a managed_paths=("${(@f)$(<"$cache")}")
+        local candidate
+
+        for candidate in "$target" "${target:A}"; do
+            if (( ${managed_paths[(Ie)$candidate]} \
+                && ! ${managed[(Ie)$candidate]} )); then
+                managed+=("$candidate")
+            fi
+        done
+    fi
+fi
+
+if (( $#managed )); then
     local -x TMPDIR="$XDG_CACHE_HOME/chezmoi"
     [[ ! -d "$TMPDIR" ]] && command mkdir -p "$TMPDIR"
     command nvim "$target"
-    command chezmoi re-add "$target" &!
+    command chezmoi re-add "${managed[@]}" &!
     return
 fi
 
