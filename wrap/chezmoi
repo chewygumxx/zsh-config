@@ -17,10 +17,10 @@
 emulate -L zsh
 setopt local_options re_match_pcre
 
-local __this__file="${(D)${${(%):-%N}:A}}"
+local __this_file="${(D)${${(%):-%N}:A}}"
 
 if (( ! $+commands[chezmoi] )); then
-    print -u2 -f "%s: [%s] %s" "${__this_file}" FATAL "Command not found: chezmoi"
+    print -u2 -f "%s: [%s] %s\n" "${__this_file}" FATAL "Command not found: chezmoi"
     return 127
 fi
 

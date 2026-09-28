@@ -140,9 +140,23 @@
 }
 
 @test 'chezmoi names itself in its command-not-found diagnostic' {
-    skip 'wrap/chezmoi:20 assigns __this__file with two underscores while
-        line 23 interpolates __this_file, so the FATAL message is emitted with
-        an empty prefix'
+    load_shell_function chezmoi
+
+    # PATH is emptied inside a helper so it is restored on return, and the
+    # command hash cleared on both sides so neither lookup is stale.
+    function __probe_no_chezmoi() {
+        local PATH="$TMP/empty"
+        hash -r
+        chezmoi
+    }
+
+    run __probe_no_chezmoi
+
+    unfunction __probe_no_chezmoi
+    hash -r
+
+    assert $state equals 127
+    assert "$output" contains 'chezmoi: [FATAL] Command not found: chezmoi'
 }
 
 @test 'sv names itself in its termux-only diagnostic' {
