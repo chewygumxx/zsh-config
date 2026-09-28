@@ -287,3 +287,16 @@
 
     assert "$output" is_greater_than 0
 }
+
+@test 'The chezmoi aliases name real subcommands' {
+    local bin="$SANDBOX/stub-bin"
+    mkdir -p -- "$bin"
+    print -rl -- '#!/bin/sh' 'exit 0' > "$bin/chezmoi"
+    chmod 0755 -- "$bin/chezmoi"
+
+    local PATH="$bin:$PATH"
+
+    run sandbox_zsh_stdout "$SANDBOX" -i -c 'print -r -- $aliases[czd]'
+
+    assert "$output" same_as 'cz destroy'
+}

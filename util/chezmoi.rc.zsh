@@ -41,7 +41,7 @@ alias cza="cz add"
 alias czr="cz re-add"
 alias czp="cz apply"
 alias czf="cz forget"
-alias czd="cz destory"
+alias czd="cz destroy"
 
 # Captured out here, where %N names this file. Inside the function below it
 # names the function, `(anon)`, so the freshness test compared against a path
