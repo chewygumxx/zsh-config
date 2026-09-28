@@ -367,3 +367,12 @@
 
     assert "$output" is_empty
 }
+
+@test 'Termux named directories hold clean paths' {
+    local -a SANDBOX_ENV=(TERMUX_VERSION=0.118)
+
+    run sandbox_zsh_stdout "$SANDBOX" -i -c \
+        'print -r -- $nameddirs[emul] $nameddirs[edl]'
+
+    assert "$output" same_as '/storage/emulated/0 /storage/emulated/0/Download'
+}
