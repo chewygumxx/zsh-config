@@ -160,9 +160,15 @@
 }
 
 @test 'sv names itself in its termux-only diagnostic' {
-    skip 'wrap/sv:16 assigns __this_file while line 24 interpolates
-        __this__file with two underscores, so the message is emitted with an
-        empty prefix. The exact mirror of the wrap/chezmoi defect'
+    load_shell_function sv
+
+    local TERMUX_VERSION
+    unset TERMUX_VERSION
+
+    run sv
+
+    assert $state equals 1
+    assert "$output" contains 'sv: This function is termux exclusive'
 }
 
 @test 'nvim passes a lone option straight through' {
