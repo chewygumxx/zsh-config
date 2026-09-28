@@ -230,3 +230,18 @@
 
     assert "$output" contains 'paged:help text'
 }
+
+@test 'claude starts quietly outside a git repository' {
+    stub_command claude "$TMP/bin" \
+        'printf "%s\n" "$CLAUDE_CODE_PROJECT_DIR_NAME"'
+    load_shell_function claude
+
+    local CLAUDE_CONFIG_DIR="$TMP/claude" CLAUDE_CODE_PROJECT_DIR_NAME
+    unset CLAUDE_CODE_PROJECT_DIR_NAME
+
+    local diagnostics
+    # shuck: disable=C085
+    diagnostics="$(cd -- "$TMP" && claude 2>&1 1> /dev/null)"
+
+    assert "$diagnostics" is_empty
+}

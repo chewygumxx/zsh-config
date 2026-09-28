@@ -36,7 +36,10 @@ fi
 if [[ ! -v CLAUDE_CODE_PROJECT_DIR_NAME ]]; then
     local git_origin{,_trim} git_slug
 
-    git_origin="$(git -C "$PWD" remote get-url origin)"
+    # Quiet on purpose. Outside a repository, or in one without an origin, git
+    # printed its complaint on every launch; the fallback name below already
+    # covers both cases.
+    git_origin="$(command git -C "$PWD" remote get-url origin 2> /dev/null)"
     git_origin_trim="${${git_origin##*:}%\.git}"
     git_slug="${(j:_:)${${(s:/:)git_origin_trim}[-2,-1]}}"
     git_slug="${git_slug// /_}"
