@@ -220,3 +220,13 @@
 
     assert "$result" same_as "$TMP/home/.local/share/Trash"
 }
+
+@test 'gh help accepts a pager given with arguments' {
+    stub_command gh "$TMP/bin" 'printf "%s\n" "help text"'
+    load_shell_function gh
+
+    local HELPPAGER='sed s/^/paged:/'
+    run gh help
+
+    assert "$output" contains 'paged:help text'
+}
