@@ -349,3 +349,21 @@
 
     assert "$output" is_greater_than 0
 }
+
+@test 'An interactive shell writes no byte to stdout' {
+    local -i bytes
+    bytes=$(sandbox_zsh_stdout "$SANDBOX" -i -c exit | wc -c)
+
+    assert $bytes equals 0
+}
+
+@test 'Every function file is marked for autoload' {
+    run sandbox_zsh_stdout "$SANDBOX" -i -c '
+        local name
+        for name in $zsh_dirs[func]/*(N.:t) $zsh_dirs[wrap]/*(N.:t); do
+            (($+functions[$name])) || print -r -- "not autoloaded: $name"
+        done
+    '
+
+    assert "$output" is_empty
+}
