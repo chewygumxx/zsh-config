@@ -4,7 +4,7 @@
 
 #
 #
-# ~chewygumxx/nvim-config.git
+# ~chewygumxx/zsh-config.git
 # ::: :/.claude/hooks/install-deps.sh
 #
 #
