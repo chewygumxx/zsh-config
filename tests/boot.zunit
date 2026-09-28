@@ -300,3 +300,29 @@
 
     assert "$output" same_as 'cz destroy'
 }
+
+@test 'The bat help pager leaves a human-readable -h alone' {
+    local bin="$SANDBOX/stub-bin"
+    mkdir -p -- "$bin"
+    print -rl -- '#!/bin/sh' 'exit 0' > "$bin/bat"
+    chmod 0755 -- "$bin/bat"
+
+    local PATH="$bin:$PATH"
+
+    # zle is shadowed by a no-op, so the widget can be driven outside the line
+    # editor and its rewrite of BUFFER read back.
+    run sandbox_zsh_stdout "$SANDBOX" -i -c '
+        function zle() { : }
+        for BUFFER in "df -h" "sudo du -h" "git -h" "git --help"; do
+            _zle_accept_line_help_bat
+            print -r -- "$BUFFER"
+        done
+    '
+
+    local -a lines=("${(@f)output}")
+
+    assert "$lines[1]" same_as 'df -h'
+    assert "$lines[2]" same_as 'sudo du -h'
+    assert "$lines[3]" same_as 'git -h 2>&1 | bat --language=help'
+    assert "$lines[4]" same_as 'git --help 2>&1 | bat --language=help'
+}
