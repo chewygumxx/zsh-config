@@ -1,0 +1,65 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/func/__plugin_clone
+#
+#
+#
+# Make sure the plugin named by a GitHub owner/repo slug is present under
+# $zsh_dirs[plugin], cloning it when its entry point is not readable. Returns 0
+# only when <repo>.plugin.zsh is readable afterwards, so a caller can write:
+#
+#   __plugin_clone zsh-users/zsh-completions && source "$plugin_file"
+#
+# Shared by rc/plugin.rc.zsh and rc/completion.rc.zsh, which each used to carry
+# a clone routine of their own and disagreed on what "installed" meant.
+#
+
+emulate -L zsh
+
+local slug="$1"
+
+# Checked strictly, because the directory derived from it may be deleted below.
+# A slug such as "owner/" once yielded an empty plugin name, and with it the
+# plugin directory itself as the path to replace.
+local -a parts=("${(@s:/:)slug}")
+if (($#parts != 2)) || [[ -z "$parts[1]" || -z "$parts[2]" ]]; then
+    print -u2 -f '%s: [%s] %s\n' "$0" "ERROR" "Not an owner/repo slug: '$slug'"
+    return 1
+fi
+
+zsh_dirs_require "$0" plugin || return 1
+
+local plugin="$parts[2]"
+local plugin_dir="$zsh_dirs[plugin]/$plugin"
+local plugin_file="$plugin_dir/$plugin.plugin.zsh"
+
+# Installed means the entry point is readable, not merely that the directory
+# exists. A clone interrupted part way leaves the directory behind.
+[[ -r "$plugin_file" ]] && return 0
+
+# Cloned beside the final path and moved into place only once complete. git
+# refuses to clone into a directory that already exists and is not empty, which
+# is exactly what an interrupted clone leaves behind, so cloning straight into
+# plugin_dir could never repair one: it failed on every start instead.
+local staging="$plugin_dir.clone.$$"
+command rm -rf -- "$staging"
+
+if ! command git clone -- "https://github.com/$slug.git" "$staging"; then
+    command rm -rf -- "$staging"
+    print -u2 -f '%s: [%s] %s\n' "$0" "ERROR" "Failed to clone plugin: $slug"
+    return 1
+fi
+
+if [[ ! -r "$staging/$plugin.plugin.zsh" ]]; then
+    command rm -rf -- "$staging"
+    print -u2 -f '%s: [%s] %s\n' "$0" "ERROR" \
+        "Plugin entry point not found in clone: $plugin.plugin.zsh"
+    return 1
+fi
+
+command rm -rf -- "$plugin_dir" &&
+    command mv -- "$staging" "$plugin_dir"

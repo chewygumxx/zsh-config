@@ -14,23 +14,22 @@
 local __this_file="${(D)${${(%):-%N}:A}}"
 
 # Variable ls_colors is declared elsewhere, in rc/ls_colors.rc.zsh
-zsh_dirs_require "$__this_file" cache cache_zstylecomp comp share_comp plugin ||
-    return 1
+zsh_dirs_require "$__this_file" \
+    cache cache_zstylecomp comp share_comp plugin func || return 1
 
 # ---------------
 # Populate fpath
 # ---------------
 
-function __download_plugin() {
-    local slug="$1"
-    local plugin="${slug##*/}"
+# Loaded by path rather than through fpath. func/ is deliberately not on fpath
+# yet: rc/function.rc.zsh adds it after compinit has indexed a minimal one.
+#
+# This used to be a local __download_plugin that tested only whether the
+# directory existed, so an interrupted clone was treated as complete forever,
+# the same fault rc/plugin.rc.zsh had already been fixed for.
+autoload -Uz "$zsh_dirs[func]/__plugin_clone"
 
-    if [[ ! -d "$zsh_dirs[plugin]/$plugin" ]]; then
-        git clone "https://github.com/$slug.git" "$zsh_dirs[plugin]/$plugin"
-    fi
-}
-
-__download_plugin "zsh-users/zsh-completions"
+__plugin_clone "zsh-users/zsh-completions"
 fpath+=(
     "$zsh_dirs[share_comp]"
     "$zsh_dirs[comp]"
@@ -105,8 +104,8 @@ if (($+commands[fzf])); then
     # Do not source anything that overwrites <Tab> bindkey.
     # (Don't source junegunn/fzf/completion.zsh, only jungunn/fzf/key-bindings.zsh)
 
-    __download_plugin "aloxaf/fzf-tab"
-    source "$zsh_dirs[plugin]/fzf-tab/fzf-tab.plugin.zsh"
+    __plugin_clone "aloxaf/fzf-tab" &&
+        source "$zsh_dirs[plugin]/fzf-tab/fzf-tab.plugin.zsh"
 
     # Escape sequences, like '%F{blue}%d%f', will be ignored by fzf-tab
     zstyle ':completion:*:descriptions' format '[%d]'
@@ -136,5 +135,3 @@ else
     bindkey -M menuselect '^j' vi-down-line-or-history
     bindkey -M menuselect '^l' vi-forward-char
 fi
-
-unset -f __download_plugin

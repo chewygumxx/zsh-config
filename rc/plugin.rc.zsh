@@ -35,29 +35,12 @@ for spec in "$zsh_dirs[spec]"/*(N.); do
             continue
         fi
 
+        # Cloned when missing or incomplete by func/__plugin_clone, which also
+        # validates the slug and reports every failure on stderr itself.
+        __plugin_clone "$slug" || continue
+
         local plugin="${slug#*/}"
-        local plugin_dir="$zsh_dirs[plugin]/$plugin"
-        local plugin_file="$plugin_dir/$plugin.plugin.zsh"
-
-        # Installed means the entry point is readable, not merely that the
-        # directory exists. A clone interrupted part way leaves the directory
-        # behind, and testing -d alone treated that as permanently complete, so
-        # the plugin silently never loaded again and was never re-cloned.
-        if [[ ! -r "$plugin_file" ]]; then
-            if ! command git clone \
-                "https://github.com/$slug.git" \
-                "$plugin_dir"; then
-                print -u2 -f '%s: [%s] %s\n' "$__this_file" "ERROR" \
-                    "Failed to clone plugin: $slug"
-                continue
-            fi
-        fi
-
-        if [[ ! -r "$plugin_file" ]]; then
-            print -u2 -f '%s: [%s] %s\n' "$__this_file" "ERROR" \
-                "Plugin entry point not readable: $plugin_file"
-            continue
-        fi
+        local plugin_file="$zsh_dirs[plugin]/$plugin/$plugin.plugin.zsh"
 
         source "$plugin_file"
     }

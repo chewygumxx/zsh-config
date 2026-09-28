@@ -143,3 +143,58 @@
     assert $state equals 1
     assert "$output" does_not_contain 'stub:'
 }
+
+#
+# __plugin_clone calls zsh_dirs_require, which env/zsh_dirs.env.zsh defines.
+# That file cannot be sourced here without creating directories under the real
+# XDG tree, so a stand-in accepting every key is defined for these tests alone.
+#
+
+@test '__plugin_clone repairs an interrupted clone' {
+    stub_command git "$TMP/bin" \
+        'for a; do dest="$a"; done' \
+        'mkdir -p "$dest" && : > "$dest/demo.plugin.zsh"'
+    load_shell_function __plugin_clone
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([plugin]="$TMP/plugins")
+
+    # What an interrupted clone leaves: the directory, but no entry point.
+    mkdir -p -- "$TMP/plugins/demo/.git"
+
+    run __plugin_clone owner/demo
+
+    unfunction zsh_dirs_require
+
+    assert $state equals 0
+    assert "$TMP/plugins/demo/demo.plugin.zsh" is_file
+}
+
+@test '__plugin_clone leaves the old directory when a clone fails' {
+    stub_command git "$TMP/bin" 'exit 128'
+    load_shell_function __plugin_clone
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([plugin]="$TMP/plugins")
+    mkdir -p -- "$TMP/plugins/demo/.git"
+
+    run __plugin_clone owner/demo
+
+    unfunction zsh_dirs_require
+
+    local -a staging=("$TMP"/plugins/demo.clone.*(N))
+
+    assert $state equals 1
+    assert "$output" contains 'Failed to clone plugin: owner/demo'
+    assert "$TMP/plugins/demo/.git" is_dir
+    assert ${#staging} equals 0
+}
+
+@test '__plugin_clone rejects a malformed slug' {
+    load_shell_function __plugin_clone
+
+    run __plugin_clone owner/
+
+    assert $state equals 1
+    assert "$output" contains 'Not an owner/repo slug'
+}

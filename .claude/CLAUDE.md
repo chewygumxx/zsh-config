@@ -142,12 +142,19 @@ readable, not merely when its directory exists. Testing the directory alone
 treated a clone interrupted part way as permanently complete, so the plugin
 silently never loaded again and was never re-cloned.
 
+Cloning is done by `func/__plugin_clone`, which clones into a staging directory
+beside the plugin and moves it into place only once the entry point is present.
+Cloning straight into the plugin directory cannot repair an interrupted clone,
+because `git clone` refuses a destination that exists and is not empty.
+
 Neither the spec nor the plugin is sourced with stderr redirected. Discarding
 those errors was the single largest reason breakage in this repo stayed
 invisible.
 
 `rc/completion.rc.zsh` clones `zsh-users/zsh-completions` and `aloxaf/fzf-tab`
-directly, bypassing `spec/` entirely.
+itself, bypassing `spec/` entirely, though through the same helper. It
+autoloads that helper by path, since `func/` is not on `fpath` until
+`rc/function.rc.zsh` runs after it.
 
 ## Conventions
 
