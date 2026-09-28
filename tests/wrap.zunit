@@ -74,6 +74,7 @@
 
     unalias del
 
+    assert $state equals 1
     assert "$output" contains 'gtrash'
     assert "$TMP/victim" is_file
 }
