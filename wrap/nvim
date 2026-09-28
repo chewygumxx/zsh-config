@@ -66,8 +66,11 @@ fi
 # module's own `stat` builtin cannot shadow /usr/bin/stat for the session.
 zmodload -F zsh/stat b:zstat
 
+# zstat follows symlinks, so a link to a root-owned file lands here too.
+# sudoedit refuses to open a path through a symlink unless sudoers sets
+# sudoedit_follow, so it is handed the resolved path instead.
 if (( $(zstat +uid "$target") == 0 )); then
-    SUDO_EDITOR=nvim command sudoedit "$target"
+    SUDO_EDITOR=nvim command sudoedit "${target:A}"
     return
 fi
 
@@ -93,10 +96,11 @@ fi
 # `chezmoi source-path` is itself a chezmoi process and asking it here would
 # reintroduce the wait. The default location stands in until a rebuild has
 # recorded the real one.
-local -i managed=0
+local -a managed=()
 
 if (( $+commands[chezmoi] )); then
-    local cache_dir="${zsh_dirs[cache]:-${XDG_CACHE_HOME:-$HOME/.local/cache}/zsh}/nvim"
+    local cache_root="${XDG_CACHE_HOME:-$HOME/.local/cache}/zsh"
+    local cache_dir="${zsh_dirs[cache]:-$cache_root}/nvim"
     local cache="$cache_dir/chezmoi-managed"
     local source_dir="${XDG_DATA_HOME:-$HOME/.local/share}/chezmoi"
 
@@ -139,20 +143,36 @@ if (( $+commands[chezmoi] )); then
                 && command mv -f -- "$tmp_source" "$cache.source" \
                 && command mv -f -- "$tmp" "$cache"
 
-            command rm -f -- ${stamp:+"$stamp"} ${tmp:+"$tmp"} ${tmp_source:+"$tmp_source"}
+            command rm -f -- \
+                ${stamp:+"$stamp"} ${tmp:+"$tmp"} ${tmp_source:+"$tmp_source"}
         } < /dev/null > /dev/null 2>&1 &!
     fi
 
-    if [[ -s "$cache" ]] && (( ${${(f)"$(<"$cache")"}[(Ie)$target]} )); then
-        managed=1
+    # Both the path as given and the one it resolves to are looked up. ${1:a}
+    # above only tidies the path and leaves symlinks alone, so a link to a
+    # managed file, or a file reached through a linked directory, never
+    # matched the list on its own. The given path is still kept: chezmoi can
+    # manage the link itself, and Neovim is still opened on the path as typed.
+    # Every match is re-added below, since editing through a managed link
+    # writes to its target, which may be managed in its own right.
+    if [[ -s "$cache" ]]; then
+        local -a managed_paths=("${(@f)$(<"$cache")}")
+        local candidate
+
+        for candidate in "$target" "${target:A}"; do
+            if (( ${managed_paths[(Ie)$candidate]} \
+                && ! ${managed[(Ie)$candidate]} )); then
+                managed+=("$candidate")
+            fi
+        done
     fi
 fi
 
-if (( managed )); then
+if (( $#managed )); then
     local -x TMPDIR="$XDG_CACHE_HOME/chezmoi"
     [[ ! -d "$TMPDIR" ]] && command mkdir -p "$TMPDIR"
     command nvim "$target"
-    command chezmoi re-add "$target" &!
+    command chezmoi re-add "${managed[@]}" &!
     return
 fi
 
