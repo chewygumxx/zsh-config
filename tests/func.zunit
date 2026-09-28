@@ -198,3 +198,12 @@
     assert $state equals 1
     assert "$output" contains 'Not an owner/repo slug'
 }
+
+@test '__slugify collapses runs without the caller setting extended_glob' {
+    setopt local_options no_extended_glob
+    load_shell_function __slugify
+
+    run __slugify 'a   b'
+
+    assert "$output" same_as a_b
+}
