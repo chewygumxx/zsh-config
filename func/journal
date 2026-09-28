@@ -18,7 +18,7 @@ if [[ -n $1 ]]; then
     suffix="_${safe}"
 fi
 
-journal_dir="$HOME/doc/journal"
+local journal_dir="$HOME/doc/journal"
 local entry_path="$journal_dir/$(date +%Y-%m-%d)$suffix.txt"
 
 echo -e "\e[35mJournaling to \e[32m${(D)entry_path}\e[0m"
