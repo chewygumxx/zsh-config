@@ -42,6 +42,12 @@ alias czr="cz re-add"
 alias czp="cz apply"
 alias czf="cz forget"
 alias czd="cz destory"
+
+# Captured out here, where %N names this file. Inside the function below it
+# names the function, `(anon)`, so the freshness test compared against a path
+# that never exists: -ot is false whenever either file is missing, and an edit
+# to this file never triggered a rebuild.
+local __this_file="${${(%):-%N}:A}"
 () {
     local comp_file="$zsh_dirs[cache_comp]/_chezmoi"
 
@@ -51,7 +57,7 @@ alias czd="cz destory"
     #  - Older than this file
     if [[ ! -r "$comp_file" ]] ||
         [[ "$comp_file" -ot "$commands[chezmoi]" ]] ||
-        [[ "$comp_file" -ot "${${(%):-%N}:A}" ]]; then
+        [[ "$comp_file" -ot "$__this_file" ]]; then
         print -u2 "Regenerating chezmoi completion file"
         \builtin command chezmoi completion zsh >| "$comp_file"
     fi

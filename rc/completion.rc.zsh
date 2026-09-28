@@ -15,7 +15,7 @@ local __this_file="${(D)${${(%):-%N}:A}}"
 
 # Variable ls_colors is declared elsewhere, in rc/ls_colors.rc.zsh
 zsh_dirs_require "$__this_file" \
-    cache cache_zstylecomp comp share_comp plugin func || return 1
+    cache cache_comp cache_zstylecomp comp share_comp plugin func || return 1
 
 # ---------------
 # Populate fpath
@@ -30,9 +30,13 @@ zsh_dirs_require "$__this_file" \
 autoload -Uz "$zsh_dirs[func]/__plugin_clone"
 
 __plugin_clone "zsh-users/zsh-completions"
+# cache_comp holds completion functions generated from a tool's own output, such
+# as the _chezmoi that util/chezmoi.rc.zsh writes. It was never on fpath, so
+# those files were regenerated faithfully and never once loaded.
 fpath+=(
     "$zsh_dirs[share_comp]"
     "$zsh_dirs[comp]"
+    "$zsh_dirs[cache_comp]"
     "$zsh_dirs[plugin]/zsh-completions/src"
 )
 

@@ -280,3 +280,10 @@
 
     assert "$output" contains vi-backward-char
 }
+
+@test 'Generated completions are on fpath' {
+    run sandbox_zsh_stdout "$SANDBOX" -i -c \
+        'print -r -- ${fpath[(Ie)$zsh_dirs[cache_comp]]}'
+
+    assert "$output" is_greater_than 0
+}
