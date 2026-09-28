@@ -46,7 +46,6 @@ fpath+=(
 
 # Provides 'menuselect' keymap. Must be loaded before compinit call
 zmodload zsh/complist
-_comp_options+=(globdots)
 
 autoload -Uz compinit
 setopt list_types extended_glob
@@ -90,6 +89,11 @@ fi
 # ---------------
 # Post compinit
 # ---------------
+
+# After compinit, not before it. compinit assigns _comp_options outright, so an
+# addition made ahead of the call was discarded, and completion only offered
+# dotfiles because .zshrc happens to set globdots for the whole shell.
+_comp_options+=(globdots)
 
 zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path "$zsh_dirs[cache_zstylecomp]"

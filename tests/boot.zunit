@@ -342,3 +342,10 @@
 
     assert "$output" same_as 'unset unset'
 }
+
+@test 'Completion matches dotfiles by its own options' {
+    run sandbox_zsh_stdout "$SANDBOX" -i -c \
+        'print -r -- ${_comp_options[(Ie)globdots]}'
+
+    assert "$output" is_greater_than 0
+}
