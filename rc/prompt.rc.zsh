@@ -47,7 +47,7 @@ setopt prompt_percent
     local shell_level="%($((2 + herdr_offset))L.%F{#ec5f66} <$((SHLVL - herdr_offset))>%f.)"
 
     local curr_work_dir=" %F{magenta}%(#.%d.%~)%f" # If root, /absolute/path, otherwise ~named/path
-    local background_jobs="%(1j.%F{2} [%B%j%b].)"
+    local background_jobs="%(1j.%F{2} [%B%j%b]%f.)"
     local exit_code="%(?..%F{red}%B %?%b%f)" # Exit Code (if not zero)
 
     local -a __ps1_mods=(
