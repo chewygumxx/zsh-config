@@ -188,3 +188,21 @@
 
     assert "$lines[1]" same_as -u
 }
+
+@test 'chezmoi help adds its own section exactly once' {
+    stub_command chezmoi "$TMP/bin" \
+        'printf "S1\n\nS2\n\nS3\n\nS4\n"'
+    stub_command bat "$TMP/bin" 'exec cat'
+    stub_command less "$TMP/bin" 'exec cat'
+    load_shell_function chezmoi
+
+    local result
+    result="$(chezmoi help 2> /dev/null)"
+
+    local -a sections=("${(@ps:\n\n:)result}")
+
+    assert "$sections[3]" same_as S3
+    assert "$sections[4]" contains '[cgxx] Alias management'
+    assert "$sections[5]" same_as S4
+    assert ${#sections} equals 5
+}
