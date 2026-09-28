@@ -145,3 +145,46 @@
 
     assert "$result" same_as -
 }
+
+@test 'eza keeps an option value beside its option' {
+    stub_command eza "$TMP/bin"
+    load_shell_function eza
+
+    local -a __eza_opts=() __eza_ignore_glob=()
+    local result
+    result="$(cd -- "$TMP" && eza --level 2 /tmp 2> /dev/null)"
+
+    local -a lines=("${(@f)result}")
+
+    assert "$lines[1]" same_as --level
+    assert "$lines[2]" same_as 2
+    assert "$lines[-1]" same_as /tmp
+    assert "$result" does_not_contain "$TMP/2"
+}
+
+@test 'eza counts the l in a cluster of short flags' {
+    stub_command eza "$TMP/bin"
+    load_shell_function eza
+
+    local -a __eza_opts=() __eza_ignore_glob=()
+    local result
+    result="$(cd -- "$TMP" && eza -la /tmp 2> /dev/null)"
+
+    local -a lines=("${(@f)result}")
+
+    assert "$lines[1]" same_as -a
+    assert "$result" contains --header
+}
+
+@test 'eza passes -u on to eza as --accessed' {
+    stub_command eza "$TMP/bin"
+    load_shell_function eza
+
+    local -a __eza_opts=() __eza_ignore_glob=()
+    local result
+    result="$(cd -- "$TMP" && eza -u /tmp 2> /dev/null)"
+
+    local -a lines=("${(@f)result}")
+
+    assert "$lines[1]" same_as -u
+}

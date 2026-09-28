@@ -57,20 +57,77 @@ local -a opts=($__eza_opts)
 local -a args=()
 local -i ignore=1
 local -i long=0
+local flags kept
+local -i value_next
 
+# Options that take a value as a separate word are kept together with it. The
+# catch-all -* branch used to take the option alone, so the 2 of
+# `lt --level 2` fell through to the operands and was listed as $PWD/2.
+#
+# The wrapper's own switch is --unignore only. It used to claim -u as well,
+# which is eza's short form of --accessed, so that could never be passed on.
 while (($#)); do
     case "$1" in
-    -u | --unignore)
+    --)
+        shift
+        args+=("$@")
+        break
+        ;;
+    --unignore)
         ignore=0
         ;;
-    -l | --long)
+    --long)
         long+=1
         ;;
-    -T | --tree)
+    --tree)
         opts+=("$1" --git-ignore)
         ;;
-    -*)
+    --level | --sort | --time | --time-style | --ignore-glob | --width)
         opts+=("$1")
+        if (($# > 1)); then
+            opts+=("$2")
+            shift
+        fi
+        ;;
+    --*)
+        opts+=("$1")
+        ;;
+    -?*)
+        # A cluster of short flags, such as -la, is taken apart one letter at a
+        # time. Only a bare -l or -T used to be recognised, so -la was passed
+        # through uncounted. Each l is counted exactly as --long is, a T brings
+        # --git-ignore as --tree does, and the first letter that takes a value
+        # ends the cluster: the rest of it is that value, or the next word is.
+        flags="${1#-}"
+        kept=""
+        value_next=0
+        while [[ -n "$flags" ]]; do
+            case "$flags[1]" in
+            l)
+                long+=1
+                ;;
+            T)
+                kept+=T
+                opts+=(--git-ignore)
+                ;;
+            [LstIw])
+                kept+="$flags"
+                ((${#flags} == 1)) && value_next=1
+                break
+                ;;
+            *)
+                kept+="$flags[1]"
+                ;;
+            esac
+            flags="$flags[2,-1]"
+        done
+
+        [[ -n "$kept" ]] && opts+=("-$kept")
+
+        if ((value_next && $# > 1)); then
+            opts+=("$2")
+            shift
+        fi
         ;;
     *)
         args+=("$1")
