@@ -245,3 +245,16 @@
 
     assert "$diagnostics" is_empty
 }
+
+@test 'systemd-run accepts a command given by path' {
+    stub_command systemd-run "$TMP/bin"
+    load_shell_function systemd-run
+
+    print -rl -- '#!/bin/sh' 'exit 0' > "$TMP/job"
+    chmod 0755 -- "$TMP/job"
+
+    run systemd-run "$TMP/job"
+
+    assert $state equals 0
+    assert "$output" contains "$TMP/job"
+}
