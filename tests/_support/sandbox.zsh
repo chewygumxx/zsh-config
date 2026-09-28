@@ -13,10 +13,10 @@
 # Builds a throwaway HOME pointed at this checkout, so the suite never reads or
 # writes the live config, cache, history or plugin clones.
 #
-# Setting ZDOTDIR alone is not enough. env/base.env.zsh and env/ssh.env.zsh
-# read XDG_DATA_HOME and XDG_RUNTIME_DIR with no fallback, and
-# env/zsh_dirs.env.zsh derives its cache, data and state trees from the XDG
-# variables rather than from ZDOTDIR, so every one of them has to be set.
+# Setting ZDOTDIR alone is not enough. env/zsh_dirs.env.zsh derives its cache,
+# data and state trees from the XDG variables rather than from ZDOTDIR, so every
+# one of them is set, and none can be inherited from the calling shell and point
+# at the live tree. sandbox_zsh_bare below is the deliberate exception.
 #
 # Nothing here exports into the calling shell. zunit runs every test as a
 # function inside one process, so an exported variable would leak into each
@@ -211,4 +211,25 @@ function sandbox_zsh_stdout() {
     emulate -L zsh
 
     sandbox_zsh "$@" 2> /dev/null
+}
+
+#
+# Run zsh against a sandbox with no XDG variable set at all, as a bare TTY
+# login, a rescue shell or a container can leave it. Only HOME, PATH, TERM,
+# SHELL and ZDOTDIR are passed, so every XDG fallback in the configuration is
+# exercised. The fallbacks name the same directories sandbox_create made.
+#
+function sandbox_zsh_bare() {
+    emulate -L zsh
+
+    local root="$1"
+    shift
+
+    env -i \
+        HOME="$root" \
+        PATH="$PATH" \
+        TERM="${TERM:-dumb}" \
+        SHELL="${commands[zsh]:-/usr/bin/zsh}" \
+        ZDOTDIR="$root/.config/zsh" \
+        zsh "$@"
 }

@@ -355,10 +355,13 @@ reverse. Remove the skip along with the fix.
 ### Sandboxing
 
 `sandbox_create` builds a scratch `HOME`, symlinks the checkout to
-`$XDG_CONFIG_HOME/zsh`, and sets every XDG variable. Setting `ZDOTDIR` alone is
-not enough, because `env/base.env.zsh` and `env/ssh.env.zsh` read
-`XDG_DATA_HOME` and `XDG_RUNTIME_DIR` with no fallback. Directories are created
-`0755` so that nothing the fixture makes is ever world-writable.
+`$XDG_CONFIG_HOME/zsh`, and sets every XDG variable, so that no value inherited
+from the calling shell can point the configuration at the live tree.
+`sandbox_zsh_bare` passes no XDG variable at all, which is how
+`tests/env.zunit` proves that every XDG read has a fallback: unset, those
+variables once collapsed paths to root-relative ones such as `/cargo/bin`.
+Directories are created `0755` so that nothing the fixture makes is ever
+world-writable.
 
 `rc/completion.rc.zsh` passes `compinit -i`, and that flag is load-bearing.
 Without it a single world-writable directory anywhere on `fpath`, including one
