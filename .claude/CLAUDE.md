@@ -356,6 +356,12 @@ that `compinit -C` skips the audit entirely, so the fault only appears on a cold
 cache. `tests/boot.zunit` pins it with a sandbox of its own, left deliberately
 unwarmed for that reason.
 
+`-i` alone did not fix CI. Debian and Ubuntu ship an `/etc/zsh/zshrc` that runs
+a bare `compinit` before `$ZDOTDIR/.zshrc`, so the abort came from that call
+instead. `.zshenv` sets `skip_global_compinit=1`, the documented opt-out, and
+that is equally load-bearing. Arch ships no such file, so it never reproduces
+locally; on an Ubuntu box, `chmod 0777` a system `fpath` directory to see it.
+
 Nothing in the fixture exports into the calling shell. zunit runs every test as
 a function inside one process, so an exported variable would leak into each
 later test; `sandbox_zsh` passes the environment explicitly through `env -i`

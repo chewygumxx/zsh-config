@@ -81,10 +81,9 @@ function sandbox_create() {
     local data="$root/.local/share"
     local state="$root/.local/state"
 
-    # 0755 throughout, and never group or world writable. On the branch where
-    # the completion dump is stale, rc/completion.rc.zsh calls compinit with
-    # neither -i nor -u, so a loosely permissioned directory anywhere on fpath
-    # makes it report insecure directories and, on a terminal, stop to ask.
+    # 0755 throughout, and never group or world writable. compinit audits every
+    # directory on fpath whenever the completion dump is stale, so nothing the
+    # fixture makes should be one it has cause to skip.
     chmod 0755 -- "$root" || return 1
 
     mkdir -p -m 0755 -- \
