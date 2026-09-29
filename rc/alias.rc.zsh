@@ -10,7 +10,8 @@
 #
 
 #
-# Function file 'func/als' groups aliases
+# Aliases may also be grouped by the zsh-als plugin, which spec/zsh-als.spec.zsh
+# declares and currently leaves disabled. There is no func/als.
 #
 
 local __this_file="${(D)${${(%):-%N}:A}}"

@@ -65,8 +65,7 @@ for ext in "avi" "m4v" "mkv" "mov" "mp4" "mpeg" "mpg" "webm"; do
     ls_colors+=("*.$ext=$color[bold];$color[magenta]")
 done
 
-typeset -gx  LS_COLORS
-
+typeset -gx LS_COLORS
 
 typeset -gx ZLS_COLORS="$LS_COLORS"
 typeset -gx EZA_COLORS="$LS_COLORS"
