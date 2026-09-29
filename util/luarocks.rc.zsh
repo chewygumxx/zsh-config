@@ -16,6 +16,8 @@
 
 # Captured out here, since $0 inside the function below is its own name.
 local __this_file="$0"
+
+zsh_dirs_require "${(D)__this_file}" cache_init || return 1
 () {
     # Declared inside a function, so version and init_cache, both generic
     # names, can no longer overwrite and then unset globals of the same name.

@@ -17,6 +17,8 @@
 
 local __this_file="$0"
 
+zsh_dirs_require "${(D)__this_file}" cache_init || return 1
+
 function __init_zoxide() {
     local _zo_exclude_dirs=(
         "$HOME"

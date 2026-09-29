@@ -156,7 +156,7 @@
     hash -r
 
     assert $state equals 127
-    assert "$output" contains 'chezmoi: [FATAL] Command not found: chezmoi'
+    assert "$output" contains 'wrap/chezmoi: [FATAL] Command not found: chezmoi'
 }
 
 @test 'sv names itself in its termux-only diagnostic' {
@@ -168,7 +168,7 @@
     run sv
 
     assert $state equals 1
-    assert "$output" contains 'sv: This function is termux exclusive'
+    assert "$output" contains 'wrap/sv: This function is termux exclusive'
 }
 
 @test 'nvim passes a lone option straight through' {

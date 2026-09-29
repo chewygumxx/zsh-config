@@ -26,28 +26,31 @@ setopt globdots
 # than trusting it. The label is expanded inline because .zshrc is sourced at top
 # level, where `local` is not available.
 zsh_dirs_require "${(D)${${(%):-%N}:A}}" rc util || return 1
-
-# (N) sets null_glob per pattern. Without it an empty rc/ or util/ raises
-# `no matches found`, which aborts the entire array literal below and leaves the
-# interactive shell with no aliases, no prompt and no history configuration.
-typeset -ga zshrcs
-zshrcs=("$zsh_dirs[rc]"/*.rc.zsh(N))
-
-# Each pattern is anchored to the final path component with */ and the full
-# filename. Matching a bare substring such as *completion* tests the whole
-# absolute path, so any config directory containing "completion", "function" or
-# "ls_colors" anywhere in its name would misclassify every file beneath it, and
-# a file matching two of the three patterns would be sourced twice.
-zshrcs=(
-    ${(M)zshrcs:#*/ls_colors.rc.zsh} # Provides for completion
-    ${(M)zshrcs:#*/completion.rc.zsh} # Minimise fpath for completion index
-    ${(M)zshrcs:#*/function.rc.zsh} # Provide function dependencies
-
-    ${zshrcs:#*/(ls_colors|completion|function).rc.zsh}
-
-    "${zsh_dirs[util]}"/*.rc.zsh(N)
-)
 () {
+    # (N) sets null_glob per pattern. Without it an empty rc/ or util/ raises
+    # `no matches found`, which aborts the entire array literal below and
+    # leaves the interactive shell with no aliases, no prompt and no history
+    # configuration. Local, so the list is not left behind in the shell.
+    #
+    # [^.]* rather than *, since globdots, set above, lets * match dotfiles.
+    local -a zshrcs=("$zsh_dirs[rc]"/[^.]*.rc.zsh(N))
+
+    # Each pattern is anchored to the final path component with */ and the full
+    # filename. Matching a bare substring such as *completion* tests the whole
+    # absolute path, so any config directory containing "completion",
+    # "function" or "ls_colors" anywhere in its name would misclassify every
+    # file beneath it, and a file matching two of the three patterns would be
+    # sourced twice.
+    zshrcs=(
+        ${(M)zshrcs:#*/ls_colors.rc.zsh} # Provides for completion
+        ${(M)zshrcs:#*/completion.rc.zsh} # Minimise fpath for completion index
+        ${(M)zshrcs:#*/function.rc.zsh} # Provide function dependencies
+
+        ${zshrcs:#*/(ls_colors|completion|function).rc.zsh}
+
+        "${zsh_dirs[util]}"/[^.]*.rc.zsh(N)
+    )
+
     local source
     for source in $zshrcs; do
 
