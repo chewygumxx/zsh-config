@@ -37,8 +37,11 @@ function zvm_config() {
     ZVM_CLIPBOARD_COPY_CMD="wl-copy --trim-newline"
     ZVM_CLIPBOARD_PASTE_CMD="wl-paste --no-newline"
 
-    ZVM_TMPDIR="$zsh_dirs[cache_zvm]"
-    mkdir -p "$ZVM_TMPDIR"
+    # Validated like every other reader of zsh_dirs. An unset key would read
+    # as empty, and ZVM_TMPDIR would then name the filesystem root.
+    if zsh_dirs_require zvm_config cache_zvm; then
+        ZVM_TMPDIR="$zsh_dirs[cache_zvm]"
+    fi
 
     ZVM_OPEN_CMD="handlr open"
     ZVM_OPEN_URL_CMD="firefox --new-tab"
