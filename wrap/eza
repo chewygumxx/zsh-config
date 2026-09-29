@@ -14,7 +14,9 @@
 # Dependent upon array variables: __eza_opts __eza_ignore_glob
 #
 
-local __this_file="${(D)${${(%):-%N}:a}}"
+# functions_source, not %N:A. In an autoloaded function %N is the bare
+# function name, so :A resolved it against $PWD rather than fpath.
+local __this_file="${(D)${functions_source[${(%):-%N}]:-${(%):-%N}}}"
 
 # A `local __eza_ignore_glob=($__eza_ignore_glob)` shadow used to stand here. It
 # brought the name into existence before the validation loop below ran, so the

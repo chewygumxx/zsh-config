@@ -19,6 +19,8 @@ if [[ -n $1 ]]; then
 fi
 
 local journal_dir="$HOME/doc/journal"
+# Created here, since the append below cannot create a missing parent.
+\builtin command mkdir -p -- "$journal_dir" || return
 local entry_path="$journal_dir/$(date +%Y-%m-%d)$suffix.txt"
 
 echo -e "\e[35mJournaling to \e[32m${(D)entry_path}\e[0m"

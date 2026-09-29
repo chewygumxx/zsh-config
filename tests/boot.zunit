@@ -391,3 +391,61 @@
 
     assert "$output" same_as '/storage/emulated/0 /storage/emulated/0/Download'
 }
+
+@test 'The loaders leave no file list behind' {
+    run sandbox_zsh_stdout "$SANDBOX" -i -c 'print -r -- $+zshenvs $+zshrcs'
+
+    assert "$output" same_as '0 0'
+}
+
+@test 'Stray dotfiles beside the config are not loaded' {
+    # .zshrc sets globdots, so a bare * in a loader also matched dotfiles: an
+    # editor swap file in spec/ was sourced, and one in rc/ or util/ too.
+    local conf
+    conf="$(sandbox_copy_config "$SANDBOX" dotfile-probe)"
+
+    print -r -- 'print -u2 PROBE-SPEC' > "$conf/spec/.probe.spec.zsh"
+    print -r -- 'print -u2 PROBE-RC' > "$conf/rc/.probe.rc.zsh"
+    print -r -- 'print -u2 PROBE-UTIL' > "$conf/util/.probe.rc.zsh"
+
+    run sandbox_zsh "$SANDBOX" -c "ZDOTDIR=${(q)conf} zsh -i -c exit"
+
+    assert "$output" does_not_contain 'PROBE-SPEC'
+    assert "$output" does_not_contain 'PROBE-RC'
+    assert "$output" does_not_contain 'PROBE-UTIL'
+}
+
+@test 'A stale completion dump is freshened by the next start' {
+    # compinit leaves a still-valid dump untouched, so without a touch its age
+    # kept growing and every start after the first day skipped compinit -C.
+    run sandbox_zsh_stdout "$SANDBOX" -c '
+        dump="$XDG_CACHE_HOME/zsh/zcompdump"
+        [[ -f "$dump" ]] || exit 1
+        touch -d "2 days ago" -- "$dump" || exit 1
+        zsh -i -c exit
+        local -a fresh=("$dump"(Nmh-1))
+        print -r -- ${#fresh}
+    '
+
+    assert "$output" equals 1
+}
+
+@test 'An empty chezmoi completion cache is regenerated' {
+    # The redirect that writes the cache truncates before chezmoi runs, so a
+    # failed run left an empty file, and a -r test accepted it from then on.
+    local bin="$SANDBOX/stub-bin"
+    mkdir -p -- "$bin"
+    print -rl -- '#!/bin/sh' 'echo "#compdef chezmoi"' > "$bin/chezmoi"
+    chmod 0755 -- "$bin/chezmoi"
+    touch -d '3 days ago' -- "$bin/chezmoi"
+
+    local PATH="$bin:$PATH"
+
+    run sandbox_zsh_stderr "$SANDBOX" -c '
+        comp="$XDG_CACHE_HOME/zsh/completions/_chezmoi"
+        : >| "$comp"
+        zsh -i -c exit
+    '
+
+    assert "$output" contains 'Regenerating chezmoi completion file'
+}

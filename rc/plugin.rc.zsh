@@ -17,8 +17,11 @@ zsh_dirs_require "$__this_file" spec plugin || return 1
 # tests/boot.zunit can compare it against spec/ rather than a list of its own.
 typeset -ga zsh_plugins_loaded=()
 
+# [^.]* rather than *, and only *.spec.zsh. .zshrc sets globdots, so a bare *
+# also matched dotfiles, and an editor swap file left in spec/ was sourced as a
+# spec, reporting `No slug provided` on every start.
 local spec
-for spec in "$zsh_dirs[spec]"/*(N.); do
+for spec in "$zsh_dirs[spec]"/[^.]*.spec.zsh(N.); do
 
     () {
         local slug enabled
@@ -46,6 +49,10 @@ for spec in "$zsh_dirs[spec]"/*(N.); do
         local plugin="${slug#*/}"
         local plugin_file="$zsh_dirs[plugin]/$plugin/$plugin.plugin.zsh"
 
+        # Sourced inside this function, so a plugin's own top-level typeset
+        # without -g declares a local that vanishes on return. The plugins in
+        # spec/ all declare their globals with -g, as any plugin loaded by a
+        # manager such as zinit must, but a new one is worth checking for it.
         source "$plugin_file" && zsh_plugins_loaded+=("$slug")
     }
 done

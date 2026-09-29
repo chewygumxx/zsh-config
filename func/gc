@@ -14,7 +14,9 @@
 
 (( $+commands[git] )) || return 127
 
-local __this_file="${(D)${${(%):-%N}:A}}"
+# functions_source, not %N:A. In an autoloaded function %N is the bare
+# function name, so :A resolved it against $PWD rather than fpath.
+local __this_file="${(D)${functions_source[${(%):-%N}]:-${(%):-%N}}}"
 
 if (( $# >= 1 )); then
     # Joined explicitly. An `IFS=" "` prefix used to stand before command, but

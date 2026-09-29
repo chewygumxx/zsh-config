@@ -64,8 +64,11 @@ setopt prompt_percent
     PS1="${(j::)__ps1_mods}"
 }
 
+# The start time has to outlive the hook that records it, so it is a global,
+# and named for this file. It was a bare time_invoked, which any script or
+# function of the same name would have read or clobbered.
 function __preexec_rps1() {
-    time_invoked=$SECONDS
+    typeset -g __rps1_time_invoked=$SECONDS
 }
 add-zsh-hook preexec __preexec_rps1
 
@@ -87,12 +90,12 @@ function __format_duration() {
 function __precmd_rps1() {
     RPS1=""
 
-    if [[ -n $time_invoked ]]; then
-        local time_exec=$(($SECONDS - $time_invoked))
+    if [[ -n $__rps1_time_invoked ]]; then
+        local time_exec=$(($SECONDS - $__rps1_time_invoked))
         if [[ $time_exec -gt 10 ]]; then
             RPS1="%F{blue}$(__format_duration $time_exec)%f"
         fi
-        unset time_invoked
+        unset __rps1_time_invoked
     fi
 }
 add-zsh-hook precmd __precmd_rps1
