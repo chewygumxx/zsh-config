@@ -33,5 +33,7 @@ fi
 # Alias
 # ------
 
+# Takes precedence on purpose. rc/alias.rc.zsh defines del as trash-put on
+# Termux, and util/ is sourced after rc/, so gtrash wins wherever both exist.
 alias del="gtrash put"
 alias del-undo="gtrash restore-group"
