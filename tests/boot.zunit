@@ -391,3 +391,26 @@
 
     assert "$output" same_as '/storage/emulated/0 /storage/emulated/0/Download'
 }
+
+@test 'The loaders leave no file list behind' {
+    run sandbox_zsh_stdout "$SANDBOX" -i -c 'print -r -- $+zshenvs $+zshrcs'
+
+    assert "$output" same_as '0 0'
+}
+
+@test 'Stray dotfiles beside the config are not loaded' {
+    # .zshrc sets globdots, so a bare * in a loader also matched dotfiles: an
+    # editor swap file in spec/ was sourced, and one in rc/ or util/ too.
+    local conf
+    conf="$(sandbox_copy_config "$SANDBOX" dotfile-probe)"
+
+    print -r -- 'print -u2 PROBE-SPEC' > "$conf/spec/.probe.spec.zsh"
+    print -r -- 'print -u2 PROBE-RC' > "$conf/rc/.probe.rc.zsh"
+    print -r -- 'print -u2 PROBE-UTIL' > "$conf/util/.probe.rc.zsh"
+
+    run sandbox_zsh "$SANDBOX" -c "ZDOTDIR=${(q)conf} zsh -i -c exit"
+
+    assert "$output" does_not_contain 'PROBE-SPEC'
+    assert "$output" does_not_contain 'PROBE-RC'
+    assert "$output" does_not_contain 'PROBE-UTIL'
+}

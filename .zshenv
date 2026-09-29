@@ -22,16 +22,19 @@
 # `compinit: initialization aborted` on every start. It has to be set here,
 # since /etc/zsh/zshrc runs before any file under rc/.
 skip_global_compinit=1
-
-# (N) sets null_glob for this pattern alone. Without it an empty or missing
-# env/ directory raises `no matches found`, which aborts the whole assignment
-# and leaves not one environment file sourced.
-typeset -ga zshenvs
-zshenvs=(
-    "$ZDOTDIR/env/"*.env.zsh(N)
-)
 () {
+    # (N) sets null_glob for this pattern alone. Without it an empty or missing
+    # env/ directory raises `no matches found`, which aborts the whole
+    # assignment and leaves not one environment file sourced.
+    #
+    # Local, so the list is not left behind in every shell, and ZDOTDIR falls
+    # back as env/zsh_dirs.env.zsh does. Unset, as when ~/.zshenv is a link to
+    # this file, the glob searched /env and sourced nothing.
     local source
+    local -a zshenvs=(
+        "${ZDOTDIR:-${XDG_CONFIG_HOME:-$HOME/.config}/zsh}/env/"*.env.zsh(N)
+    )
+
     for source in $zshenvs; do
         source "$source"
     done

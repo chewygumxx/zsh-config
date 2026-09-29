@@ -233,3 +233,34 @@ function sandbox_zsh_bare() {
         ZDOTDIR="$root/.config/zsh" \
         zsh "$@"
 }
+
+#
+# Copy the shell sources of this checkout to a directory of the given name
+# under the sandbox, and print its path.
+#
+# The sandbox otherwise links the checkout itself, which suits every test that
+# only reads it. A copy is for the tests that need the configuration to live
+# somewhere particular, such as a directory whose name is itself a trap, or
+# that need a stray file beside the tracked ones, which must never be written
+# into the real checkout.
+#
+function sandbox_copy_config() {
+    emulate -L zsh
+
+    local root="$1"
+    local name="$2"
+
+    [[ -n "$root" && -d "$root" && -n "$name" ]] || return 1
+
+    local dest="$root/$name"
+
+    mkdir -p -m 0755 -- "$dest" || return 1
+
+    cp -R -- \
+        "$ZSH_CONFIG_ROOT"/.zshenv \
+        "$ZSH_CONFIG_ROOT"/.zshrc \
+        "$ZSH_CONFIG_ROOT"/{env,rc,util,func,wrap,spec,comp} \
+        "$dest"/ || return 1
+
+    print -r -- "$dest"
+}
