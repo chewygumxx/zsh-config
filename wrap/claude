@@ -22,8 +22,6 @@
 emulate -L zsh
 setopt localoptions extended_glob
 
-local __this_file="${(D)${${(%):-%N}:A}}"
-
 # ------------
 # Directories
 # ------------

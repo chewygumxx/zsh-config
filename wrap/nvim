@@ -13,7 +13,9 @@
 # Zsh wrapper function for Neovim.
 #
 
-local __this_file="${(D)${${(%):-%N}:A}}"
+# functions_source, not %N:A. In an autoloaded function %N is the bare
+# function name, so :A resolved it against $PWD rather than fpath.
+local __this_file="${(D)${functions_source[${(%):-%N}]:-${(%):-%N}}}"
 
 if (( ! $+commands[nvim] )); then
     print -u2 "${__this_file}: Command not found: nvim"
