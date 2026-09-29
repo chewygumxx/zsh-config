@@ -244,6 +244,19 @@
     assert "$printed" is_empty
 }
 
+@test 'journal creates its directory when it is missing' {
+    load_shell_function journal
+
+    local HOME="$TMP/home"
+
+    journal probe <<< 'entry text' > /dev/null 2>&1
+
+    local -a entries=("$HOME"/doc/journal/*_probe.txt(N))
+
+    assert ${#entries} equals 1
+    assert "$(< $entries[1])" same_as 'entry text'
+}
+
 @test 'zedd names its own file in its usage diagnostic' {
     load_shell_function zedd
 
