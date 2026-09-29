@@ -243,3 +243,14 @@
     assert "$output" contains Usage
     assert "$printed" is_empty
 }
+
+@test 'zedd names its own file in its usage diagnostic' {
+    load_shell_function zedd
+
+    run zedd
+
+    # With %N:A the function name resolved against $PWD, so the message named
+    # a file that does not exist rather than func/zedd.
+    assert $state equals 1
+    assert "$output" contains 'func/zedd: Usage'
+}
