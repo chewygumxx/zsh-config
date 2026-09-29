@@ -257,36 +257,6 @@
     assert "$output" equals 0
 }
 
-@test 'The luarocks cache leaves the rest of PATH alone' {
-    # A stub stands in for luarocks. Its `path` output ends in the same
-    # `export PATH=` line the real one prints, holding a frozen snapshot that
-    # must never reach the shell.
-    local bin="$SANDBOX/stub-bin"
-    mkdir -p -- "$bin"
-
-    print -rl -- '#!/bin/sh' \
-        'case "$*" in' \
-        "    *--lr-bin*) printf '%s\n' /stub/rocks/bin:/usr/bin ;;" \
-        "    *) printf '%s\n' \"export LUA_PATH='stub'\" \"export PATH='/frozen'\" ;;" \
-        'esac' > "$bin/luarocks"
-    chmod 0755 -- "$bin/luarocks"
-
-    local PATH="$bin:$PATH"
-
-    run sandbox_zsh_stdout "$SANDBOX" -i -c '
-        print -r -- "$LUA_PATH"
-        print -r -- "$path[1]"
-        print -r -- "${path[(Ie)/frozen]} ${path[(Ie)$HOME/.local/bin]}"
-    '
-
-    local -a lines=("${(@f)output}")
-
-    assert "$lines[1]" same_as stub
-    assert "$lines[2]" same_as /stub/rocks/bin
-    assert "${lines[3]%% *}" equals 0
-    assert "${lines[3]##* }" is_greater_than 0
-}
-
 @test 'Menu selection gets vi motions when fzf is absent' {
     # rc/completion.rc.zsh only binds these on the branch without fzf-tab.
     (($+commands[fzf])) && skip 'fzf is installed, so fzf-tab owns the menu'

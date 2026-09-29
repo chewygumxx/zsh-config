@@ -118,7 +118,7 @@ autoload out of the current working directory.
   real binary via `command foo`, or they recurse into themselves. Wrappers often
   read a companion `__foo_opts` array defined in `util/`.
 - `util/` - `*.rc.zsh` per-external-tool config (bat, chezmoi, eza, fzf, gtrash,
-  linters, luarocks, nvm, systemd, zoxide), sourced last by `.zshrc`.
+  linters, mise, systemd, zoxide), sourced last by `.zshrc`.
 - `spec/` - `*.spec.zsh`, one per plugin, sourced by `rc/plugin.rc.zsh`. See
   below.
 - `comp/` - completion definitions, on `fpath`; holds a tracked `.keep`
@@ -401,8 +401,8 @@ sandbox plugin directory is still a symlink afterwards, and that is what
 actually pins the suite offline.
 
 The first start of a fresh sandbox legitimately writes to stderr:
-`env/zsh_dirs.env.zsh` announces `Creating zsh directories`, and the chezmoi,
-luarocks and zoxide helpers each announce the cache they are regenerating.
+`env/zsh_dirs.env.zsh` announces `Creating zsh directories`, and the chezmoi
+and zoxide helpers each announce the cache they are regenerating.
 `sandbox_warm` throws that first start away, which is what allows a later
 start's stderr to be treated as a genuine fault.
 

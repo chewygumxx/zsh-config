@@ -45,7 +45,7 @@ function __init_zoxide() {
     #  - Older than binary
     #  - Older than this file
     #
-    # -s rather than -f, as in util/luarocks.rc.zsh. A failed `zoxide init`
+    # -s rather than -f, since a failed `zoxide init`
     # still leaves the empty file that >| created, and -f accepted it, so the
     # shell went on sourcing nothing until the binary or this file changed.
     if [[ ! -s "$__init_cache" ]] ||

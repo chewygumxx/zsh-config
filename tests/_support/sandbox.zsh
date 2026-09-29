@@ -150,6 +150,10 @@ function sandbox_zsh() {
     # array of NAME=value words, which reaches this function through dynamic
     # scope and is appended after the defaults, so it can also override them.
     # Unset, the plain $SANDBOX_ENV expansion yields no words at all.
+    #
+    # mise records trust under XDG_STATE_HOME, which is empty here, so without
+    # MISE_TRUSTED_CONFIG_PATHS util/mise.rc.zsh would warn on every start that
+    # this checkout's .mise.toml is not trusted, as the live shell never does.
     env -i \
         HOME="$root" \
         PATH="$PATH" \
@@ -161,6 +165,7 @@ function sandbox_zsh() {
         XDG_STATE_HOME="$root/.local/state" \
         XDG_RUNTIME_DIR="$root/run" \
         ZDOTDIR="$root/.config/zsh" \
+        MISE_TRUSTED_CONFIG_PATHS="$ZSH_CONFIG_ROOT" \
         $SANDBOX_ENV \
         zsh "$@"
 }
@@ -170,9 +175,9 @@ function sandbox_zsh() {
 #
 # A new sandbox has an empty cache, so its first interactive start legitimately
 # reports what it is populating: env/zsh_dirs.env.zsh announces "Creating zsh
-# directories", and util/chezmoi.rc.zsh, util/luarocks.rc.zsh and
-# util/zoxide.rc.zsh each announce the cache they are regenerating. All four are
-# by design, and all four correctly go to stderr rather than stdout.
+# directories", and util/chezmoi.rc.zsh and util/zoxide.rc.zsh each announce the
+# cache they are regenerating. All three are by design, and all three correctly
+# go to stderr rather than stdout.
 #
 # Throwing that first start away is what lets the suite treat anything a later
 # start reports as a genuine fault. The exit status is deliberately not
