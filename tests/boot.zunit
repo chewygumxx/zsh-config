@@ -429,3 +429,23 @@
 
     assert "$output" equals 1
 }
+
+@test 'An empty chezmoi completion cache is regenerated' {
+    # The redirect that writes the cache truncates before chezmoi runs, so a
+    # failed run left an empty file, and a -r test accepted it from then on.
+    local bin="$SANDBOX/stub-bin"
+    mkdir -p -- "$bin"
+    print -rl -- '#!/bin/sh' 'echo "#compdef chezmoi"' > "$bin/chezmoi"
+    chmod 0755 -- "$bin/chezmoi"
+    touch -d '3 days ago' -- "$bin/chezmoi"
+
+    local PATH="$bin:$PATH"
+
+    run sandbox_zsh_stderr "$SANDBOX" -c '
+        comp="$XDG_CACHE_HOME/zsh/completions/_chezmoi"
+        : >| "$comp"
+        zsh -i -c exit
+    '
+
+    assert "$output" contains 'Regenerating chezmoi completion file'
+}
