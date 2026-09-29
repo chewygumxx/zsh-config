@@ -80,10 +80,17 @@ local -a __zcompdump_fresh=("$__zcompdump"(Nmh-24))
 # it is not something a change here can otherwise prevent.
 #
 # -i rather than -u deliberately: an insecure directory is skipped, not trusted.
+#
+# The touch after a full run is what keeps the fast path reachable. compinit
+# only rewrites the dump when the set of completion files or the zsh version has
+# changed, and otherwise sources it as it stands, so its mtime never moved: once
+# a day had passed, every later start took the slow path and audited fpath
+# again.
 if (($#__zcompdump_fresh)); then
     compinit -i -C -d "$__zcompdump"
 else
     compinit -i -d "$__zcompdump"
+    [[ -f "$__zcompdump" ]] && command touch -- "$__zcompdump"
 fi
 
 # ---------------

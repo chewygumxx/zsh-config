@@ -414,3 +414,18 @@
     assert "$output" does_not_contain 'PROBE-RC'
     assert "$output" does_not_contain 'PROBE-UTIL'
 }
+
+@test 'A stale completion dump is freshened by the next start' {
+    # compinit leaves a still-valid dump untouched, so without a touch its age
+    # kept growing and every start after the first day skipped compinit -C.
+    run sandbox_zsh_stdout "$SANDBOX" -c '
+        dump="$XDG_CACHE_HOME/zsh/zcompdump"
+        [[ -f "$dump" ]] || exit 1
+        touch -d "2 days ago" -- "$dump" || exit 1
+        zsh -i -c exit
+        local -a fresh=("$dump"(Nmh-1))
+        print -r -- ${#fresh}
+    '
+
+    assert "$output" equals 1
+}
