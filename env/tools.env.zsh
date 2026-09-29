@@ -44,9 +44,13 @@ export ANDROID_USER_HOME="$__tools_data/android"
 export DOTNET_CLI_HOME="$__tools_data/dotnet"
 export NUGET_PACKAGES="$__tools_cache/NuGetPackages"
 
-# GitHub, and the cross-tool telemetry opt-out it honours
+# Console Do Not Track, https://consoledonottrack.com, honoured by gh among
+# many others. 1, as the convention specifies and as wrap/claude defaults it;
+# it was "true" here.
+export DO_NOT_TRACK=1
+
+# GitHub
 export GH_TELEMETRY="false"
-export DO_NOT_TRACK="true"
 
 # GnuPG
 export GNUPGHOME="$__tools_data/gnupg"
