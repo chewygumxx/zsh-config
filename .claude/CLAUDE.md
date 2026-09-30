@@ -188,6 +188,11 @@ autoloads that helper by path, since `func/` is not on `fpath` until
   variables into the sourcing shell.
 - Files that depend on `zsh_dirs` call `zsh_dirs_require` before proceeding
   rather than trusting it.
+- `__this_file` in `func/` and `wrap/` is
+  `"${(D)${functions_source[${(%):-%N}]:-${(%):-%N}}}"`: in an autoloaded
+  function `%N` is the bare name, so `%N:A` resolves it against `$PWD`. Sourced
+  files (`rc/`, `util/`, `env/`) keep `"${(D)${${(%):-%N}:A}}"`, since there the
+  `functions_source` fallback would drop the `:A`.
 - `local +h functions` does **not** scope function definitions; zsh defines
   functions globally regardless. To keep a helper out of the interactive
   namespace, either `trap 'unset -f helper' EXIT` (an EXIT trap set inside a
