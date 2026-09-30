@@ -1,0 +1,7 @@
+{
+    "$schema": "https://cdn.jsdelivr.net/gh/LuaLS/vscode-lua/setting/schema.json",
+    "runtime.version": "LuaJIT",
+    "runtime.pathStrict": true,
+    "workspace.checkThirdParty": false,
+    "workspace.library": ["$VIMRUNTIME/lua"]
+}
