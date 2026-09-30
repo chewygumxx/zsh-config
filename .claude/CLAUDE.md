@@ -1,12 +1,30 @@
+---
+__cgxx: |
+  # vim:set expandtab shiftwidth=2 filetype=markdown foldlevel=3:
+  # SPDX-License-Identifier: GPL-3.0-only
+
+  #
+  #
+  # ~chewygumxx/zsh-config.git
+  # ::: :/.claude/CLAUDE.md
+  #
+  #
+
+ctime: 2026-09-30
+title: CLAUDE.md
+description: "Repository instructions"
+tags:
+  - claude
+  - llm
+---
+
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with
-code in this repository.
+Continuously granularly commit as you work. Compose single-line commit messages
+whenever appropriate. If the granular commit does indeed warrant further
+context, include such within the commit message body.
 
 Absolutely no em dashes are to be employed within this repository.
-
-Ensure any printed conversation output line length is limited to 80 characters
-except where it may be unfeasable to do so eg. URL.
 
 ## Repository
 
