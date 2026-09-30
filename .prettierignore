@@ -27,3 +27,6 @@ tests/_output/
 
 # Claude Code Remember plugin session state
 .remember/
+
+# Claude Code per-machine permissions, ignored only by a global git ignore
+.claude/settings.local.json
