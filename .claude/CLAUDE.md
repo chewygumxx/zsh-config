@@ -123,8 +123,6 @@ autoload out of the current working directory.
   below.
 - `comp/` - completion definitions, on `fpath`; holds a tracked `.keep`
   placeholder.
-- `patches/` - npm patch files applied via `patchedDependencies` in
-  `package.json`; repo tooling, unrelated to the shell runtime.
 
 ## Plugin management
 
