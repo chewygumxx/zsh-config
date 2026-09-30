@@ -309,6 +309,33 @@ worse than no hook at all.
 dispatcher exits 0 when the top-level counterpart is absent, so adding a file at
 `.husky/<hook>` is live immediately with no need to re-run `husky`.
 
+## Neovim project tooling
+
+`.nvim.lua` is loaded through `exrc`, which nvim-config enables and `:trust`
+gates. It gives a new file in `func/`, `wrap/`, `util/` or `spec/` a body
+template via `vim.snippet.expand`, and registers a blink source whose snippets
+are offered only in those directories. The filetype stays plain `zsh` on
+purpose: a compound filetype stops shuck attaching and hides blink's zsh
+snippets, since both match the name exactly, and the `filetype=zsh` modeline
+overrides it on read anyway.
+
+The header above each template comes from nvim-config's `util.header`. It writes
+`#!/bin/false` only because nvim-config's `lua/util/shebang.lua` lists
+`~/dev/zsh-config` in `source_dirs`; without that entry `tests/header.zunit`
+fails on every new file.
+
+No gate covers this tooling, so check it by hand:
+
+- `selene.toml` and `vim.yml` give selene a `vim` global. `luajit` is not a
+  built-in selene std, so do not add it without a matching `luajit.yml`.
+- `emmylua_check .` from a shell needs `VIMRUNTIME` exported, or `.luarc.json`'s
+  library does not resolve and `vim` is reported undefined.
+- `luafmt` skips dotfiles when given a path; check with
+  `luafmt --check --stdin-filename .nvim.lua < .nvim.lua`.
+- Probe templates with `nvim --headless -n -i NONE -c 'source .nvim.lua'`,
+  which sidesteps `:trust`, then `:edit` a new path and wait for the scheduled
+  expansion with `vim.wait`.
+
 ## Tests
 
 `mise run test` runs zunit over `tests/`. The suite is the executable form of
