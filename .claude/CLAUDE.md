@@ -251,12 +251,18 @@ is 72.
 ## Toolchain and tasks
 
 Tool versions and repo tasks are declared in `.mise.toml`. `mise install`
-provisions Node (with its bundled npm), `actionlint`, and `shuck`. `shuck` is not carried in the
-mise registry, so it is pulled from its GitHub releases through the `github:`
-backend, with the binary named explicitly because the release assets are called
-`shuck-cli-*`. Tasks prepend `node_modules/.bin` to `PATH`, so they call `tsc`,
-`prettier`, `commitlint` and `cz` directly instead of paying an `npx`
-resolution.
+provisions Node (with its bundled npm), `actionlint`, `shuck`, and `yamllint`
+with the `uv` that installs it. `shuck` is not carried in the mise registry, so
+it is pulled from its GitHub releases through the `github:` backend, with the
+binary named explicitly because the release assets are called `shuck-cli-*`.
+Tasks prepend `node_modules/.bin` to `PATH`, so they call `tsc`, `prettier`,
+`commitlint` and `cz` directly instead of paying an `npx` resolution.
+
+`.yamllint.yaml` only `extends` the shared `@chewygumxx/yamllint-config` by its
+`node_modules/` path, so yamllint must run from the repository root after
+`mise run setup`. There is deliberately no `.biome.json`: `package.json` names
+Prettier, so nvim-config's `util.biome` leaves JSON and TypeScript to Prettier,
+matching the `prettier --check` gate. A Biome config would flip that choice.
 
 Node is pinned to the major that `.github/workflows/commitlint.yaml` installs,
 currently 24, which is the floor set by `.github/workflows/CLAUDE.md`.
@@ -272,11 +278,12 @@ Run `mise tasks` for the full list. The entry points:
 `lint` fans out to `lint:zsh` (`shuck check`, configured by `.shuck.toml`),
 `lint:syntax` (`zsh -n` over every shell file, with exactly one carve-out:
 `tests/*.zunit`, for the reason below), `lint:actions` (`actionlint`),
-`lint:types` (`tsc` over `.commitlintrc.mts`, the only TypeScript file in the
-repo), and `lint:format` (`shuck format --check`, then `prettier --check .`).
-`lint:commit` inspects the most recent commit message and is deliberately kept
-out of the aggregate, since it depends on `HEAD` rather than on the working
-tree.
+`lint:yaml` (`yamllint --strict` over the tracked YAML, fed by `git ls-files` so
+that `node_modules/` is never walked), `lint:types` (`tsc` over
+`.commitlintrc.mts`, the only TypeScript file in the repo), and `lint:format`
+(`shuck format --check`, then `prettier --check .`). `lint:commit` inspects the
+most recent commit message and is deliberately kept out of the aggregate, since
+it depends on `HEAD` rather than on the working tree.
 
 `lint:actions` carries a deliberate exclusion, commented inline in `.mise.toml`:
 it ignores a known `actionlint` false positive against
