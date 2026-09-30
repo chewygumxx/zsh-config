@@ -224,20 +224,21 @@ These each caused a real, long-lived bug here:
 
 ## Commit messages
 
-Commits are linted by commitlint (`@commitlint/config-conventional`) via a Husky
-`commit-msg` hook, so commit messages must follow Conventional Commits. Use
-`mise run commit` (Commitizen, same as `npm run commit`) to be walked through a
-compliant message interactively, or check the last one with
-`mise run lint:commit`.
+Commits are linted by commitlint via a Husky `commit-msg` hook, so commit
+messages must follow Conventional Commits. `.commitlintrc.mts` declares only the
+scopes; the rules come from `defineConfig` in the shared
+`@chewygumxx/commitlint-config` package, which extends
+`@commitlint/config-conventional`. Use `mise run commit` (Commitizen, same as
+`npm run commit`) to be walked through a compliant message interactively, or
+check the last one with `mise run lint:commit`.
 
-Two rules in `.commitlintrc.mts` are stricter than the defaults and are easy to
-trip over:
+Two rules are stricter than the defaults and are easy to trip over:
 
 - `header-max-length` is **50**, not 72.
-- `scope-enum` permits only `env`, `rc`, `util`, `func`, `wrap`, `spec`, `comp`.
-  Scopes used earlier in the repo's history, such as `zsh`, `chezmoi` and
-  `systemd/ssh`, now fail. Changes to root-level files take a bare `type:` with
-  no scope.
+- `scope-enum` permits only `env`, `rc`, `util`, `func`, `wrap`, `spec`, `comp`
+  and `claude`. Scopes used earlier in the repo's history, such as `zsh`,
+  `chezmoi` and `systemd/ssh`, now fail. Changes to root-level files take a bare
+  `type:` with no scope.
 
 `subject-case` wants start case or sentence case, and `body-max-line-length`
 is 72.
