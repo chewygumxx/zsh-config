@@ -18,16 +18,6 @@
 
 [tools]
 
-# Declared before node deliberately. mise contributes bin directories to PATH in
-# the order tools appear here, and node ships an npm of its own, so listing this
-# second left node's bundled npm shadowing the pinned one.
-#
-# The pin exists because `patchedDependencies` in package.json, and the
-# `npm patch` family that maintains it, are npm 12 features. Node 22 bundles npm
-# 10 and node 24 bundles npm 11, so with only the bundled npm the patch under
-# patches/ is silently ignored on install and never applied.
-"npm:npm" = "12"
-
 # Pinned to the major that .github/workflows/commitlint.yaml installs, so
 # `npm ci` here resolves the same tree CI does. 24 is the floor set by
 # .github/workflows/CLAUDE.md.

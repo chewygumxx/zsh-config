@@ -19,7 +19,3 @@ tags: [llm, claude]
 
 Ensure any workflow within this repository that utilises Node.js employs version
 24 or later.
-
-Node 24 bundles npm 11, which is below the npm 12 floor that
-`patchedDependencies` in `package.json` requires, so workflows running `npm ci`
-must upgrade npm explicitly before installing.

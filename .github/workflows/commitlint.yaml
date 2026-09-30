@@ -36,13 +36,6 @@ jobs:
               with:
                   node-version: 24
 
-            # actions/setup-node installs whichever npm the chosen node bundles,
-            # which for node 24 is npm 11. package.json requires npm 12 for
-            # patchedDependencies, and .npmrc sets engine-strict, so npm ci
-            # would fail outright without this upgrade.
-            - name: Upgrade NPM
-              run: npm install --global npm@12
-
             - name: NPM Clean Install
               run: npm ci
 

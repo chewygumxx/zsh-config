@@ -227,28 +227,12 @@ is 72.
 ## Toolchain and tasks
 
 Tool versions and repo tasks are declared in `.mise.toml`. `mise install`
-provisions npm, Node, `actionlint`, and `shuck`. `shuck` is not carried in the
+provisions Node (with its bundled npm), `actionlint`, and `shuck`. `shuck` is not carried in the
 mise registry, so it is pulled from its GitHub releases through the `github:`
 backend, with the binary named explicitly because the release assets are called
 `shuck-cli-*`. Tasks prepend `node_modules/.bin` to `PATH`, so they call `tsc`,
 `prettier`, `commitlint` and `cz` directly instead of paying an `npx`
 resolution.
-
-`npm:npm` is pinned to 12 and is declared **before** `node` on purpose. mise
-contributes bin directories to `PATH` in the order tools appear, and Node ships
-an npm of its own, so listing it second leaves Node's bundled npm shadowing the
-pinned one. npm 12 is required because `patchedDependencies`, and the
-`npm patch` family that maintains it, are npm 12 features: Node 22 bundles npm
-10 and Node 24 bundles npm 11, and with either the patch under `patches/` is
-ignored on install in complete silence. `.npmrc` sets `engine-strict=true` so
-the `engines` block in `package.json` makes that a hard failure instead.
-`.github/workflows/commitlint.yaml` upgrades npm explicitly before `npm ci` for
-the same reason.
-
-If the patch file itself is edited, `package-lock.json` records an integrity
-hash of it and `npm ci` will refuse with
-`does not match the patch recorded in the lock file`. Run `npm install` to
-resync the lock.
 
 Node is pinned to the major that `.github/workflows/commitlint.yaml` installs,
 currently 24, which is the floor set by `.github/workflows/CLAUDE.md`.

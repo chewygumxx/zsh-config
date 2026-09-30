@@ -11,8 +11,7 @@
     "homepage": "https://github.com/chewygumxx/zsh-config",
     "repository": "github:chewygumxx/zsh-config",
     "engines": {
-        "node": ">=24",
-        "npm": ">=12"
+        "node": ">=24"
     },
     "devDependencies": {
         "@chewygumxx/cz-commitlint": "^1.0.2",
