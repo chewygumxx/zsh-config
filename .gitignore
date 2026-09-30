@@ -8,7 +8,17 @@
 #
 #
 
+.env*
+*.local.*
+
 node_modules/
+/.herdr/
+/.claude/worktrees/
+/.templates/
+
+/.remember/
+/.superpowers/
+*claude.json
 
 # Test runner binaries fetched by the test:deps task
 .bin/
