@@ -18,10 +18,9 @@
 
 [tools]
 
-# Pinned to the major that .github/workflows/commitlint.yaml installs, so
-# `npm ci` here resolves the same tree CI does. 24 is the floor set by
-# .github/workflows/CLAUDE.md.
-node = "24"
+# Pinned to the version that .github/workflows/commitlint.yaml installs, so
+# `bun install` here resolves the same tree CI does.
+bun = "1.4"
 
 # Workflow linter. The registry alias resolves to aqua:rhysd/actionlint.
 actionlint = "1.7.12"
@@ -44,8 +43,9 @@ actionlint = "1.7.12"
 
 [env]
 
-# Lets the tasks below invoke commitlint, prettier and tsc as bare commands
-# instead of paying an npx resolution on each call.
+# Puts the dev dependencies' CLIs on PATH for interactive use. The tasks below
+# still run them through `bunx --bun`, because their shebangs name node, which
+# this file does not provide.
 #
 # .bin holds zunit and revolver, which the test:deps task fetches because
 # neither can come from the tools table above. It is listed second so a
@@ -74,12 +74,12 @@ dir = "{{config_root}}"
 # -------
 
 [tasks.setup]
-description = "Install the Node dev dependencies and the Husky commit-msg hook"
-run = "npm ci"
+description = "Install the dev dependencies with Bun, and the Husky hooks"
+run = "bun install --frozen-lockfile"
 
 [tasks.commit]
 description = "Compose a Conventional Commit through Commitizen"
-run = "cz"
+run = "bunx --bun --no-install cz"
 
 
 # -------
@@ -162,7 +162,7 @@ run = "git ls-files -z '*.yaml' '*.yml' | xargs -0 -r yamllint --strict"
 
 [tasks."lint:types"]
 description = "Typecheck .commitlintrc.mts"
-run = "tsc"
+run = "bunx --bun --no-install tsc"
 
 [tasks."lint:format"]
 description = "Check that neither formatter would rewrite anything"
@@ -170,12 +170,12 @@ description = "Check that neither formatter would rewrite anything"
 # The read-only counterpart to the fmt task, in the same order.
 run = [
     "shuck format --check",
-    "prettier --check .",
+    "bunx --bun --no-install prettier --check .",
 ]
 
 [tasks."lint:commit"]
 description = "Lint the most recent commit message against Conventional Commits"
-run = "commitlint --last --verbose"
+run = "bunx --bun --no-install commitlint --last --verbose"
 
 
 # ------
@@ -283,4 +283,4 @@ run = "shuck format"
 
 [tasks."fmt:prettier"]
 description = "Format the non-shell files with Prettier"
-run = "prettier --write ."
+run = "bunx --bun --no-install prettier --write ."

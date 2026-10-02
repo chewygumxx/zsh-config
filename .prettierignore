@@ -12,7 +12,7 @@
 # again here or `prettier --check .` fails on files that are not repo content.
 
 node_modules/
-package-lock.json
+bun.lock
 
 # Test runner binaries fetched by the test:deps task
 .bin/
