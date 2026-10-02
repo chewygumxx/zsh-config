@@ -37,19 +37,18 @@ jobs:
                   sudo apt-get update
                   sudo apt-get install --yes zsh
 
-            # Provides node, actionlint, shuck and yamllint straight from
+            # Provides bun, actionlint, shuck and yamllint straight from
             # .mise.toml, so CI resolves the same versions a local run does.
             - name: Setup Mise
               uses: jdx/mise-action@v4
 
             - name: Report tool versions
               run: |
-                  node --version
-                  npm --version
+                  bun --version
                   zsh --version
                   yamllint --version
 
-            - name: Install Node dependencies
+            - name: Install dependencies
               run: mise run setup
 
             - name: Lint
@@ -71,7 +70,7 @@ jobs:
             - name: Setup Mise
               uses: jdx/mise-action@v4
 
-            - name: Install Node dependencies
+            - name: Install dependencies
               run: mise run setup
 
             # The suite borrows existing clones rather than letting the

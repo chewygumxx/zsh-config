@@ -31,18 +31,18 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - name: Setup Node
-              uses: actions/setup-node@v5
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
               with:
-                  node-version: 24
+                  bun-version: "1.4"
 
-            - name: NPM Clean Install
-              run: npm ci
+            - name: Bun Install
+              run: bun install --frozen-lockfile
 
             - name: Lint Pull Request Commits
               if: github.event_name == 'pull_request'
-              run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+              run: bunx --bun --no-install commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
 
             - name: Lint Pushed Commit
               if: github.event_name != 'pull_request'
-              run: npx commitlint --last --verbose
+              run: bunx --bun --no-install commitlint --last --verbose
