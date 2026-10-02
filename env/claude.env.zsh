@@ -10,5 +10,8 @@
 #
 
 # Herdr also requires this
-: "${CLAUDE_CONFIG_DIR:=${XDG_CONFIG_HOME:-$HOME/.config}/claude}"
-export CLAUDE_CONFIG_DIR
+if [[ -v CLAUDE_ALT ]]; then
+    export CLAUDE_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/claude-2"
+else
+    export CLAUDE_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/claude"
+fi
