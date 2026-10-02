@@ -234,7 +234,7 @@ messages must follow Conventional Commits. `.commitlintrc.mts` declares only the
 scopes; the rules come from `defineConfig` in the shared
 `@chewygumxx/commitlint-config` package, which extends
 `@commitlint/config-conventional`. Use `mise run commit` (Commitizen, same as
-`npm run commit`) to be walked through a compliant message interactively, or
+`bun run commit`) to be walked through a compliant message interactively, or
 check the last one with `mise run lint:commit`.
 
 Two rules are stricter than the defaults and are easy to trip over:
@@ -251,12 +251,13 @@ is 72.
 ## Toolchain and tasks
 
 Tool versions and repo tasks are declared in `.mise.toml`. `mise install`
-provisions Node (with its bundled npm), `actionlint`, `shuck`, and `yamllint`
-with the `uv` that installs it. `shuck` is not carried in the mise registry, so
-it is pulled from its GitHub releases through the `github:` backend, with the
-binary named explicitly because the release assets are called `shuck-cli-*`.
-Tasks prepend `node_modules/.bin` to `PATH`, so they call `tsc`, `prettier`,
-`commitlint` and `cz` directly instead of paying an `npx` resolution.
+provisions Bun, `actionlint`, `shuck`, and `yamllint` with the `uv` that
+installs it. `shuck` is not carried in the mise registry, so it is pulled from
+its GitHub releases through the `github:` backend, with the binary named
+explicitly because the release assets are called `shuck-cli-*`. Tasks run
+`tsc`, `prettier`, `commitlint` and `cz` through `bunx --bun --no-install`:
+their shebangs name node, which mise does not provide, and `--bun` runs them on
+Bun instead.
 
 `.yamllint.yaml` only `extends` the shared `@chewygumxx/yamllint-config` by its
 `node_modules/` path, so yamllint must run from the repository root after
@@ -264,12 +265,13 @@ Tasks prepend `node_modules/.bin` to `PATH`, so they call `tsc`, `prettier`,
 Prettier, so nvim-config's `util.biome` leaves JSON and TypeScript to Prettier,
 matching the `prettier --check` gate. A Biome config would flip that choice.
 
-Node is pinned to the major that `.github/workflows/commitlint.yaml` installs,
-currently 24, which is the floor set by `.github/workflows/CLAUDE.md`.
+Bun is pinned to the version that `.github/workflows/commitlint.yaml` installs,
+currently 1.4.
 
 Run `mise tasks` for the full list. The entry points:
 
-- `mise run setup` - `npm ci`, which also installs the Husky hooks.
+- `mise run setup` - `bun install --frozen-lockfile`, which also installs the
+  Husky hooks.
 - `mise run lint` - every non-interactive check.
 - `mise run test` - the zunit suite, against a throwaway `HOME`.
 - `mise run fmt` - rewrites files in place, via `shuck format` and Prettier.
