@@ -9,6 +9,9 @@
 #
 #
 
+# Temporarily enabled
+export CLAUDE_ALT=1
+
 # Herdr also requires this
 if [[ -v CLAUDE_ALT ]]; then
     export CLAUDE_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/claude-2"
