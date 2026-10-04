@@ -36,7 +36,7 @@
         "$ZSH_CONFIG_ROOT"/rc/*.rc.zsh(N)
         "$ZSH_CONFIG_ROOT"/util/*.rc.zsh(N)
         "$ZSH_CONFIG_ROOT"/spec/*.spec.zsh(N)
-        "$ZSH_CONFIG_ROOT"/comp/*.zsh(N)
+        "$ZSH_CONFIG_ROOT"/comp/_*(N.)
         "$ZSH_CONFIG_ROOT"/func/*(N.)
         "$ZSH_CONFIG_ROOT"/wrap/*(N.)
         "$ZSH_CONFIG_ROOT"/tests/_support/*.zsh(N)
@@ -56,10 +56,20 @@
 @test 'Every shell file refuses direct execution' {
     # #!/bin/false rather than a real interpreter, because none of these files
     # is ever run: they are sourced or autoloaded.
+    #
+    # comp/ is the exception. compinit reads only the first line of each file
+    # on fpath, and indexes it only when that line is `#compdef`, so a shebang
+    # there would leave the completion silently unregistered.
     local file
     local -a offenders=()
 
     for file in $SHELL_FILES; do
+        if [[ "$file" == "$ZSH_CONFIG_ROOT"/comp/* ]]; then
+            [[ "$(head -n 1 -- "$file")" == '#compdef '* ]] ||
+                offenders+=("${file#$ZSH_CONFIG_ROOT/}")
+            continue
+        fi
+
         [[ "$(head -n 1 -- "$file")" == '#!/bin/false' ]] ||
             offenders+=("${file#$ZSH_CONFIG_ROOT/}")
     done

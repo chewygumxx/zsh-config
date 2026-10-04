@@ -117,7 +117,7 @@ run = '''
         rc/*.rc.zsh
         util/*.rc.zsh
         spec/*.spec.zsh
-        comp/*.zsh
+        comp/_*(.)
         func/*(.)
         wrap/*(.)
         tests/_support/*.zsh
