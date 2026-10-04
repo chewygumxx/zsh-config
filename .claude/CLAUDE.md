@@ -139,8 +139,16 @@ autoload out of the current working directory.
   linters, mise, systemd, zoxide), sourced last by `.zshrc`.
 - `spec/` - `*.spec.zsh`, one per plugin, sourced by `rc/plugin.rc.zsh`. See
   below.
-- `comp/` - completion definitions, on `fpath`; holds a tracked `.keep`
-  placeholder.
+- `comp/` - completion definitions, on `fpath`, each named `_<command>` with no
+  extension. compinit indexes only `_*` files, and a `_bun.zsh` would register
+  a function called `_bun.zsh`. `comp/_bun` is a loader rather than a full
+  definition: on the first Tab it writes `bun completions` to
+  `$zsh_dirs[cache_comp]/bun.zsh`, then sources it and calls the real `_bun`.
+  It generates at completion time, not at startup as `util/chezmoi.rc.zsh`
+  does, because bun reaches `PATH` only through mise, which `util/mise.rc.zsh`
+  activates after any `util/bun.rc.zsh` would run. Note that a new file here
+  is not indexed until the dump is rebuilt, since `compinit -C` skips the
+  check for new files.
 
 ## Plugin management
 
@@ -183,6 +191,9 @@ autoloads that helper by path, since `func/` is not on `fpath` until
   `# SPDX-License-Identifier: GPL-3.0-only`, then a comment naming the file's
   own repo-relative path. These files are only ever sourced or autoloaded, so
   `#!/bin/false` is deliberate: it prevents accidental direct execution.
+  `comp/` files carry the same block with `#compdef <command>` in place of the
+  shebang, because compinit reads only line one and registers the file only
+  when that line is `#compdef`.
 - Loops and scoped locals are commonly wrapped in anonymous functions
   (`() { local x; ... }`, often with `emulate -L zsh`) to avoid leaking
   variables into the sourcing shell.
@@ -376,11 +387,14 @@ archived.
   borrowed plugin clones and always runs.
 - `tests/func.zunit` and `tests/wrap.zunit` - unit tests for `func/` and
   `wrap/`.
+- `tests/comp.zunit` - unit tests for the loaders in `comp/`, called directly
+  against a stub binary that emits a stand-in script.
 - `tests/header.zunit` - header block conformance, including that every
   `# ::: :/<path>` line matches the file's real location, which is what catches
   a copied file.
 - `tests/_support/` - `sandbox.zsh` builds and tears down the throwaway `HOME`;
-  `autoload.zsh` puts `func/` and `wrap/` on `fpath` and writes stub binaries.
+  `autoload.zsh` puts `func/`, `wrap/` and `comp/` on `fpath` and writes stub
+  binaries.
 - `tests/_output/` - zunit's generated logs. Gitignored and prettierignored.
 
 Both underscore-prefixed directory names are load-bearing, not stylistic:
