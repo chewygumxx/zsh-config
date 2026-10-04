@@ -1,0 +1,154 @@
+#!/usr/bin/env zunit
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/tests/comp.zunit
+#
+#
+
+#
+# Unit tests for the completion loaders in comp/.
+#
+# Each loader is called directly, outside the completion system, so the stub
+# binaries below emit a stand-in script rather than a real completion function.
+# A real one ends in `compdef`, and calling that here would start compinit
+# inside the zunit process itself.
+#
+# The loaders call zsh_dirs_require, which env/zsh_dirs.env.zsh defines. That
+# file cannot be sourced here without creating directories under the real XDG
+# tree, so a stand-in accepting every key is defined for these tests alone.
+#
+
+@setup {
+    load _support/autoload
+
+    TMP="$(mktemp -d -- "${TMPDIR:-/tmp}/zsh-config-unit.XXXXXXXX")"
+    mkdir -p -- "$TMP/cache"
+}
+
+@teardown {
+    if [[ -n "$TMP" && -d "$TMP" ]]; then
+        command rm -rf -- "$TMP"
+    fi
+}
+
+@test '_bun generates its cache and hands on to it' {
+    # The SHELL check is what pins the override. Without it bun prints the
+    # script for whichever shell happens to be running the completion.
+    stub_command bun "$TMP/bin" \
+        '[ "$SHELL" = zsh ] || exit 1' \
+        'echo "_bun() { print -r -- generated \"\$*\"; }"'
+    load_shell_function _bun
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([cache_comp]="$TMP/cache")
+
+    run _bun one two
+
+    unfunction zsh_dirs_require
+
+    assert $state equals 0
+    assert "$output" same_as 'generated one two'
+    assert "$TMP/cache/bun.zsh" is_file
+}
+
+@test '_bun regenerates a cache older than bun' {
+    # Dated so that only the binary is newer than the cache. Left to the clock,
+    # the cache would usually predate comp/_bun as well, and the test would
+    # pass on that condition alone.
+    stub_command bun "$TMP/bin" 'echo "_bun() { print -r -- fresh; }"'
+    touch -d '2100-01-01' -- "$TMP/bin/bun"
+    load_shell_function _bun
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([cache_comp]="$TMP/cache")
+
+    print -r -- '_bun() { print -r -- stale; }' > "$TMP/cache/bun.zsh"
+    touch -r "$ZSH_CONFIG_ROOT/comp/_bun" -- "$TMP/cache/bun.zsh"
+
+    run _bun
+
+    unfunction zsh_dirs_require
+
+    assert $state equals 0
+    assert "$output" same_as fresh
+}
+
+@test '_bun regenerates a cache older than itself' {
+    stub_command bun "$TMP/bin" 'echo "_bun() { print -r -- fresh; }"'
+    touch -d '2000-01-01' -- "$TMP/bin/bun"
+    load_shell_function _bun
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([cache_comp]="$TMP/cache")
+
+    print -r -- '_bun() { print -r -- stale; }' > "$TMP/cache/bun.zsh"
+    touch -d '2000-01-02' -- "$TMP/cache/bun.zsh"
+
+    run _bun
+
+    unfunction zsh_dirs_require
+
+    assert $state equals 0
+    assert "$output" same_as fresh
+}
+
+@test '_bun keeps its old cache when bun fails' {
+    # What the staging file is for. Redirected straight into the cache, a
+    # failing bun would truncate a working completion before it had produced
+    # anything to replace it with.
+    stub_command bun "$TMP/bin" 'exit 1'
+    touch -d '2100-01-01' -- "$TMP/bin/bun"
+    load_shell_function _bun
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([cache_comp]="$TMP/cache")
+
+    print -r -- '_bun() { print -r -- stale; }' > "$TMP/cache/bun.zsh"
+    touch -r "$ZSH_CONFIG_ROOT/comp/_bun" -- "$TMP/cache/bun.zsh"
+
+    run _bun
+
+    unfunction zsh_dirs_require
+
+    assert $state equals 0
+    assert "$output" same_as stale
+}
+
+@test '_bun leaves no cache behind when bun fails' {
+    stub_command bun "$TMP/bin" 'exit 1'
+    load_shell_function _bun
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([cache_comp]="$TMP/cache")
+
+    run _bun
+
+    unfunction zsh_dirs_require
+
+    local -a leftover=("$TMP"/cache/*(N))
+
+    assert $state equals 1
+    assert ${#leftover} equals 0
+}
+
+@test '_bun does not recurse when its cache defines no _bun' {
+    # The empty output is the real assertion. Unbounded recursion fails too,
+    # once zsh reports `maximum nested function level reached`, so the status
+    # alone would pass with the guard removed.
+    stub_command bun "$TMP/bin" 'echo "_bun_other() { :; }"'
+    load_shell_function _bun
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([cache_comp]="$TMP/cache")
+
+    run _bun
+
+    unfunction zsh_dirs_require
+
+    assert $state equals 1
+    assert "$output" is_empty
+}

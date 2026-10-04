@@ -10,7 +10,7 @@
 #
 
 #
-# Makes the contents of func/ and wrap/ callable from a test.
+# Makes the contents of func/, wrap/ and comp/ callable from a test.
 #
 # These files cannot be sourced. Each one is an autoload body with no
 # `function name { ... }` wrapper, so sourcing it would run the body in the
@@ -32,11 +32,13 @@ typeset -gU fpath
 fpath=(
     "$ZSH_CONFIG_ROOT/func"
     "$ZSH_CONFIG_ROOT/wrap"
+    "$ZSH_CONFIG_ROOT/comp"
     $fpath
 )
 
 #
-# Mark a name in func/ or wrap/ for autoload, replacing any earlier definition.
+# Mark a name in func/, wrap/ or comp/ for autoload, replacing any earlier
+# definition.
 #
 function load_shell_function() {
     emulate -L zsh

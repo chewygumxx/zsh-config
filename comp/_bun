@@ -1,0 +1,70 @@
+#compdef bun
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/comp/_bun
+#
+#
+#
+# Loader for the completion function bun generates for itself. On first use it
+# writes `bun completions` to $zsh_dirs[cache_comp]/bun.zsh, sources that over
+# this stub and hands the call on to the real _bun.
+#
+# Generated here, at completion time, rather than at startup the way
+# util/chezmoi.rc.zsh does it. bun is provided by mise, often per project, and
+# util/mise.rc.zsh runs after any util/bun.rc.zsh would, so at startup bun is
+# usually not yet on PATH. By the time anyone completes `bun`, it is.
+#
+# Sourced and then called, rather than written to fpath as _bun. bun's script is
+# a series of definitions ending in `compdef _bun bun` with no call to _bun, so
+# autoloaded directly it would only define itself, and the first completion of
+# every shell would offer nothing.
+#
+# The cache is named without a leading underscore so that compinit, which
+# indexes only `_*` files, never registers it in competition with this stub.
+#
+
+# functions_source is a zsh/parameter special, assigned by zsh itself, which
+# shuck cannot see.
+# shuck: disable=C006
+local self="$functions_source[_bun]"
+
+zsh_dirs_require "${(D)self:-$0}" cache_comp || return 1
+
+local comp_file="$zsh_dirs[cache_comp]/bun.zsh"
+
+# Regenerate the cache if either:
+#  - Missing or empty
+#  - Older than the bun binary
+#  - Older than this file
+#
+# Written to a staging file and moved into place only once non-empty, so a
+# failed run cannot leave behind a cache that the next completion would source.
+#
+# SHELL is set explicitly because bun picks the script to print from its
+# basename alone, and refuses outright when it is unset or names another shell.
+if (($+commands[bun])) && {
+    [[ ! -s "$comp_file" ]] ||
+        [[ "$comp_file" -ot "$commands[bun]" ]] ||
+        [[ "$comp_file" -ot "$self" ]]
+}; then
+    local staging="$comp_file.$$"
+
+    if SHELL=zsh command bun completions >| "$staging" && [[ -s "$staging" ]]; then
+        command mv -f -- "$staging" "$comp_file"
+    else
+        command rm -f -- "$staging"
+    fi
+fi
+
+[[ -s "$comp_file" ]] || return 1
+
+source "$comp_file"
+
+# Without this, a cache that somehow lacks a _bun definition would leave this
+# stub as _bun, and the call below would recurse into itself without end.
+[[ "$functions_source[_bun]" != "$self" ]] || return 1
+
+_bun "$@"
