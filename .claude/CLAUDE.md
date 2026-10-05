@@ -1,22 +1,22 @@
 ---
-__cgxx: |
-  # vim:set expandtab shiftwidth=2 filetype=markdown foldlevel=3:
-  # SPDX-License-Identifier: GPL-3.0-only
-
-  #
-  #
-  # ~chewygumxx/zsh-config.git
-  # ::: :/.claude/CLAUDE.md
-  #
-  #
-
 ctime: 2026-09-30
+mtime: 2026-10-05
+spdx: GPL-3.0-only
 title: CLAUDE.md
-description: "Repository instructions"
+description: >-
+  Claude Code's guide to this Zsh configuration: its loading architecture,
+  conventions, toolchain, hooks and zunit tests, and how to verify a change.
 tags:
   - claude
   - llm
 ---
+
+<!--
+   -
+   - ~chewygumxx/zsh-config.git
+   - ::: :/.claude/CLAUDE.md
+   -
+   -->
 
 # CLAUDE.md
 
@@ -535,3 +535,5 @@ what the sandbox exists for.
 When adding an assertion, break the thing it guards and watch it fail before
 trusting it green. Several assertions in this suite passed vacuously on the
 first attempt.
+
+<!-- vim:set expandtab shiftwidth=2 filetype=markdown foldlevel=3: -->
