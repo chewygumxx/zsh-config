@@ -26,9 +26,8 @@ bun = "1.4"
 actionlint = "1.7.12"
 
 # Zsh linter and formatter; reads .shuck.toml. Not carried in the mise
-# registry, so it is pulled from its GitHub releases directly. The release
-# assets are named shuck-cli-*, so the binary has to be named explicitly.
-"github:ewhauser/shuck" = { version = "0.2.3", exe = "shuck" }
+# registry, so it is pulled from its GitHub releases directly.
+"github:ewhauser/shuck" = "0.2.3"
 
 # YAML linter, a Python tool installed with the uv pinned beside it. Its rules
 # come from .yamllint.yaml, which extends @chewygumxx/yamllint-config in
