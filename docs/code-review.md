@@ -1,3 +1,23 @@
+---
+ctime: 2026-09-28
+mtime: 2026-10-05
+spdx: GPL-3.0-only
+title: Code Review of the Zsh Sources
+description: >-
+  A full read-through review of the zsh sources, with each finding fixed in its
+  own commit.
+tags:
+  - zsh
+  - review
+---
+
+<!--
+   -
+   - ~chewygumxx/zsh-config.git
+   - ::: :/docs/code-review.md
+   -
+   -->
+
 # Code Review of the Zsh Sources
 
 Review date: 2026-09-28. Branch: `claude/code-review`, based on `8278c1b`.
@@ -324,3 +344,5 @@ These cost time during the work and are now recorded in `.claude/CLAUDE.md`
   pointing at fresh clones of every plugin in `spec/` and
   `rc/completion.rc.zsh`.
 - Every commit on the branch passed the `pre-commit` hook, which runs both.
+
+<!-- vim:set expandtab shiftwidth=2 filetype=markdown foldlevel=3: -->
