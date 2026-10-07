@@ -9,8 +9,7 @@
 #
 #
 
-# Temporarily enabled
-export CLAUDE_ALT=1
+#export CLAUDE_ALT=1
 
 # Herdr also requires this
 if [[ -v CLAUDE_ALT ]]; then
