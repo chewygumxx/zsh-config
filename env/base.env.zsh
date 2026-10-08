@@ -25,6 +25,7 @@
 typeset -gU path
 path=(
     "$HOME/.local/bin"
+    "${XDG_CACHE_HOME:-$HOME/.local/cache}/.bun/bin"
     "${XDG_DATA_HOME:-$HOME/.local/share}/cargo/bin"
     "${XDG_DATA_HOME:-$HOME/.local/share}/go/bin"
     $path
