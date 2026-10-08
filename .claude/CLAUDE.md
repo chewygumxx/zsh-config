@@ -34,8 +34,18 @@ loading architecture below only takes effect once `ZDOTDIR` is set to this repo.
 
 Note that `~/.config/zsh` is a separate clone of this same repository and is the
 live configuration. This checkout is the source; commits here do not affect the
-running shell until they are pushed or pulled across. `origin` carries a second
-push URL pointing at that live checkout.
+running shell until they reach that clone.
+
+`origin` is GitHub alone. The live clone is a second remote, `local`, and sets
+`receive.denyCurrentBranch=updateInstead`, so `git push local main` updates its
+working tree directly. That push is refused while the live clone has
+uncommitted changes to tracked files; an untracked file there only blocks it
+when an incoming commit adds the same path. Both remotes are machine-local git
+config, not part of the repository.
+
+Changes reach `main` through pull requests. Once one merges, pull `main` here
+before anything else, since `sync-header-metadata` may have committed on top
+(see "GitHub workflows"), then `git push local main`.
 
 On this machine `/etc/zsh/zshenv` supplies `XDG_CONFIG_HOME`, `XDG_CACHE_HOME`,
 `XDG_DATA_HOME`, `XDG_STATE_HOME` and `ZDOTDIR`. That file is machine-local and
@@ -120,8 +130,10 @@ autoload out of the current working directory.
 ## Directory purposes
 
 - `env/` - `*.env.zsh`, sourced by `.zshenv`; safe for non-interactive shells
-  (env vars, `zsh_dirs`, fzf/ssh/claude env setup, and the per-tool XDG
-  relocations in `env/tools.env.zsh`). A variable that decides where a tool
+  (`PATH`, `EDITOR` and the like in `env/base.env.zsh`, `zsh_dirs`, fzf/ssh/
+  claude env setup, the per-tool XDG relocations in `env/tools.env.zsh`, and
+  mise's shims on `PATH` in `env/mise.env.zsh`, for non-interactive shells
+  only, since `util/mise.rc.zsh` activates mise in interactive ones). A variable that decides where a tool
   keeps its state belongs here rather than in `rc/`, or scripts and
   `ssh host cmd` see a different value from the interactive shell.
 - `rc/` - `*.rc.zsh`, interactive-only modules sourced by `.zshrc` (aliases,
@@ -268,7 +280,12 @@ its GitHub releases through the `github:` backend, with the binary named
 explicitly because the release assets are called `shuck-cli-*`. Tasks run
 `tsc`, `prettier`, `commitlint` and `cz` through `bunx --bun --no-install`:
 their shebangs name node, which mise does not provide, and `--bun` runs them on
-Bun instead.
+Bun instead. `bunfig.toml` does the same for `bun run`: its `[run] bun = true`
+puts a `node` that is Bun first on `PATH`, so a Node installed elsewhere never
+runs a package script.
+
+`.tombi.toml` configures the tombi TOML formatter for editors. No task or gate
+runs it, and tombi is not pinned in `.mise.toml`.
 
 `.yamllint.yaml` only `extends` the shared `@chewygumxx/yamllint-config` by its
 `node_modules/` path, so yamllint must run from the repository root after
@@ -328,6 +345,52 @@ worse than no hook at all.
 `.husky/_/` already holds a generated shim for every git hook, and the `h`
 dispatcher exits 0 when the top-level counterpart is absent, so adding a file at
 `.husky/<hook>` is live immediately with no need to re-run `husky`.
+
+## GitHub workflows
+
+All four live in `.github/workflows/`, beside a `CLAUDE.md` of their own that
+requires Node.js 24 or later in any workflow that uses it.
+
+- `lint.yaml` - runs on every push to `main` and every pull request, as two
+  jobs: `mise run lint`, and `mise run test` on Ubuntu, which is where the
+  Debian `compinit` fault described under "Sandboxing" surfaces.
+- `commitlint.yaml` - lints a pull request's commits, or the pushed commit on
+  `main`, with the same Bun version that `.mise.toml` pins.
+- `sync-header-metadata.yaml` - on the same triggers, runs
+  `chewygumxx/sync-header-metadata` over every tracked file and commits any
+  change as `chore: Sync header metadata`, back onto the branch it ran
+  against. It rewrites the repository line and the `# ::: :/<path>` line of a
+  header, which is how a file copied from another repository or renamed in
+  place gets fixed even when `tests/header.zunit` was not run first. Pull
+  before pushing again to a branch it may have committed to.
+- `sync-repo-metadata.yaml` - when `.repo-metadata.jsonc` changes on `main`,
+  applies it to the GitHub repository's own settings. That needs
+  Administration write, which `GITHUB_TOKEN` cannot hold, so it mints a token
+  from a GitHub App; this is the step behind the `lint:actions` exclusion.
+
+The test job does not let `rc/plugin.rc.zsh` clone anything. It clones each
+plugin itself into a cache keyed on `spec/*.spec.zsh` and
+`rc/completion.rc.zsh`, from a slug list written out in the workflow: the
+enabled specs, plus zsh-completions and fzf-tab, which `rc/completion.rc.zsh`
+clones. Enabling a spec therefore means adding its slug there too; otherwise
+the sandboxed start clones it for real, and `tests/boot.zunit` fails on CI
+reporting it as cloned during startup.
+
+## Claude Code assets
+
+- `.claude/settings.json` enables the project's plugins, blanks the commit and
+  pull request attribution, and registers one `SessionStart` hook.
+- `.claude/hooks/install-deps.sh` is that hook. It runs `bun install` in a
+  cloud session only (`CLAUDE_CODE_REMOTE=true`), because a fresh clone has no
+  `core.hooksPath` until something installs, so commits made early in the
+  session would skip commitlint, lint and test without a word. A local checkout
+  is expected to have run `mise run setup` once already.
+- `.mcp.json` registers the GitHub MCP server, authenticated per request
+  through `gh auth token`.
+- `.worktreeinclude` names the gitignored files copied into a new worktree:
+  `env*`, `*.local.*` and `node_modules/`.
+- `docs/code-review.md` records the full review of the zsh sources made on
+  2026-09-28, each finding with the commit that fixed it.
 
 ## Neovim project tooling
 
