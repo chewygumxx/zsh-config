@@ -191,6 +191,93 @@
     assert "$result" same_as -
 }
 
+@test 'nvim adds a new managed file to chezmoi in the background' {
+    # The cache is written by hand and the source directory backdated, so the
+    # wrapper finds it fresh and never starts a rebuild of its own. Neither
+    # stream goes through `run`: the detached add inherits the wrapper's
+    # stdout, and a command substitution would wait for it to exit.
+    local XDG_CACHE_HOME="$TMP/cache" XDG_CONFIG_HOME="$TMP/config"
+    local -A zsh_dirs=(cache "$TMP/cache/zsh")
+    local cache="$TMP/cache/zsh/nvim/chezmoi-managed"
+    local -x CHEZMOI_LOG="$TMP/chezmoi.log"
+
+    mkdir -p -- "$TMP/src" "$TMP/home/managed" "${cache:h}"
+    touch -d 2000-01-01 -- "$TMP/src"
+    print -r -- "$TMP/src" > "$cache.source"
+    print -r -- "$TMP/home/managed" > "$cache"
+
+    stub_command nvim "$TMP/bin" 'touch "$1"'
+    # shuck: disable=C005
+    stub_command chezmoi "$TMP/bin" 'sleep 1' \
+        'printf "%s\n" "$*" >> "$CHEZMOI_LOG"'
+    load_shell_function nvim
+
+    nvim "$TMP/home/managed/new" <<< y > "$TMP/out" 2> "$TMP/err"
+
+    local -a early=("$CHEZMOI_LOG"(N))
+
+    local i
+    for i in {1..30}; do
+        [[ -s "$CHEZMOI_LOG" ]] && break
+        sleep 0.1
+    done
+
+    assert $#early equals 0
+    assert "$(<"$TMP/err")" contains 'to chezmoi? [y/N]'
+    assert "$(<"$CHEZMOI_LOG")" contains "add -- $TMP/home/managed/new"
+    assert "$(<"$CHEZMOI_LOG")" does_not_contain 'source-path'
+}
+
+@test 'nvim adds nothing when the new file prompt is declined' {
+    local XDG_CACHE_HOME="$TMP/cache" XDG_CONFIG_HOME="$TMP/config"
+    local -A zsh_dirs=(cache "$TMP/cache/zsh")
+    local cache="$TMP/cache/zsh/nvim/chezmoi-managed"
+    local -x CHEZMOI_LOG="$TMP/chezmoi.log"
+
+    mkdir -p -- "$TMP/src" "$TMP/home/managed" "${cache:h}"
+    touch -d 2000-01-01 -- "$TMP/src"
+    print -r -- "$TMP/src" > "$cache.source"
+    print -r -- "$TMP/home/managed" > "$cache"
+
+    stub_command nvim "$TMP/bin" 'touch "$1"'
+    # shuck: disable=C005
+    stub_command chezmoi "$TMP/bin" 'printf "%s\n" "$*" >> "$CHEZMOI_LOG"'
+    load_shell_function nvim
+
+    nvim "$TMP/home/managed/new" <<< n > "$TMP/out" 2> "$TMP/err"
+    sleep 0.5
+
+    local -a log=("$CHEZMOI_LOG"(N))
+
+    assert "$(<"$TMP/err")" contains 'to chezmoi? [y/N]'
+    assert $#log equals 0
+}
+
+@test 'nvim does not offer an unmanaged new file to chezmoi' {
+    local XDG_CACHE_HOME="$TMP/cache" XDG_CONFIG_HOME="$TMP/config"
+    local -A zsh_dirs=(cache "$TMP/cache/zsh")
+    local cache="$TMP/cache/zsh/nvim/chezmoi-managed"
+    local -x CHEZMOI_LOG="$TMP/chezmoi.log"
+
+    mkdir -p -- "$TMP/src" "$TMP/home/managed" "$TMP/home/other" "${cache:h}"
+    touch -d 2000-01-01 -- "$TMP/src"
+    print -r -- "$TMP/src" > "$cache.source"
+    print -r -- "$TMP/home/managed" > "$cache"
+
+    stub_command nvim "$TMP/bin" 'touch "$1"'
+    # shuck: disable=C005
+    stub_command chezmoi "$TMP/bin" 'printf "%s\n" "$*" >> "$CHEZMOI_LOG"'
+    load_shell_function nvim
+
+    nvim "$TMP/home/other/new" <<< y > "$TMP/out" 2> "$TMP/err"
+    sleep 0.5
+
+    local -a log=("$CHEZMOI_LOG"(N))
+
+    assert "$(<"$TMP/err")" is_empty
+    assert $#log equals 0
+}
+
 @test 'eza keeps an option value beside its option' {
     stub_command eza "$TMP/bin"
     load_shell_function eza

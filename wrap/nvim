@@ -33,33 +33,9 @@ fi
 
 local target="${1:a}"
 
-
-# ---------
-# New File
-# ---------
-
-if [[ ! -e "$target" ]]; then
-    command nvim "$target"
-    local nvim_exit=$?
-
-    if [[ ! -e "$target" ]]; then
-        return $nvim_exit
-    fi
-
-    if (( $+commands[chezmoi] )); then
-        local source_dir
-        if source_dir="$(command chezmoi source-path "${target:h}" 2>/dev/null)"; then
-            command chezmoi add --prompt "$target"
-        fi
-    fi
-
-    return $nvim_exit
-fi
-
-
-# ---------------
-# File Exists
-# ---------------
+# ------------------
+# Directories, Root
+# ------------------
 
 if [[ -d "$target" ]]; then
     cd "$target"
@@ -76,7 +52,10 @@ zmodload -F zsh/stat b:zstat
 # zstat follows symlinks, so a link to a root-owned file lands here too.
 # sudoedit refuses to open a path through a symlink unless sudoers sets
 # sudoedit_follow, so it is handed the resolved path instead.
-if (( $(zstat +uid "$target") == 0 )); then
+#
+# The -e guard is needed because a new file reaches this test too. On a missing
+# path zstat prints an error and the test becomes `(( == 0 ))`.
+if [[ -e "$target" ]] && (( $(zstat +uid "$target") == 0 )); then
     SUDO_EDITOR=nvim command sudoedit "${target:A}"
     return
 fi
@@ -90,7 +69,9 @@ fi
 # path: it reads every file under the source directory and renders every
 # template, password manager and command output lookups included. Asking about
 # one file therefore costs as much as listing all of them, and asked here, that
-# cost landed ahead of Neovim on every edit of an existing file.
+# cost landed ahead of Neovim on every edit of an existing file. Its sibling
+# `chezmoi source-path` is no cheaper, and the new file branch below once paid
+# that after Neovim exited, about six seconds before the prompt came back.
 #
 # The full list is cached instead, and the lookup is a read of that file. The
 # cache is never rebuilt in the foreground. When anything under the source
@@ -103,7 +84,7 @@ fi
 # `chezmoi source-path` is itself a chezmoi process and asking it here would
 # reintroduce the wait. The default location stands in until a rebuild has
 # recorded the real one.
-local -a managed=()
+local -a managed=() managed_paths=()
 
 if (( $+commands[chezmoi] )); then
     local cache_root="${XDG_CACHE_HOME:-$HOME/.local/cache}/zsh"
@@ -163,7 +144,7 @@ if (( $+commands[chezmoi] )); then
     # Every match is re-added below, since editing through a managed link
     # writes to its target, which may be managed in its own right.
     if [[ -s "$cache" ]]; then
-        local -a managed_paths=("${(@f)$(<"$cache")}")
+        managed_paths=("${(@f)$(<"$cache")}")
         local candidate
 
         for candidate in "$target" "${target:A}"; do
@@ -173,6 +154,50 @@ if (( $+commands[chezmoi] )); then
             fi
         done
     fi
+fi
+
+
+# ---------
+# New File
+# ---------
+
+# A new file is offered to chezmoi when its directory is managed. That is
+# answered from the cached list, which names directories as well as files, so
+# no chezmoi process runs before the question. The add itself runs detached,
+# since it builds the whole source state just as `chezmoi managed` does. A
+# directory that became managed since the last rebuild is missed once.
+#
+# The question is asked here rather than through `chezmoi add --prompt`, which
+# could only ask once that source state was built. Alone, read -q opens the
+# terminal itself and fails when there is none; -u 0 reads stdin instead, still
+# one keypress at a time on a terminal, and end of file declines. The question
+# is printed rather than passed as read's ?prompt, which only an interactive
+# shell displays, and the newline read -q never echoes follows it on stderr.
+# stdin is detached from the add for the same reason as the rebuild above.
+if [[ ! -e "$target" ]]; then
+    command nvim "$target"
+    local nvim_exit=$?
+
+    if [[ ! -e "$target" ]]; then
+        return $nvim_exit
+    fi
+
+    local parent
+    for parent in "${target:h}" "${target:h:A}"; do
+        (( ${managed_paths[(Ie)$parent]} )) || continue
+
+        local answer=1
+        print -nu2 -- "Add ${(D)target} to chezmoi? [y/N] "
+        read -q -u 0 && answer=0
+        print -u2
+
+        if (( answer == 0 )); then
+            command chezmoi add -- "$target" < /dev/null &!
+        fi
+        break
+    done
+
+    return $nvim_exit
 fi
 
 if (( $#managed )); then
