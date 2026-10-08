@@ -280,7 +280,12 @@ its GitHub releases through the `github:` backend, with the binary named
 explicitly because the release assets are called `shuck-cli-*`. Tasks run
 `tsc`, `prettier`, `commitlint` and `cz` through `bunx --bun --no-install`:
 their shebangs name node, which mise does not provide, and `--bun` runs them on
-Bun instead.
+Bun instead. `bunfig.toml` does the same for `bun run`: its `[run] bun = true`
+puts a `node` that is Bun first on `PATH`, so a Node installed elsewhere never
+runs a package script.
+
+`.tombi.toml` configures the tombi TOML formatter for editors. No task or gate
+runs it, and tombi is not pinned in `.mise.toml`.
 
 `.yamllint.yaml` only `extends` the shared `@chewygumxx/yamllint-config` by its
 `node_modules/` path, so yamllint must run from the repository root after
