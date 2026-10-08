@@ -34,8 +34,18 @@ loading architecture below only takes effect once `ZDOTDIR` is set to this repo.
 
 Note that `~/.config/zsh` is a separate clone of this same repository and is the
 live configuration. This checkout is the source; commits here do not affect the
-running shell until they are pushed or pulled across. `origin` carries a second
-push URL pointing at that live checkout.
+running shell until they reach that clone.
+
+`origin` is GitHub alone. The live clone is a second remote, `local`, and sets
+`receive.denyCurrentBranch=updateInstead`, so `git push local main` updates its
+working tree directly. That push is refused while the live clone has
+uncommitted changes to tracked files; an untracked file there only blocks it
+when an incoming commit adds the same path. Both remotes are machine-local git
+config, not part of the repository.
+
+Changes reach `main` through pull requests. Once one merges, pull `main` here
+before anything else, since `sync-header-metadata` may have committed on top
+(see "GitHub workflows"), then `git push local main`.
 
 On this machine `/etc/zsh/zshenv` supplies `XDG_CONFIG_HOME`, `XDG_CACHE_HOME`,
 `XDG_DATA_HOME`, `XDG_STATE_HOME` and `ZDOTDIR`. That file is machine-local and
