@@ -251,10 +251,15 @@
     # present in the borrowed plugin cache, so nothing but the flag stops it
     # loading. rc/plugin.rc.zsh reaches its `continue` from inside an anonymous
     # function, which is worth pinning rather than assuming.
+    #
+    # Counted as functions defined from the plugin's directory rather than by
+    # one function's name. This once tested for `autocomplete.async`, which
+    # upstream renamed to `.autocomplete__async`, after which the test passed
+    # with the flag ignored and the plugin fully loaded.
     run sandbox_zsh_stdout "$SANDBOX" -i -c \
-        'print -r -- $(( $+functions[autocomplete.async] ))'
+        'print -r -- ${#${(M)functions_source:#*/zsh-autocomplete/*}}'
 
-    assert "$output" equals 0
+    assert "$output" same_as 0
 }
 
 @test 'Menu selection gets vi motions when fzf is absent' {
