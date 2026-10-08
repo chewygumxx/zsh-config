@@ -370,11 +370,12 @@ requires Node.js 24 or later in any workflow that uses it.
 
 The test job does not let `rc/plugin.rc.zsh` clone anything. It clones each
 plugin itself into a cache keyed on `spec/*.spec.zsh` and
-`rc/completion.rc.zsh`, from a slug list written out in the workflow: the
-enabled specs, plus zsh-completions and fzf-tab, which `rc/completion.rc.zsh`
-clones. Enabling a spec therefore means adding its slug there too; otherwise
-the sandboxed start clones it for real, and `tests/boot.zunit` fails on CI
-reporting it as cloned during startup.
+`rc/completion.rc.zsh`: every spec, disabled ones included, plus
+zsh-completions and fzf-tab, which `rc/completion.rc.zsh` clones. The spec
+slugs are read with `sed` from each file's `local slug="owner/repo"` line, so a
+spec must declare its slug in exactly that form. One that does not is left
+uncloned on CI, the sandboxed start clones it for real, and `tests/boot.zunit`
+fails reporting it as cloned during startup.
 
 ## Claude Code assets
 
