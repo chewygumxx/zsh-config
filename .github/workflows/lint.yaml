@@ -76,13 +76,15 @@ jobs:
             # The suite borrows existing clones rather than letting the
             # configuration fetch them, which is what keeps a test run offline
             # and repeatable. Keyed on the files that decide which plugins are
-            # wanted, so adding a spec invalidates the cache.
+            # wanted, so adding a spec invalidates the cache. This workflow is
+            # among them, since the clone step below decides it too; without
+            # it, a change there left a stale cache restored and never ran.
             - name: Cache plugin clones
               id: plugins
               uses: actions/cache@v6
               with:
                   path: ~/zsh-test-plugins
-                  key: zsh-plugins-${{ hashFiles('spec/*.spec.zsh', 'rc/completion.rc.zsh') }}
+                  key: zsh-plugins-${{ hashFiles('spec/*.spec.zsh', 'rc/completion.rc.zsh', '.github/workflows/lint.yaml') }}
 
             # Every spec's slug is read out of spec/, disabled ones included:
             # the enabled=false test in tests/boot.zunit needs a clone present
