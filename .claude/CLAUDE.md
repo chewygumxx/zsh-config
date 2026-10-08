@@ -376,6 +376,22 @@ clones. Enabling a spec therefore means adding its slug there too; otherwise
 the sandboxed start clones it for real, and `tests/boot.zunit` fails on CI
 reporting it as cloned during startup.
 
+## Claude Code assets
+
+- `.claude/settings.json` enables the project's plugins, blanks the commit and
+  pull request attribution, and registers one `SessionStart` hook.
+- `.claude/hooks/install-deps.sh` is that hook. It runs `bun install` in a
+  cloud session only (`CLAUDE_CODE_REMOTE=true`), because a fresh clone has no
+  `core.hooksPath` until something installs, so commits made early in the
+  session would skip commitlint, lint and test without a word. A local checkout
+  is expected to have run `mise run setup` once already.
+- `.mcp.json` registers the GitHub MCP server, authenticated per request
+  through `gh auth token`.
+- `.worktreeinclude` names the gitignored files copied into a new worktree:
+  `env*`, `*.local.*` and `node_modules/`.
+- `docs/code-review.md` records the full review of the zsh sources made on
+  2026-09-28, each finding with the commit that fixed it.
+
 ## Neovim project tooling
 
 `.nvim.lua` is loaded through `exrc`, which nvim-config enables and `:trust`
