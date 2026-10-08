@@ -84,6 +84,11 @@ jobs:
                   path: ~/zsh-test-plugins
                   key: zsh-plugins-${{ hashFiles('spec/*.spec.zsh', 'rc/completion.rc.zsh') }}
 
+            # Every spec's slug is read out of spec/, disabled ones included:
+            # the enabled=false test in tests/boot.zunit needs a clone present
+            # so that only the flag stands between it and loading. A list
+            # written out here once missed exactly those.
+            #
             # zsh-completions and fzf-tab are cloned by rc/completion.rc.zsh
             # rather than declared in spec/, and fzf-tab only when fzf is on
             # PATH. It is cloned here regardless, so the result does not depend
@@ -91,14 +96,10 @@ jobs:
             - name: Clone plugins
               if: steps.plugins.outputs.cache-hit != 'true'
               run: |
+                  slugs=$(sed -n 's/^local slug="\(.*\)"$/\1/p' spec/*.spec.zsh)
                   mkdir -p ~/zsh-test-plugins
                   cd ~/zsh-test-plugins
-                  for slug in \
-                      zdharma-continuum/fast-syntax-highlighting \
-                      zsh-users/zsh-autosuggestions \
-                      jeffreytse/zsh-vi-mode \
-                      zsh-users/zsh-completions \
-                      aloxaf/fzf-tab; do
+                  for slug in $slugs zsh-users/zsh-completions aloxaf/fzf-tab; do
                       git clone --depth 1 "https://github.com/$slug.git"
                   done
 
