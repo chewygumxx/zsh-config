@@ -341,6 +341,36 @@ worse than no hook at all.
 dispatcher exits 0 when the top-level counterpart is absent, so adding a file at
 `.husky/<hook>` is live immediately with no need to re-run `husky`.
 
+## GitHub workflows
+
+All four live in `.github/workflows/`, beside a `CLAUDE.md` of their own that
+requires Node.js 24 or later in any workflow that uses it.
+
+- `lint.yaml` - runs on every push to `main` and every pull request, as two
+  jobs: `mise run lint`, and `mise run test` on Ubuntu, which is where the
+  Debian `compinit` fault described under "Sandboxing" surfaces.
+- `commitlint.yaml` - lints a pull request's commits, or the pushed commit on
+  `main`, with the same Bun version that `.mise.toml` pins.
+- `sync-header-metadata.yaml` - on the same triggers, runs
+  `chewygumxx/sync-header-metadata` over every tracked file and commits any
+  change as `chore: Sync header metadata`, back onto the branch it ran
+  against. It rewrites the repository line and the `# ::: :/<path>` line of a
+  header, which is how a file copied from another repository or renamed in
+  place gets fixed even when `tests/header.zunit` was not run first. Pull
+  before pushing again to a branch it may have committed to.
+- `sync-repo-metadata.yaml` - when `.repo-metadata.jsonc` changes on `main`,
+  applies it to the GitHub repository's own settings. That needs
+  Administration write, which `GITHUB_TOKEN` cannot hold, so it mints a token
+  from a GitHub App; this is the step behind the `lint:actions` exclusion.
+
+The test job does not let `rc/plugin.rc.zsh` clone anything. It clones each
+plugin itself into a cache keyed on `spec/*.spec.zsh` and
+`rc/completion.rc.zsh`, from a slug list written out in the workflow: the
+enabled specs, plus zsh-completions and fzf-tab, which `rc/completion.rc.zsh`
+clones. Enabling a spec therefore means adding its slug there too; otherwise
+the sandboxed start clones it for real, and `tests/boot.zunit` fails on CI
+reporting it as cloned during startup.
+
 ## Neovim project tooling
 
 `.nvim.lua` is loaded through `exrc`, which nvim-config enables and `:trust`
