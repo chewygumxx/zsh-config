@@ -29,18 +29,18 @@
 # lockfile that has drifted from `package.json` should not leave a session
 # with no hooks at all. Either way Bun reuses container-cached
 # `node_modules` instead of rebuilding it from nothing every time. It is
-# genuinely idempotent here: no dependency is patched and `package.json` has no `postinstall`
-# (the commitizen prompt's titles come from `@chewygumxx/cz-commitlint`), so
-# nothing about dependency resolution depends on pnpm-only lockfile fields
-# the way it briefly did. Verified by probe: a clean `bun install` reproduces
-# `bun.lock` byte-for-byte against what is committed, both from nothing and
-# repeated on top of itself.
+# genuinely idempotent here: no dependency is patched and `package.json` has
+# no `postinstall` (the commitizen prompt's titles come from
+# `@chewygumxx/cz-commitlint`). Verified by probe: a clean `bun install`
+# reproduces `bun.lock` byte-for-byte against what is committed, both from
+# nothing and repeated on top of itself.
 #
 # Scoped to Bun on purpose. `mise install` cannot run here: this
 # environment's network policy blocks mise's own download hosts, so the
-# gate binaries it pins (luafmt, selene, tombi, lua-language-server, ...)
-# stay unavailable regardless of what this hook does. That gap belongs to
-# the environment's network policy, not to a repository-committed hook.
+# gate binaries `.mise.toml` pins (actionlint, shuck, and yamllint with the
+# uv that installs it) stay unavailable regardless of what this hook does.
+# That gap belongs to the environment's network policy, not to a
+# repository-committed hook.
 
 set -u
 
