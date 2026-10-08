@@ -130,8 +130,10 @@ autoload out of the current working directory.
 ## Directory purposes
 
 - `env/` - `*.env.zsh`, sourced by `.zshenv`; safe for non-interactive shells
-  (env vars, `zsh_dirs`, fzf/ssh/claude env setup, and the per-tool XDG
-  relocations in `env/tools.env.zsh`). A variable that decides where a tool
+  (`PATH`, `EDITOR` and the like in `env/base.env.zsh`, `zsh_dirs`, fzf/ssh/
+  claude env setup, the per-tool XDG relocations in `env/tools.env.zsh`, and
+  mise's shims on `PATH` in `env/mise.env.zsh`, for non-interactive shells
+  only, since `util/mise.rc.zsh` activates mise in interactive ones). A variable that decides where a tool
   keeps its state belongs here rather than in `rc/`, or scripts and
   `ssh host cmd` see a different value from the interactive shell.
 - `rc/` - `*.rc.zsh`, interactive-only modules sourced by `.zshrc` (aliases,
