@@ -472,6 +472,11 @@ Each of these cost real time here:
   `assert association equals banana` passes. Use `same_as` for anything that is
   not a number. Note that `same_as` leaves its comparison unquoted, making it a
   pattern, whereas `contains` quotes and so is literal.
+- **`assert` splits its comparison on newlines.** The dispatcher passes the
+  expected side through `${(@f)...}`, so `assert "$x" same_as $'a\nb'`
+  compares against `a` alone. Only the left-hand value survives intact; join a
+  multi-line capture onto one line, as with `"${(j: :)${(f)x}}"`, before
+  comparing it.
 - **`run` merges the streams.** It captures `2>&1` into `$output` and strips
   trailing newlines. An assertion about one specific stream has to separate them
   before `run` sees them, and a byte-exact check needs `wc -c` rather than
