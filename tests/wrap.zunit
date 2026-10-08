@@ -304,6 +304,61 @@
     assert "$output" contains "$TMP/job"
 }
 
+@test 'systemd-run passes its own options through untouched' {
+    stub_command systemd-run "$TMP/bin"
+    load_shell_function systemd-run
+
+    local args
+    args="$(systemd-run --user --unit=run-something \
+        --on-calendar=4:00 -- true 2> /dev/null)" || true
+
+    assert "${(j: :)${(f)args}}" same_as \
+        '--user --unit=run-something --on-calendar=4:00 -- true'
+}
+
+@test 'systemd-run finds the command past a separate option value' {
+    stub_command systemd-run "$TMP/bin"
+    load_shell_function systemd-run
+
+    local args
+    args="$(systemd-run --on-calendar 4:00 true 2> /dev/null)" || true
+
+    assert "${(j: :)${(f)args}}" same_as \
+        '--user --unit=true --on-calendar 4:00 true'
+}
+
+@test 'systemd-run leaves --user out when a manager is chosen' {
+    stub_command systemd-run "$TMP/bin"
+    load_shell_function systemd-run
+
+    local args
+    args="$(systemd-run --system true 2> /dev/null)" || true
+
+    assert "${(j: :)${(f)args}}" same_as '--unit=true --system true'
+}
+
+@test 'systemd-run reads a unit name from bundled short options' {
+    stub_command systemd-run "$TMP/bin"
+    load_shell_function systemd-run
+
+    local args
+    args="$(systemd-run -qu job true 2> /dev/null)" || true
+
+    assert "${(j: :)${(f)args}}" same_as '--user -qu job true'
+}
+
+@test 'systemd-run derives a valid unit name' {
+    stub_command systemd-run "$TMP/bin"
+    load_shell_function systemd-run
+
+    local args
+    args="$(systemd-run /usr/bin/cclip -t 'image/png' -x 2> /dev/null)" ||
+        true
+
+    assert "${(j: :)${(f)args}}" same_as \
+        '--user --unit=cclip_-t_image_png /usr/bin/cclip -t image/png -x'
+}
+
 @test 'pacman runs yay when it is installed' {
     stub_command yay "$TMP/bin"
     stub_command pacman "$TMP/bin"

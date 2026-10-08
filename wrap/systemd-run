@@ -7,60 +7,95 @@
 # ::: :/wrap/systemd-run
 #
 #
-(( $+commands[systemd-run] )) || return 127
 
-# `local +h functions` used to stand here as an attempt to scope the helper
-# below. It does not work: zsh defines functions globally regardless. An EXIT
-# trap set inside a function runs when that function returns, so this removes the
-# helper on every path out, early returns included.
-trap 'unset -f print_help' EXIT
+(($+commands[systemd-run])) || return 127
 
-local this_file="$0"
-local unit
+emulate -L zsh
 
-function print_help () {
-    print -f "%s\n" \
-        "Helper wrapper for systemd-run --user" \
-        "Usage: $this_file [options] [command] [args]" \
+#
+# Runs a command as a transient user unit named after the command, so that
+# `systemd-run cclip -t image/png` runs
+# `systemd-run --user --unit=cclip_-t_image_png cclip -t image/png`.
+#
+# Every option is systemd-run's own and is passed through untouched. --user is
+# added only when no option already picks a manager, and --unit only when no
+# option names the unit and a command is present.
+#
+# This wrapper once parsed options of its own, -u and -h among them, and took
+# whatever word followed them as the command. A genuine systemd-run option such
+# as --user was then rejected as `Command not found: --user`.
+#
 
-    print -f "\n%s\n" "Options:"
-    # -- terminates print's own option parsing. Without it the "-u|--unit"
-    # argument below is read as print's `-u fd` flag, which then demands a
-    # numeric descriptor and aborts with `number expected after -u`.
-    print -f "    %-10s %s\n" -- \
-        "-u|--unit " "Unit name, default is the command and first two arguments" \
-        ""           "underscore concatenated" \
-        ""           "For example 'urun cclip -S -t "image/png" -t ...' -> 'cclipd_-S_-t'" \
-        "-h|--help " "Print this help"
-}
+# systemd-run's options that take their value as the next word, as of systemd
+# 262. systemd-run stops parsing at the first non-option, so this list is what
+# tells the value in `--on-calendar 4:00 job` apart from the command. An
+# abbreviated long option, which getopt_long also accepts, is not recognised.
+local -a value_opts=(
+    -H --host -M --machine -C --capsule -u --unit -p --property
+    --description --slice --expand-environment --service-type --uid --gid
+    --nice --working-directory --root-directory -E --setenv --output --json
+    --job-mode --background --path-property --socket-property --on-active
+    --on-boot --on-startup --on-unit-active --on-unit-inactive --on-calendar
+    --timer-property
+)
+local -a manager_opts=(--user --system -H --host -M --machine -C --capsule)
 
-while true; do
-    case $1 in
-        -u|--unit)
-            if [[ -z "$2" ]]; then
-                print -u2 "${0}: $1 was provided with no value"
-                return 1
-            fi
-            unit="$2"
-            shift 2
+local word opt unit
+local -a inject name
+integer has_manager has_unit i=1 j
+
+while ((i <= $#)); do
+    word="$argv[i]"
+
+    case "$word" in
+        --)
+            ((i++))
+            break
             ;;
-        -h|--help) print_help; return 0;;
-        *) break;;
+        --*)
+            opt="${word%%=*}"
+            ((manager_opts[(Ie)$opt])) && has_manager=1
+            [[ "$opt" == --unit ]] && has_unit=1
+            [[ "$word" != *=* ]] && ((value_opts[(Ie)$opt])) && ((i++))
+            ;;
+        -?*)
+            # Short options may be bundled, as in -qGu name. The first one that
+            # takes a value consumes the rest of the word, or the next word when
+            # it is last.
+            for ((j = 2; j <= $#word; j++)); do
+                opt="-$word[j]"
+                ((manager_opts[(Ie)$opt])) && has_manager=1
+                [[ "$opt" == -u ]] && has_unit=1
+
+                if ((value_opts[(Ie)$opt])); then
+                    ((j == $#word)) && ((i++))
+                    break
+                fi
+            done
+            ;;
+        *)
+            break
+            ;;
     esac
+
+    ((i++))
 done
 
-# A path is accepted as well as a name. $commands only knows names found on
-# PATH, so `systemd-run ./script` and `systemd-run /usr/bin/foo` were rejected
-# as not found even though systemd-run itself runs both.
-if [[ -z "$1" ]] || ! { (( $+commands[$1] )) || [[ "$1" == */* && -x "$1" ]] }; then
-    print -u2 "${0}: Command not found: $1"
-    return 127
+((has_manager)) || inject+=(--user)
+
+if ((!has_unit && i <= $#)); then
+    # Sliced from the command, which is known to exist. A quoted slice lying
+    # wholly past the end of argv yields one empty word rather than none, so
+    # `argv[i + 1, i + 2]` turned `systemd-run true` into the unit `true_`.
+    name=("${(@)argv[i, i + 2]}")
+    name[1]="${name[1]:t}"
+    unit="${(j:_:)name}"
+
+    # A unit name may hold only ASCII letters, digits and `:_.-`, and at most
+    # 255 characters including its suffix.
+    inject+=(--unit="${${unit//[^A-Za-z0-9:_.-]/_}[1,128]}")
 fi
 
-: ${unit:=${(j:_:)@:1:3}}
-
-# `command` is required: this function is named systemd-run and autoloaded, so a
-# bare call resolves back to the function rather than the binary. It recursed,
-# re-entered the option parser with --user as $1, and exited 127 reporting
-# `Command not found: --user`, so this wrapper never once ran systemd-run.
-command systemd-run --user --unit="${unit:gs/\//_/}" "$@"
+# `command` is required: this function is named systemd-run and autoloaded, so
+# a bare call resolves back to the function rather than the binary.
+command systemd-run $inject "$@"
