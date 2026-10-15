@@ -147,10 +147,7 @@ if (($+commands[chezmoi])); then
         local candidate
 
         for candidate in "$target" "${target:A}"; do
-            if ((\
-            \ \
-            ${managed_paths[(Ie)$candidate]} \ \
-            && ! ${managed[(Ie)$candidate]})); then
+            if ((${managed_paths[(Ie)$candidate]} && !${managed[(Ie)$candidate]})); then
                 managed+=("$candidate")
             fi
         done
