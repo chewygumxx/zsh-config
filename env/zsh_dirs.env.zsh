@@ -16,9 +16,8 @@
 # root-relative one such as /zsh, and the mkdir -p at the foot of this file then
 # fails with permission denied on every single shell start.
 #
-# The cache fallback deliberately mirrors the non-standard location set in
-# base.conf rather than the XDG default of ~/.cache, so that an unset variable
-# cannot silently strand a second cache tree elsewhere.
+# The cache fallback is the XDG default of ~/.cache, where any other
+# XDG-aware tool would also look with the variable unset.
 # The source directories follow ZDOTDIR, which is what zsh itself used to find
 # .zshenv and .zshrc, so a checkout sourced from anywhere loads its own rc, util,
 # func, wrap and spec files rather than whichever copy happens to live under

@@ -106,8 +106,7 @@ per-user state rather than part of the checkout.
 Every XDG variable is read with a `:-` fallback. Those variables come from
 systemd, which is not applied in every context, and without a fallback every
 path collapsed to a root-relative one such as `/zsh` where `mkdir -p` fails on
-each shell start. The cache fallback is `$HOME/.local/cache`, matching the local
-convention rather than the XDG default of `~/.cache`.
+each shell start. The cache fallback is the XDG default of `$HOME/.cache`.
 
 The array is declared and assigned in a single `typeset -gA zsh_dirs=( ... )`
 statement. Split across two statements, the subscripted keys are only valid once

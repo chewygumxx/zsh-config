@@ -21,8 +21,7 @@ local __this_file="${(D)${functions_source[${(%):-%N}]:-${(%):-%N}}}"
 (($+commands[cloudflared])) || return 127
 
 local dir_config="${XDG_CONFIG_HOME:="$HOME/.config"}/cloudflared"
-# The cache fallback is ~/.local/cache, as everywhere else in this repository,
-# rather than the XDG default of ~/.cache.
+# The cache fallback is ~/.cache, as everywhere else in this repository.
 local dir_cache="${XDG_CACHE_HOME:="$HOME/.cache"}/cloudflared"
 
 # --------------
