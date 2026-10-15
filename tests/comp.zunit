@@ -152,3 +152,314 @@
     assert $state equals 1
     assert "$output" is_empty
 }
+
+@test '_herdr generates its cache and hands on to it' {
+    # The output is also what pins the dropped dispatch. Left in, the script's
+    # foot calls compdef, which is undefined here and would report as much.
+    load _support/herdr
+    stub_herdr "$TMP/bin"
+    stub_herdr_script "$TMP/bin"
+    load_shell_function _herdr
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([cache_comp]="$TMP/cache")
+
+    run _herdr one two
+
+    unfunction zsh_dirs_require
+
+    assert $state equals 0
+    assert "$output" same_as 'generated one two'
+    assert "$TMP/cache/herdr.zsh" is_file
+}
+
+@test '_herdr completes ids from the live server' {
+    load _support/herdr
+    stub_herdr "$TMP/bin"
+    stub_herdr_script "$TMP/bin"
+    load_shell_function _herdr
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([cache_comp]="$TMP/cache")
+
+    run _herdr
+
+    unfunction zsh_dirs_require
+
+    # Built at run time, since zunit passes each test body through echo, which
+    # turns a doubled backslash written here into a single one.
+    local bs=${(#):-92}
+    local -a cache=("${(@f)$(<"$TMP/cache/herdr.zsh")}")
+    local -a want=(
+        "':pane_id:_herdr_live_ids panes' $bs"
+        "'::pane_id:_herdr_live_ids panes' $bs"
+        "'--pane[Existing pane]:ID:_herdr_live_ids panes' $bs"
+        "'--source-pane[]:ID:_herdr_live_ids panes' $bs"
+        "'--target-pane[]:PANE:_herdr_live_ids panes' $bs"
+        "':tab_id:_herdr_live_ids tabs' $bs"
+        "'--tab[]:TAB_ID:_herdr_live_ids tabs' $bs"
+        "':workspace_id:_herdr_live_ids workspaces' $bs"
+        "'--workspace[]:WORKSPACE_ID:_herdr_live_ids workspaces' $bs"
+        "':target:_herdr_live_ids agents' $bs"
+        "'::target:_herdr_live_ids agents' $bs"
+    )
+    local -a missing=(${want:|cache})
+
+    assert $state equals 0
+    assert "${(j: :)missing}" is_empty
+}
+
+@test '_herdr leaves every other argument to _default' {
+    # One target precedes the agent block and one follows it, under
+    # `herdr terminal session`, where it names a terminal rather than an
+    # agent. Both have to survive, as does an ID that is no herdr object.
+    load _support/herdr
+    stub_herdr "$TMP/bin"
+    stub_herdr_script "$TMP/bin"
+    load_shell_function _herdr
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([cache_comp]="$TMP/cache")
+
+    run _herdr
+
+    unfunction zsh_dirs_require
+
+    local bs=${(#):-92}
+    local -a cache=("${(@f)$(<"$TMP/cache/herdr.zsh")}")
+    local -a kept=(${(M)cache:#*_default*})
+    local -a expected=(
+        "'--source[]:ID:_default' $bs"
+        "':target:_default' $bs"
+    )
+    local -a dispatch=(${(M)cache:#*compdef*})
+
+    # Differences are taken unquoted. Inside double quotes the array is joined
+    # into one word before :| sees it, so nothing is ever removed.
+    local -a extra=(${kept:|expected}) absent=(${expected:|kept})
+
+    assert $state equals 0
+    assert ${#kept} equals 3
+    assert "${(j: :)extra}" is_empty
+    assert "${(j: :)absent}" is_empty
+    assert ${#dispatch} equals 1
+    assert "$dispatch[1]" same_as '#compdef herdr'
+}
+
+@test '_herdr regenerates a cache older than herdr' {
+    load _support/herdr
+    stub_herdr "$TMP/bin"
+    print -r -- '_herdr() { print -r -- fresh; }' > "$TMP/bin/completion.zsh"
+    touch -d '2100-01-01' -- "$TMP/bin/herdr"
+    load_shell_function _herdr
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([cache_comp]="$TMP/cache")
+
+    print -r -- '_herdr() { print -r -- stale; }' > "$TMP/cache/herdr.zsh"
+    touch -r "$ZSH_CONFIG_ROOT/comp/_herdr" -- "$TMP/cache/herdr.zsh"
+
+    run _herdr
+
+    unfunction zsh_dirs_require
+
+    assert $state equals 0
+    assert "$output" same_as fresh
+}
+
+@test '_herdr regenerates a cache older than itself' {
+    load _support/herdr
+    stub_herdr "$TMP/bin"
+    print -r -- '_herdr() { print -r -- fresh; }' > "$TMP/bin/completion.zsh"
+    touch -d '2000-01-01' -- "$TMP/bin/herdr"
+    load_shell_function _herdr
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([cache_comp]="$TMP/cache")
+
+    print -r -- '_herdr() { print -r -- stale; }' > "$TMP/cache/herdr.zsh"
+    touch -d '2000-01-02' -- "$TMP/cache/herdr.zsh"
+
+    run _herdr
+
+    unfunction zsh_dirs_require
+
+    assert $state equals 0
+    assert "$output" same_as fresh
+}
+
+@test '_herdr keeps its old cache when herdr fails' {
+    stub_command herdr "$TMP/bin" 'exit 1'
+    touch -d '2100-01-01' -- "$TMP/bin/herdr"
+    load_shell_function _herdr
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([cache_comp]="$TMP/cache")
+
+    print -r -- '_herdr() { print -r -- stale; }' > "$TMP/cache/herdr.zsh"
+    touch -r "$ZSH_CONFIG_ROOT/comp/_herdr" -- "$TMP/cache/herdr.zsh"
+
+    run _herdr
+
+    unfunction zsh_dirs_require
+
+    local -a leftover=("$TMP"/cache/herdr.zsh.*(N))
+
+    assert $state equals 0
+    assert "$output" same_as stale
+    assert ${#leftover} equals 0
+}
+
+@test '_herdr does not recurse when its cache defines no _herdr' {
+    load _support/herdr
+    stub_herdr "$TMP/bin"
+    print -r -- '_herdr_other() { :; }' > "$TMP/bin/completion.zsh"
+    load_shell_function _herdr
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([cache_comp]="$TMP/cache")
+
+    run _herdr
+
+    unfunction zsh_dirs_require
+
+    assert $state equals 1
+    assert "$output" is_empty
+}
+
+@test '_herdr_live_ids offers ids with their colons quoted' {
+    # _describe splits each candidate at its first unquoted colon, and every
+    # pane id has one, so an unquoted w1:p1 would be offered as plain w1.
+    load _support/herdr
+    stub_herdr "$TMP/bin"
+    stub_herdr_script "$TMP/bin"
+    load_shell_function _herdr
+    load_shell_function __herdr_ids
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([cache_comp]="$TMP/cache")
+
+    # Called outside run, whose subshell would take the completer it defines
+    # away with it.
+    _herdr > /dev/null 2>&1
+
+    function _describe() { print -r -- "tag:$2"; print -rl -- "${(@P)${@[-1]}}" }
+
+    local BUFFER='herdr tab focus '
+
+    # Called as _arguments calls an action given as a command and words: with
+    # its own compadd options inserted ahead of the words, so the kind is the
+    # last argument and never the first.
+    run _herdr_live_ids -J argument-1 -X '[tab_id]' tabs
+
+    unfunction zsh_dirs_require _describe
+
+    local bs=${(#):-92}
+    local -a expected=(tag:tabs "w1${bs}:t1:alpha: main" "w2${bs}:t1:beta: 1")
+
+    local -a extra=(${lines:|expected}) absent=(${expected:|lines})
+
+    assert $state equals 0
+    assert ${#lines} equals 3
+    assert "${(j: :)extra}" is_empty
+    assert "${(j: :)absent}" is_empty
+}
+
+@test '_herdr_live_ids asks the session named on the command line' {
+    load _support/herdr
+    stub_herdr "$TMP/bin"
+    stub_herdr_script "$TMP/bin"
+    load_shell_function _herdr
+    load_shell_function __herdr_ids
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([cache_comp]="$TMP/cache")
+
+    # Called outside run, whose subshell would take the completer it defines
+    # away with it.
+    _herdr > /dev/null 2>&1
+
+    function _describe() { : }
+
+    local BUFFER='herdr --session other tab focus '
+    run _herdr_live_ids tabs
+    local spaced="${(j: :)${(f)$(<"$TMP/bin/herdr.args")}}"
+
+    BUFFER='herdr --session=again tab focus '
+    run _herdr_live_ids tabs
+    local joined="${(j: :)${(f)$(<"$TMP/bin/herdr.args")}}"
+
+    unfunction zsh_dirs_require _describe
+
+    assert "$spaced" same_as '--session other api snapshot'
+    assert "$joined" same_as '--session again api snapshot'
+}
+
+@test '_herdr_live_ids offers nothing for a remote machine' {
+    # A snapshot over ssh on every Tab would be slow, and the ids would belong
+    # to another server than the one the local snapshot describes.
+    load _support/herdr
+    stub_herdr "$TMP/bin"
+    stub_herdr_script "$TMP/bin"
+    load_shell_function _herdr
+    load_shell_function __herdr_ids
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([cache_comp]="$TMP/cache")
+
+    _herdr > /dev/null 2>&1
+    command rm -f -- "$TMP/bin/herdr.args"
+
+    function _describe() { print -r -- called }
+
+    local BUFFER='herdr --machine box pane close '
+
+    run _herdr_live_ids panes
+
+    unfunction zsh_dirs_require _describe
+
+    local -a called=("$TMP/bin/herdr.args"(N))
+
+    assert $state equals 1
+    assert "$output" is_empty
+    assert ${#called} equals 0
+}
+
+@test '_herdr still finds every id argument in the real script' {
+    # The one test here that reads herdr's own output, and so the one that
+    # notices when an upgrade renames an argument. Without it the rewrite
+    # would quietly match nothing and every id would complete as a filename.
+    #
+    # The real _herdr is called outside completion, where it can only fail;
+    # the cache it leaves behind is all that is inspected.
+    (($+commands[herdr])) || skip 'herdr is not installed'
+
+    load_shell_function _herdr
+    function zsh_dirs_require() { return 0 }
+
+    local -A zsh_dirs=([cache_comp]="$TMP/cache")
+
+    run _herdr
+
+    unfunction zsh_dirs_require
+
+    local -a cache=("${(@f)$(<"$TMP/cache/herdr.zsh")}")
+    local kind
+    local -A found
+
+    for kind in panes tabs workspaces agents; do
+        found[$kind]=${#${(M)cache:#*_herdr_live_ids $kind\'*}}
+    done
+
+    local -a missed=(
+        ${(M)cache:#*\':(|:)(pane|tab|workspace)_id:_default\'*}
+        ${(M)cache:#*\'--(|source-|target-)pane\[*\]:*:_default\'*}
+        ${(M)cache:#*\'--(tab|workspace)\[*\]:*:_default\'*}
+    )
+
+    assert $found[panes] different_to 0
+    assert $found[tabs] different_to 0
+    assert $found[workspaces] different_to 0
+    assert $found[agents] different_to 0
+    assert "${(j: :)missed}" is_empty
+}
