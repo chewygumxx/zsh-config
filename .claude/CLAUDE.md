@@ -142,7 +142,13 @@ autoload out of the current working directory.
   only, since `util/mise.rc.zsh` activates mise in interactive ones). A
   variable that decides where a tool keeps its state belongs here rather than
   in `rc/`, or scripts and `ssh host cmd` see a different value from the
-  interactive shell.
+  interactive shell. `env/chezmoi.env.zsh` is not part of this repository:
+  `chezmoi-environment` in the dotfiles repository writes it into the live
+  clone, exporting the `CHEZMOI_*` paths that `rc/directory.rc.zsh` turns into
+  the `~df` named directories. It is gitignored for that reason. Do not run
+  the suite in the live clone: the sandbox links the whole checkout, so that
+  file points the test shell at the real dotfiles, and `tests/header.zunit`
+  and `tests/boot.zunit` both fail on it.
 - `rc/` - `*.rc.zsh`, interactive-only modules sourced by `.zshrc` (aliases,
   completion, directory hashes, function loading, history, ls_colors, plugin
   management, prompt).
