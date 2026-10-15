@@ -17,7 +17,7 @@
 # function name, so :A resolved it against $PWD rather than fpath.
 local __this_file="${(D)${functions_source[${(%):-%N}]:-${(%):-%N}}}"
 
-if (( ! $+commands[nvim] )); then
+if ((!$+commands[nvim])); then
     print -u2 "${__this_file}: Command not found: nvim"
     return 127
 fi
@@ -26,7 +26,7 @@ fi
 # opened a new file called $PWD/--version, and `cmd | nvim -` opened one called
 # $PWD/- rather than reading stdin. Every editor alias in rc/alias.rc.zsh
 # inherited both.
-if (( $# != 1 )) || [[ "$1" == [-+]* ]]; then
+if (($# != 1)) || [[ "$1" == [-+]* ]]; then
     command nvim "$@"
     return
 fi
@@ -55,11 +55,10 @@ zmodload -F zsh/stat b:zstat
 #
 # The -e guard is needed because a new file reaches this test too. On a missing
 # path zstat prints an error and the test becomes `(( == 0 ))`.
-if [[ -e "$target" ]] && (( $(zstat +uid "$target") == 0 )); then
+if [[ -e "$target" ]] && (($(zstat +uid "$target") == 0)); then
     SUDO_EDITOR=nvim command sudoedit "${target:A}"
     return
 fi
-
 
 # ----------------------
 # chezmoi Managed Paths
@@ -86,14 +85,14 @@ fi
 # recorded the real one.
 local -a managed=() managed_paths=()
 
-if (( $+commands[chezmoi] )); then
-    local cache_root="${XDG_CACHE_HOME:-$HOME/.local/cache}/zsh"
+if (($+commands[chezmoi])); then
+    local cache_root="${XDG_CACHE_HOME:=$HOME/.cache}/zsh"
     local cache_dir="${zsh_dirs[cache]:-$cache_root}/nvim"
     local cache="$cache_dir/chezmoi-managed"
     local source_dir="${XDG_DATA_HOME:-$HOME/.local/share}/chezmoi"
 
     if [[ -s "$cache.source" ]]; then
-        source_dir="$(<"$cache.source")"
+        source_dir="$(< "$cache.source")"
     fi
 
     # .git is pruned because commits and fetches change it without changing
@@ -105,7 +104,7 @@ if (( $+commands[chezmoi] )); then
         stale="$(command find -H "$source_dir" \
             "${XDG_CONFIG_HOME:-$HOME/.config}"/chezmoi/chezmoi.*(N) \
             -path "$source_dir/.git" -prune \
-            -o -newer "$cache" -print -quit 2>/dev/null)"
+            -o -newer "$cache" -print -quit 2> /dev/null)"
     else
         stale=1
     fi
@@ -121,15 +120,15 @@ if (( $+commands[chezmoi] )); then
         {
             local stamp tmp tmp_source
 
-            command mkdir -p -- "$cache_dir" \
-                && stamp="$(command mktemp -- "$cache.XXXXXXXX")" \
-                && tmp="$(command mktemp -- "$cache.XXXXXXXX")" \
-                && tmp_source="$(command mktemp -- "$cache.XXXXXXXX")" \
-                && command chezmoi managed --path-style absolute >| "$tmp" \
-                && command chezmoi source-path >| "$tmp_source" \
-                && command touch -r "$stamp" -- "$tmp" \
-                && command mv -f -- "$tmp_source" "$cache.source" \
-                && command mv -f -- "$tmp" "$cache"
+            command mkdir -p -- "$cache_dir" &&
+                stamp="$(command mktemp -- "$cache.XXXXXXXX")" &&
+                tmp="$(command mktemp -- "$cache.XXXXXXXX")" &&
+                tmp_source="$(command mktemp -- "$cache.XXXXXXXX")" &&
+                command chezmoi managed --path-style absolute >| "$tmp" &&
+                command chezmoi source-path >| "$tmp_source" &&
+                command touch -r "$stamp" -- "$tmp" &&
+                command mv -f -- "$tmp_source" "$cache.source" &&
+                command mv -f -- "$tmp" "$cache"
 
             command rm -f -- \
                 ${stamp:+"$stamp"} ${tmp:+"$tmp"} ${tmp_source:+"$tmp_source"}
@@ -148,14 +147,15 @@ if (( $+commands[chezmoi] )); then
         local candidate
 
         for candidate in "$target" "${target:A}"; do
-            if (( ${managed_paths[(Ie)$candidate]} \
-                && ! ${managed[(Ie)$candidate]} )); then
+            if ((\
+            \ \
+            ${managed_paths[(Ie)$candidate]} \ \
+            && ! ${managed[(Ie)$candidate]})); then
                 managed+=("$candidate")
             fi
         done
     fi
 fi
-
 
 # ---------
 # New File
@@ -184,14 +184,14 @@ if [[ ! -e "$target" ]]; then
 
     local parent
     for parent in "${target:h}" "${target:h:A}"; do
-        (( ${managed_paths[(Ie)$parent]} )) || continue
+        ((${managed_paths[(Ie)$parent]})) || continue
 
         local answer=1
         print -nu2 -- "Add ${(D)target} to chezmoi? [y/N] "
         read -q -u 0 && answer=0
         print -u2
 
-        if (( answer == 0 )); then
+        if ((answer == 0)); then
             command chezmoi add -- "$target" < /dev/null &!
         fi
         break
@@ -200,8 +200,8 @@ if [[ ! -e "$target" ]]; then
     return $nvim_exit
 fi
 
-if (( $#managed )); then
-    local -x TMPDIR="${XDG_CACHE_HOME:-$HOME/.local/cache}/chezmoi"
+if (($#managed)); then
+    local -x TMPDIR="${XDG_CACHE_HOME:-$HOME/.cache}/chezmoi"
     [[ ! -d "$TMPDIR" ]] && command mkdir -p "$TMPDIR"
     command nvim "$target"
     command chezmoi re-add "${managed[@]}" < /dev/null &!

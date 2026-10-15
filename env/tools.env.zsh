@@ -32,10 +32,10 @@
 # header included. They are unset at the foot instead.
 #
 
-__tools_config="${XDG_CONFIG_HOME:-$HOME/.config}"
-__tools_cache="${XDG_CACHE_HOME:-$HOME/.local/cache}"
-__tools_data="${XDG_DATA_HOME:-$HOME/.local/share}"
-__tools_state="${XDG_STATE_HOME:-$HOME/.local/state}"
+__tools_config="${XDG_CONFIG_HOME:=$HOME/.config}"
+__tools_cache="${XDG_CACHE_HOME:=$HOME/.cache}"
+__tools_data="${XDG_DATA_HOME:=$HOME/.local/share}"
+__tools_state="${XDG_STATE_HOME:=$HOME/.local/state}"
 
 # Android
 export ANDROID_USER_HOME="$__tools_data/android"

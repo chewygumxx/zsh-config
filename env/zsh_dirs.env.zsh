@@ -24,10 +24,10 @@
 # func, wrap and spec files rather than whichever copy happens to live under
 # XDG_CONFIG_HOME. The data directories below deliberately do not follow it:
 # caches, plugins and history are per-user state, not part of the checkout.
-zsh_conf="${ZDOTDIR:-${XDG_CONFIG_HOME:-$HOME/.config}/zsh}"
-zsh_cache="${XDG_CACHE_HOME:-$HOME/.local/cache}"
-zsh_share="${XDG_DATA_HOME:-$HOME/.local/share}/zsh"
-zsh_state="${XDG_STATE_HOME:-$HOME/.local/state}/zsh"
+zsh_conf="${ZDOTDIR:=${XDG_CONFIG_HOME:=$HOME/.config}/zsh}"
+zsh_cache="${XDG_CACHE_HOME:=$HOME/.cache}"
+zsh_share="${XDG_DATA_HOME:=$HOME/.local/share}/zsh"
+zsh_state="${XDG_STATE_HOME:=$HOME/.local/state}/zsh"
 
 # Declared and assigned as a single statement on purpose. Split across two, the
 # subscripted keys below are only valid once `typeset -gA` has actually run, so

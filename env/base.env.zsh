@@ -25,12 +25,12 @@
 typeset -gU path
 path=(
     "$HOME/.local/bin"
-    "${XDG_CACHE_HOME:-$HOME/.local/cache}/.bun/bin"
-    "${XDG_DATA_HOME:-$HOME/.local/share}/cargo/bin"
-    "${XDG_DATA_HOME:-$HOME/.local/share}/go/bin"
+    "${XDG_CACHE_HOME:="$HOME/.cache"}/.bun/bin"
+    "${XDG_DATA_HOME:="$HOME/.local/share"}/cargo/bin"
+    "${XDG_DATA_HOME:="$HOME/.local/share"}/go/bin"
     $path
 )
-export PAGER="less"
+export PAGER="less -RN"
 export BROWSER="firefox"
 export TERMCMD="wezterm"
 export EDITOR="nvim"

@@ -160,7 +160,7 @@ function sandbox_zsh() {
         TERM="${TERM:-dumb}" \
         SHELL="${commands[zsh]:-/usr/bin/zsh}" \
         XDG_CONFIG_HOME="$root/.config" \
-        XDG_CACHE_HOME="$root/.local/cache" \
+        XDG_CACHE_HOME="$root/.cache" \
         XDG_DATA_HOME="$root/.local/share" \
         XDG_STATE_HOME="$root/.local/state" \
         XDG_RUNTIME_DIR="$root/run" \
