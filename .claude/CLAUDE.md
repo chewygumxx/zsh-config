@@ -139,9 +139,10 @@ autoload out of the current working directory.
   (`PATH`, `EDITOR` and the like in `env/base.env.zsh`, `zsh_dirs`, fzf/ssh/
   claude env setup, the per-tool XDG relocations in `env/tools.env.zsh`, and
   mise's shims on `PATH` in `env/mise.env.zsh`, for non-interactive shells
-  only, since `util/mise.rc.zsh` activates mise in interactive ones). A variable that decides where a tool
-  keeps its state belongs here rather than in `rc/`, or scripts and
-  `ssh host cmd` see a different value from the interactive shell.
+  only, since `util/mise.rc.zsh` activates mise in interactive ones). A
+  variable that decides where a tool keeps its state belongs here rather than
+  in `rc/`, or scripts and `ssh host cmd` see a different value from the
+  interactive shell.
 - `rc/` - `*.rc.zsh`, interactive-only modules sourced by `.zshrc` (aliases,
   completion, directory hashes, function loading, history, ls_colors, plugin
   management, prompt).
@@ -307,9 +308,10 @@ Tool versions and repo tasks are declared in `.mise.toml`. `mise install`
 provisions Bun, `actionlint`, `jq`, `shuck`, and `yamllint` with the `uv`
 that installs it. `jq` is there for the suite, which runs the real binary
 against `func/__herdr_ids`; the interactive shell finds whichever `jq` is on
-`PATH`, since a pin here is active only inside this checkout. `shuck` is not carried in the mise registry, so it is pulled from
-its GitHub releases through the `github:` backend, with the binary named
-explicitly because the release assets are called `shuck-cli-*`. Tasks run
+`PATH`, since a pin here is active only inside this checkout. `shuck` is not
+carried in the mise registry, so it is pulled from its GitHub releases through
+the `github:` backend, with the binary named explicitly because the release
+assets are called `shuck-cli-*`. Tasks run
 `tsc`, `prettier`, `commitlint` and `cz` through `bunx --bun --no-install`:
 their shebangs name node, which mise does not provide, and `--bun` runs them on
 Bun instead. `bunfig.toml` does the same for `bun run`: its `[run] bun = true`
