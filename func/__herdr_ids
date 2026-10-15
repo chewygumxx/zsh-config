@@ -1,0 +1,76 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/func/__herdr_ids
+#
+#
+#
+# Print the live herdr workspaces, tabs, panes or agents, one per line as an
+# identifier, a tab, and a description. comp/_herdr is the consumer: it turns
+# these lines into completion candidates.
+#
+# Usage: __herdr_ids <kind> [herdr option...]
+#
+# Any further arguments are passed to herdr ahead of `api snapshot`, which is
+# how `--session NAME` reaches the server the command line is aimed at.
+#
+# One snapshot carries every kind, so a completion costs one round trip to the
+# server whichever kind it wants. herdr reports a server that is not running
+# with an error object on stdout and status 1, so the status is checked before
+# anything is parsed; otherwise a stopped server would look like an empty one.
+#
+# Agents are listed by name where they have one, since `herdr agent` accepts a
+# name or a pane id as its target and the name is the one worth typing.
+#
+emulate -L zsh
+
+local kind="$1"
+
+case $kind in
+    workspaces|tabs|panes|agents) ;;
+    *)
+        print -u2 -r -- 'usage: __herdr_ids workspaces|tabs|panes|agents [herdr option...]'
+        return 2
+        ;;
+esac
+
+(($+commands[herdr] && $+commands[jq])) || return 1
+
+local snapshot
+snapshot="$(command herdr "${@[2,-1]}" api snapshot)" || return 1
+
+# Called through `command` so that wrap/jq, which adds --indent, is bypassed.
+print -r -- "$snapshot" | command jq -r --arg kind "$kind" --arg home "$HOME" '
+    def home:
+        if $home != "" and (. == $home or startswith($home + "/"))
+        then "~" + .[($home | length):]
+        else .
+        end;
+
+    .result.snapshot as $s
+    | ($s.workspaces // [] | map({key: .workspace_id, value: .label})
+        | from_entries) as $ws
+    | ($s.agents // [] | map({key: .pane_id, value: .}) | from_entries) as $ag
+    | def where: $ws[.workspace_id] // .workspace_id;
+
+    if $kind == "workspaces" then
+        $s.workspaces // [] | .[] | [.workspace_id, .label]
+    elif $kind == "tabs" then
+        $s.tabs // [] | .[] | [.tab_id, "\(where): \(.label)"]
+    elif $kind == "panes" then
+        $s.panes // [] | .[]
+        | $ag[.pane_id] as $a
+        | [.pane_id, "\(where): " + ([
+            (if $a then "\($a.agent) \($a.agent_status)" else empty end),
+            (.foreground_cwd // .cwd // "" | home)
+          ] | map(select(. != "")) | join(", "))]
+    else
+        $s.agents // [] | .[]
+        | [.name // .pane_id, "\(where): \(.agent) \(.agent_status)"]
+    end
+    | map(tostring | gsub("[\t\n]"; " "))
+    | join("\t")
+'
