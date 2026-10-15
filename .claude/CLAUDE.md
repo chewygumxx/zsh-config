@@ -304,8 +304,10 @@ is 72.
 ## Toolchain and tasks
 
 Tool versions and repo tasks are declared in `.mise.toml`. `mise install`
-provisions Bun, `actionlint`, `shuck`, and `yamllint` with the `uv` that
-installs it. `shuck` is not carried in the mise registry, so it is pulled from
+provisions Bun, `actionlint`, `jq`, `shuck`, and `yamllint` with the `uv`
+that installs it. `jq` is there for the suite, which runs the real binary
+against `func/__herdr_ids`; the interactive shell finds whichever `jq` is on
+`PATH`, since a pin here is active only inside this checkout. `shuck` is not carried in the mise registry, so it is pulled from
 its GitHub releases through the `github:` backend, with the binary named
 explicitly because the release assets are called `shuck-cli-*`. Tasks run
 `tsc`, `prettier`, `commitlint` and `cz` through `bunx --bun --no-install`:
