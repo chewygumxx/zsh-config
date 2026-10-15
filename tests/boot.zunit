@@ -273,6 +273,32 @@
     assert "$output" is_greater_than 0
 }
 
+@test 'comp/ precedes the system completion directories' {
+    # The herdr package installs its own _herdr in site-functions, and
+    # comp/_herdr only shadows it from ahead of that directory, since both
+    # compinit and autoload take the first file of a name found on fpath.
+    #
+    # The system directories are whatever zsh itself starts with, read from a
+    # shell that loads no configuration, and handed in through the environment
+    # since the sandbox passes nothing else through.
+    local -a SANDBOX_ENV=(ZSH_TEST_DEFAULT_FPATH="$(zsh -fc 'print -r -- $FPATH')")
+
+    run sandbox_zsh_stdout "$SANDBOX" -i -c '
+        local -i comp=${fpath[(Ie)$zsh_dirs[comp]]} at
+        local dir
+        print -r -- "comp:$comp"
+        for dir in ${(s.:.)ZSH_TEST_DEFAULT_FPATH}; do
+            at=${fpath[(Ie)$dir]}
+            ((at && at < comp)) && print -r -- "ahead:$dir"
+        done
+    '
+
+    local -a ahead=(${(M)lines:#ahead:*})
+
+    assert "$lines[1]" different_to 'comp:0'
+    assert "${(j: :)ahead}" is_empty
+}
+
 @test 'The chezmoi aliases name real subcommands' {
     local bin="$SANDBOX/stub-bin"
     mkdir -p -- "$bin"

@@ -33,9 +33,15 @@ __plugin_clone "zsh-users/zsh-completions"
 # cache_comp holds completion functions generated from a tool's own output, such
 # as the _chezmoi that util/chezmoi.rc.zsh writes. It was never on fpath, so
 # those files were regenerated faithfully and never once loaded.
-fpath+=(
-    "$zsh_dirs[share_comp]"
+#
+# comp/ alone goes ahead of zsh's own directories, so that a definition here
+# replaces one a package installed under the same name. compinit and autoload
+# both take the first file of a name found on fpath, so appended, comp/_herdr
+# lost to the _herdr the herdr package puts in site-functions.
+fpath=(
     "$zsh_dirs[comp]"
+    $fpath
+    "$zsh_dirs[share_comp]"
     "$zsh_dirs[cache_comp]"
     "$zsh_dirs[plugin]/zsh-completions/src"
 )
