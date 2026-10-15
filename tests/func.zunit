@@ -277,8 +277,8 @@
 
     assert $state equals 0
     assert ${#lines} equals 2
-    assert "$lines[1]" same_as ${(b):-$'w1\talpha'}
-    assert "$lines[2]" same_as ${(b):-$'w2\tbeta'}
+    assert "$lines[1]" same_as $'w1\talpha'
+    assert "$lines[2]" same_as $'w2\tbeta'
 }
 
 @test '__herdr_ids qualifies tabs by workspace' {
@@ -290,33 +290,25 @@
 
     assert $state equals 0
     assert ${#lines} equals 2
-    assert "$lines[1]" same_as ${(b):-$'w1:t1\talpha: main'}
-    assert "$lines[2]" same_as ${(b):-$'w2:t1\tbeta: 1'}
+    assert "$lines[1]" same_as $'w1:t1\talpha: main'
+    assert "$lines[2]" same_as $'w2:t1\tbeta: 1'
 }
 
 @test '__herdr_ids describes panes by agent and cwd' {
     # The second pane has no foreground_cwd and must fall back to cwd, which
     # lies under HOME and so is abbreviated. The third has both and must
     # prefer the foreground one.
-    #
-    # The abbreviated line is compared through contains and its length, since
-    # same_as matches a pattern and ${(b)...} quotes a tilde as `\~`, which a
-    # pattern taken from a parameter does not then accept as a literal `~`.
     load _support/herdr
     stub_herdr "$TMP/bin"
     load_shell_function __herdr_ids
 
     run __herdr_ids panes
 
-    local home_line=$'w2:p1\tbeta: ~/dev/beta'
-
     assert $state equals 0
     assert ${#lines} equals 3
-    assert "$lines[1]" same_as ${(b):-$'w1:p1\talpha: claude idle, /srv/alpha'}
-    assert "$lines[2]" contains "$home_line"
-    assert ${#lines[2]} equals ${#home_line}
-    assert "$lines[3]" same_as \
-        ${(b):-$'w2:p2\tbeta: codex working, /srv/beta/sub'}
+    assert "$lines[1]" same_as $'w1:p1\talpha: claude idle, /srv/alpha'
+    assert "$lines[2]" same_as $'w2:p1\tbeta: ~/dev/beta'
+    assert "$lines[3]" same_as $'w2:p2\tbeta: codex working, /srv/beta/sub'
 }
 
 @test '__herdr_ids names agents, falling back to their pane' {
@@ -328,8 +320,8 @@
 
     assert $state equals 0
     assert ${#lines} equals 2
-    assert "$lines[1]" same_as ${(b):-$'helper\talpha: claude idle'}
-    assert "$lines[2]" same_as ${(b):-$'w2:p2\tbeta: codex working'}
+    assert "$lines[1]" same_as $'helper\talpha: claude idle'
+    assert "$lines[2]" same_as $'w2:p2\tbeta: codex working'
 }
 
 @test '__herdr_ids passes its options to herdr before the subcommand' {
