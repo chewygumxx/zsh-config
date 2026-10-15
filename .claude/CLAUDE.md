@@ -92,7 +92,7 @@ missing on every start. It tests each one rather than trusting a stamp file: a
 stamp outside the tree survived the tree's deletion, so nothing was recreated
 and completion silently disappeared. Its keys are:
 
-- Source, derived from `${ZDOTDIR:-${XDG_CONFIG_HOME:-$HOME/.config}/zsh}`:
+- Source, derived from `${ZDOTDIR:=${XDG_CONFIG_HOME:=$HOME/.config}/zsh}`:
   `conf`, `env`, `comp`, `func`, `wrap`, `rc`, `util`, `spec`.
 - Cache, under `XDG_CACHE_HOME`: `cache`, `cache_comp`, `cache_init`,
   `cache_zstylecomp`, `cache_zvm`.
@@ -103,10 +103,17 @@ Source paths follow `ZDOTDIR` so a checkout sourced from anywhere loads its own
 files; the cache, data and state paths deliberately do not, since those are
 per-user state rather than part of the checkout.
 
-Every XDG variable is read with a `:-` fallback. Those variables come from
+Every XDG variable is read with a `:=` fallback. Those variables come from
 systemd, which is not applied in every context, and without a fallback every
 path collapsed to a root-relative one such as `/zsh` where `mkdir -p` fails on
-each shell start. The cache fallback is the XDG default of `$HOME/.cache`.
+each shell start. `:=` rather than `:-` assigns the default as it is read, so
+every later reader in the same shell sees one value rather than repeating the
+fallback. An unset variable assigned this way is not exported. The cache
+fallback is the XDG default of `$HOME/.cache`.
+
+`tests/_support/sandbox.zsh` is the one exception and keeps `:-`. zunit runs
+every test in one process, and an assignment there would carry into each
+later test.
 
 The array is declared and assigned in a single `typeset -gA zsh_dirs=( ... )`
 statement. Split across two statements, the subscripted keys are only valid once

@@ -17,7 +17,7 @@ local __this_file="${(D)${${(%):-%N}:A}}"
 # -----
 
 hash -d bin="$HOME/.local/bin"
-hash -d share="${XDG_DATA_HOME:-$HOME/.local/share}"
+hash -d share="${XDG_DATA_HOME:=$HOME/.local/share}"
 () {
     emulate -L zsh
     setopt local_options no_glob_dots
@@ -76,7 +76,7 @@ fi
 () {
     emulate -L zsh
 
-    local cfg_dir="${nameddirs[dfconf]:-${XDG_CONFIG_HOME:-$HOME/.config}}"
+    local cfg_dir="${nameddirs[dfconf]:-${XDG_CONFIG_HOME:=$HOME/.config}}"
     local -A cfg_dirs
     cfg_dirs=(
         [envd]="$cfg_dir/environment.d"
