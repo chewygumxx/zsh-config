@@ -11,6 +11,10 @@
 .env*
 *.local.*
 
+# Written into the live clone by chezmoi-environment from the dotfiles
+# repository, with paths particular to this machine
+/env/chezmoi.env.zsh
+
 node_modules/
 /.herdr/
 /.claude/worktrees/
