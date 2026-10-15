@@ -92,7 +92,7 @@ missing on every start. It tests each one rather than trusting a stamp file: a
 stamp outside the tree survived the tree's deletion, so nothing was recreated
 and completion silently disappeared. Its keys are:
 
-- Source, derived from `${ZDOTDIR:-${XDG_CONFIG_HOME:-$HOME/.config}/zsh}`:
+- Source, derived from `${ZDOTDIR:=${XDG_CONFIG_HOME:=$HOME/.config}/zsh}`:
   `conf`, `env`, `comp`, `func`, `wrap`, `rc`, `util`, `spec`.
 - Cache, under `XDG_CACHE_HOME`: `cache`, `cache_comp`, `cache_init`,
   `cache_zstylecomp`, `cache_zvm`.
@@ -103,11 +103,17 @@ Source paths follow `ZDOTDIR` so a checkout sourced from anywhere loads its own
 files; the cache, data and state paths deliberately do not, since those are
 per-user state rather than part of the checkout.
 
-Every XDG variable is read with a `:-` fallback. Those variables come from
+Every XDG variable is read with a `:=` fallback. Those variables come from
 systemd, which is not applied in every context, and without a fallback every
 path collapsed to a root-relative one such as `/zsh` where `mkdir -p` fails on
-each shell start. The cache fallback is `$HOME/.local/cache`, matching the local
-convention rather than the XDG default of `~/.cache`.
+each shell start. `:=` rather than `:-` assigns the default as it is read, so
+every later reader in the same shell sees one value rather than repeating the
+fallback. An unset variable assigned this way is not exported. The cache
+fallback is the XDG default of `$HOME/.cache`.
+
+`tests/_support/sandbox.zsh` is the one exception and keeps `:-`. zunit runs
+every test in one process, and an assignment there would carry into each
+later test.
 
 The array is declared and assigned in a single `typeset -gA zsh_dirs=( ... )`
 statement. Split across two statements, the subscripted keys are only valid once
@@ -158,9 +164,22 @@ autoload out of the current working directory.
   `$zsh_dirs[cache_comp]/bun.zsh`, then sources it and calls the real `_bun`.
   It generates at completion time, not at startup as `util/chezmoi.rc.zsh`
   does, because bun reaches `PATH` only through mise, which `util/mise.rc.zsh`
-  activates after any `util/bun.rc.zsh` would run. Note that a new file here
-  is not indexed until the dump is rebuilt, since `compinit -C` skips the
-  check for new files.
+  activates after any `util/bun.rc.zsh` would run. `comp/_herdr` follows the
+  same pattern for `herdr completion zsh`, but rewrites that script before
+  caching it: each pane, tab, workspace and agent argument has its `_default`
+  action, which offers filenames, replaced by `_herdr_live_ids`. That
+  completer offers the live ids `func/__herdr_ids` reads from one
+  `herdr api snapshot`, parsed with `jq`. The rewrite matches clap's argument
+  names, so `tests/comp.zunit` also runs it against the installed herdr's real
+  script, which is what catches an upstream rename; that test skips where
+  herdr is absent, as on CI. Note that a new file here is not indexed until
+  the dump is rebuilt, since `compinit -C` skips the check for new files.
+
+  `rc/completion.rc.zsh` puts `comp/` alone **ahead** of zsh's default
+  `fpath`, and appends the other completion directories. compinit and
+  autoload both take the first file of a name found on `fpath`, so appended,
+  `comp/_herdr` lost to the unamended `_herdr` that the herdr package installs
+  in `site-functions`. `tests/boot.zunit` pins the order.
 
 ## Plugin management
 
@@ -249,6 +268,17 @@ These each caused a real, long-lived bug here:
   written negated by mistake, so they acted on exactly the opposite condition.
 - `zstat` requires `zmodload -F zsh/stat b:zstat`. The bare `zmodload zsh/stat`
   also defines a `stat` builtin that shadows `/usr/bin/stat` for the session.
+- An unquoted parameter on the right of `[[ = ]]` is a **plain string**, not a
+  pattern, unless `glob_subst` is set. Write `${~pattern}` to match a pattern
+  held in a variable.
+- `${a:|b}` inside **double quotes** joins `a` into one word before the
+  difference is taken, so nothing is ever removed. Assign it unquoted, as in
+  `local -a extra=(${a:|b})`, then test the result.
+- `_arguments` calls an action given as a command and words with **its own
+  compadd options inserted ahead of the words**, such as `-J argument-1`. A
+  completer that reads its argument from `$1` gets `-J`; read `${@[-1]}`. The
+  unit tests passed this by calling the completer directly; only a real Tab
+  in a pty exposed it.
 
 ## Commit messages
 
@@ -274,8 +304,10 @@ is 72.
 ## Toolchain and tasks
 
 Tool versions and repo tasks are declared in `.mise.toml`. `mise install`
-provisions Bun, `actionlint`, `shuck`, and `yamllint` with the `uv` that
-installs it. `shuck` is not carried in the mise registry, so it is pulled from
+provisions Bun, `actionlint`, `jq`, `shuck`, and `yamllint` with the `uv`
+that installs it. `jq` is there for the suite, which runs the real binary
+against `func/__herdr_ids`; the interactive shell finds whichever `jq` is on
+`PATH`, since a pin here is active only inside this checkout. `shuck` is not carried in the mise registry, so it is pulled from
 its GitHub releases through the `github:` backend, with the binary named
 explicitly because the release assets are called `shuck-cli-*`. Tasks run
 `tsc`, `prettier`, `commitlint` and `cz` through `bunx --bun --no-install`:
@@ -457,7 +489,8 @@ archived.
   a copied file.
 - `tests/_support/` - `sandbox.zsh` builds and tears down the throwaway `HOME`;
   `autoload.zsh` puts `func/`, `wrap/` and `comp/` on `fpath` and writes stub
-  binaries.
+  binaries; `herdr.zsh` stubs herdr with a canned snapshot and a stand-in for
+  its generated completion script.
 - `tests/_output/` - zunit's generated logs. Gitignored and prettierignored.
 
 Both underscore-prefixed directory names are load-bearing, not stylistic:
@@ -533,8 +566,19 @@ Each of these cost real time here:
   compares with `[[ -eq ]]`, so zsh evaluates both sides as math expressions,
   bare words resolve as parameters, and two unset parameters are both zero.
   `assert association equals banana` passes. Use `same_as` for anything that is
-  not a number. Note that `same_as` leaves its comparison unquoted, making it a
-  pattern, whereas `contains` quotes and so is literal.
+  not a number. Both `same_as` and `contains` are literal: `same_as` leaves its
+  comparison unquoted, but zsh treats an unquoted parameter there as a plain
+  string, so `assert abc same_as 'a*'` fails. Wrapping the expected side in
+  `${(b)...}` therefore breaks a comparison rather than protecting it, since
+  the backslashes it adds are compared too.
+- **zunit passes each test body through `echo`.** It assembles the test as a
+  string and runs `eval "$(echo "$func")"`, and zsh's `echo` interprets
+  escapes, so a `\\` written in a test reaches zsh as a single `\`, and `\\"`
+  as an escaped quote that fails the parse. Build a backslash at run time
+  instead, as `tests/comp.zunit` does with `${(#):-92}`.
+- **`run` executes in a subshell.** Anything the command defines, such as the
+  completer `comp/_herdr` creates, is gone once `run` returns. Call the
+  command directly first when a later step needs what it defined.
 - **`assert` splits its comparison on newlines.** The dispatcher passes the
   expected side through `${(@f)...}`, so `assert "$x" same_as $'a\nb'`
   compares against `a` alone. Only the left-hand value survives intact; join a
@@ -560,6 +604,12 @@ Each of these cost real time here:
   at the top of a file that takes the whole header block with it. Put the
   comment inside the function body instead, which is why several files open an
   anonymous function straight after the preceding statement.
+- **`shuck format` rewrites a case pattern's `(a|b)` as `@(a|b)`.** That is ksh
+  syntax, which zsh reads as a literal `@` unless `ksh_glob` is set, so the
+  pattern silently stops matching. Keep such a pattern in a string and match
+  it with `[[ $x == ${~pattern} ]]`, as `comp/_herdr` does.
+- **A `# shuck: disable=...` inside an array literal does nothing.** Place it
+  above the whole statement instead.
 - **revolver writes into `$ZDOTDIR`.** Its state directory defaults to
   `${REVOLVER_DIR:-${ZDOTDIR:-$HOME}/.revolver}`, and `ZDOTDIR` on this machine
   is the live configuration, itself a checkout of this repository, so a

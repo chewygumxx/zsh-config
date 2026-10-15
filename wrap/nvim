@@ -89,7 +89,7 @@ if (($+commands[chezmoi])); then
     local cache_root="${XDG_CACHE_HOME:=$HOME/.cache}/zsh"
     local cache_dir="${zsh_dirs[cache]:-$cache_root}/nvim"
     local cache="$cache_dir/chezmoi-managed"
-    local source_dir="${XDG_DATA_HOME:-$HOME/.local/share}/chezmoi"
+    local source_dir="${XDG_DATA_HOME:=$HOME/.local/share}/chezmoi"
 
     if [[ -s "$cache.source" ]]; then
         source_dir="$(< "$cache.source")"
@@ -102,7 +102,7 @@ if (($+commands[chezmoi])); then
     local stale
     if [[ -e "$cache" ]]; then
         stale="$(command find -H "$source_dir" \
-            "${XDG_CONFIG_HOME:-$HOME/.config}"/chezmoi/chezmoi.*(N) \
+            "${XDG_CONFIG_HOME:=$HOME/.config}"/chezmoi/chezmoi.*(N) \
             -path "$source_dir/.git" -prune \
             -o -newer "$cache" -print -quit 2> /dev/null)"
     else
@@ -147,10 +147,7 @@ if (($+commands[chezmoi])); then
         local candidate
 
         for candidate in "$target" "${target:A}"; do
-            if ((\
-            \ \
-            ${managed_paths[(Ie)$candidate]} \ \
-            && ! ${managed[(Ie)$candidate]})); then
+            if ((${managed_paths[(Ie)$candidate]} && !${managed[(Ie)$candidate]})); then
                 managed+=("$candidate")
             fi
         done
@@ -201,7 +198,7 @@ if [[ ! -e "$target" ]]; then
 fi
 
 if (($#managed)); then
-    local -x TMPDIR="${XDG_CACHE_HOME:-$HOME/.cache}/chezmoi"
+    local -x TMPDIR="${XDG_CACHE_HOME:=$HOME/.cache}/chezmoi"
     [[ ! -d "$TMPDIR" ]] && command mkdir -p "$TMPDIR"
     command nvim "$target"
     command chezmoi re-add "${managed[@]}" < /dev/null &!

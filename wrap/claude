@@ -26,7 +26,7 @@ setopt localoptions extended_glob
 # Directories
 # ------------
 
-local -x CLAUDE_CONFIG_DIR="${CLAUDE_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/claude}"
+local -x CLAUDE_CONFIG_DIR="${CLAUDE_CONFIG_DIR:-${XDG_CONFIG_HOME:=$HOME/.config}/claude}"
 if [[ ! -d "$CLAUDE_CONFIG_DIR" ]]; then
     mkdir -p "$CLAUDE_CONFIG_DIR" || return 1
 fi

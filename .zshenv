@@ -32,7 +32,7 @@ skip_global_compinit=1
     # this file, the glob searched /env and sourced nothing.
     local source
     local -a zshenvs=(
-        "${ZDOTDIR:-${XDG_CONFIG_HOME:-$HOME/.config}/zsh}/env/"*.env.zsh(N)
+        "${ZDOTDIR:-${XDG_CONFIG_HOME:=$HOME/.config}/zsh}/env/"*.env.zsh(N)
     )
 
     for source in $zshenvs; do

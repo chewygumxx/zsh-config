@@ -77,7 +77,7 @@ function sandbox_create() {
         return 1
 
     local config="$root/.config"
-    local cache="$root/.local/cache"
+    local cache="$root/.cache"
     local data="$root/.local/share"
     local state="$root/.local/state"
 

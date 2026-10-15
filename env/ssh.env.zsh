@@ -18,6 +18,6 @@
 # socket path collapsed to /ssh-agent-protonpass.socket. /run/user/$UID is
 # where systemd-logind creates it.
 if [[ -z "$SSH_CONNECTION" || -z "$SSH_AUTH_SOCK" ]]; then
-    export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$UID}"
+    export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:=/run/user/$UID}"
     SSH_AUTH_SOCK+="/ssh-agent-protonpass.socket"
 fi
