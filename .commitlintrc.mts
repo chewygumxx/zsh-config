@@ -10,49 +10,44 @@
 
 import { defineConfig } from "@chewygumxx/commitlint-config";
 
-// One scope per published package.
+const scopes = [
+    {
+        name: "env",
+        fullName: "Zshenv",
+        description: "Universal Initialisation",
+    },
+    {
+        name: "rc",
+        fullName: "Zshrc",
+        description: "Interactive Initialisation",
+    },
+    {
+        name: "util",
+        fullName: "Utility",
+        description: "Tool-Specific Integration",
+    },
+    {
+        name: "func",
+        fullName: "Function",
+        description: "Autoload-ed function files (excluding wrappers)",
+    },
+    {
+        name: "wrap",
+        fullName: "Wrapper",
+        description: "Autoload-ed function files as command wrappers",
+    },
+    {
+        name: "spec",
+        fullName: "Plugin Spec",
+        description: "Third-party plugin specification",
+    },
+    {
+        name: "comp",
+        fullName: "Completion",
+        description: "Completion function files",
+    },
+];
+
 export default defineConfig({
-    scopes: [
-        {
-            name: "env",
-            fullName: "Environment",
-            description: "Environment variables, sourced first via zsh_dirs",
-        },
-        {
-            name: "rc",
-            fullName: "RC",
-            description:
-                "Core interactive setup: aliases, completion, prompt, history",
-        },
-        {
-            name: "util",
-            fullName: "Utility",
-            description: "Per-tool integration snippets loaded after core rc",
-        },
-        {
-            name: "func",
-            fullName: "Function",
-            description: "Autoloadable Zsh functions",
-        },
-        {
-            name: "wrap",
-            fullName: "Wrapper",
-            description: "Thin command wrappers/shims",
-        },
-        {
-            name: "spec",
-            fullName: "Spec",
-            description: "Third-party plugin specs",
-        },
-        {
-            name: "comp",
-            fullName: "Completion",
-            description: "Completion dump/cache directory",
-        },
-        {
-            name: "claude",
-            fullName: "Claude assets",
-            description: "Claude Code assets ie. hooks, skills, agents, etc.",
-        },
-    ],
+    scopes: scopes,
 });

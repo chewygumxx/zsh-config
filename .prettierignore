@@ -28,5 +28,10 @@ tests/_output/
 # Claude Code Remember plugin session state
 .remember/
 
+# Agent skills vendored by the skills CLI, and the lock file it writes; see the
+# note in .shuck.toml
+.agents/
+skills-lock.json
+
 # Claude Code per-machine permissions, ignored only by a global git ignore
 .claude/settings.local.json

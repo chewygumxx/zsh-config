@@ -1,36 +1,34 @@
 ---
 ctime: 2026-09-30
-mtime: 2026-10-05
+mtime: 2026-11-03
 spdx: GPL-3.0-only
-title: CLAUDE.md
+title: Repository Agentic Instructions
 description: >-
-  Claude Code's guide to this Zsh configuration: its loading architecture,
-  conventions, toolchain, hooks and zunit tests, and how to verify a change.
+  Agentic instruction file detailing repository architecture, convention,
+  toolchain, hooks, tests, and change verification protocol.
 tags:
-  - claude
-  - llm
+  - agents
 ---
 
 <!--
    -
    - ~chewygumxx/zsh-config.git
-   - ::: :/.claude/CLAUDE.md
+   - ::: :/AGENTS.md
    -
    -->
 
-# CLAUDE.md
+# Repository Agentic Instructions
+
+Absolutely no em dashes are to be employed within this repository.
 
 Continuously granularly commit as you work. Compose single-line commit messages
 whenever appropriate. If the granular commit does indeed warrant further
 context, include such within the commit message body.
 
-Absolutely no em dashes are to be employed within this repository.
-
 ## Repository
 
-Personal Zsh shell configuration dotfiles (`~chewygumxx/zsh-config`). It is used
-by pointing `ZDOTDIR` at this directory; there is no install script, so the
-loading architecture below only takes effect once `ZDOTDIR` is set to this repo.
+Personalised Z Shell configuration dotfiles (`~chewygumxx/zsh-config`).
+Effective when `ZDOTDIR` is equal to the directory path of the repository root.
 
 Note that `~/.config/zsh` is a separate clone of this same repository and is the
 live configuration. This checkout is the source; commits here do not affect the
@@ -429,8 +427,8 @@ reporting it as cloned during startup.
   through `gh auth token`.
 - `.worktreeinclude` names the gitignored files copied into a new worktree:
   `env*`, `*.local.*` and `node_modules/`.
-- `docs/code-review.md` records the full review of the zsh sources made on
-  2026-09-28, each finding with the commit that fixed it.
+- `docs/2026-09-28_code-review-zsh-sources.md` records the full review of the
+  zsh sources made on 2026-09-28, each finding with the commit that fixed it.
 
 ## Neovim project tooling
 

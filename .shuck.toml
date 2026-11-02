@@ -42,6 +42,13 @@ binary-next-line = false
 switch-case-indent = true
 function-next-line = false
 
+# Agent skills vendored by the skills CLI, pinned by skills-lock.json. Their
+# scripts are upstream's to style; formatting them here would only make them
+# drift from the hash the lock file records. Only the formatter needs telling:
+# `shuck check` already passes them. A top-level extend-exclude is silently
+# ignored, and `.agents/` without the `**` matches nothing.
+exclude = [".agents/**"]
+
 [lint]
 ignore = [
   "C001",  # Variable is assigned but never used
