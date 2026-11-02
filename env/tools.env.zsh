@@ -51,6 +51,11 @@ export NUGET_PACKAGES="$__tools_cache/NuGetPackages"
 export BUN_INSTALL_GLOBAL_DIR="$__tools_data/bun/global"
 export BUN_INSTALL_BIN="$HOME/.local/bin"
 
+# Codex keeps config, credentials, databases, transcripts and its daemon in one
+# root, so it lives in ~/.local/var, the dotfiles home directory specification's
+# place for inseparable application data. Not an XDG variable: no fallback.
+export CODEX_HOME="$HOME/.local/var/codex"
+
 # Console Do Not Track, https://consoledonottrack.com, honoured by gh among
 # many others. 1, as the convention specifies and as wrap/claude defaults it;
 # it was "true" here.
