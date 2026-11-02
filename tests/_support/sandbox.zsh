@@ -275,3 +275,41 @@ function sandbox_copy_config() {
 
     print -r -- "$dest"
 }
+
+#
+# Install the tracked runtime into a sandbox the way the live installation is
+# laid out, and print the live checkout's path.
+#
+# Only the files git tracks beneath zsh/ are copied, read from the working tree
+# so uncommitted edits are what get tested. A generated env/chezmoi.env.zsh, or
+# any other untracked file, therefore never reaches the copy, and nothing in it
+# links back to this checkout. The configuration path is then repointed at the
+# copy's zsh/ child, replacing the link sandbox_create made, so ZDOTDIR is
+# reached through a symlink exactly as on the live machine.
+#
+function sandbox_install_runtime() {
+    emulate -L zsh
+
+    local root="$1"
+
+    [[ -n "$root" && -d "$root" ]] || return 1
+
+    local live="$root/.local/share/zsh-config"
+    local -a files
+    files=(${(0)"$(git -C "$ZSH_REPO_ROOT" ls-files -z -- zsh)"})
+
+    # An empty list would install nothing and leave the old link in place,
+    # and every assertion would then be about the checkout instead.
+    ((${#files})) || return 1
+
+    local file
+    for file in $files; do
+        mkdir -p -m 0755 -- "$live/${file:h}" || return 1
+        cp -- "$ZSH_REPO_ROOT/$file" "$live/$file" || return 1
+    done
+
+    # -n replaces the existing link rather than descending into its target.
+    ln -sfn -- "$live/zsh" "$root/.config/zsh" || return 1
+
+    print -r -- "$live"
+}
