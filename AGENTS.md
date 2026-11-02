@@ -1,6 +1,6 @@
 ---
 ctime: 2026-09-30
-mtime: 2026-11-02
+mtime: 2026-11-03
 spdx: GPL-3.0-only
 title: Repository Agentic Instructions
 description: >-
@@ -427,8 +427,8 @@ reporting it as cloned during startup.
   through `gh auth token`.
 - `.worktreeinclude` names the gitignored files copied into a new worktree:
   `env*`, `*.local.*` and `node_modules/`.
-- `docs/code-review.md` records the full review of the zsh sources made on
-  2026-09-28, each finding with the commit that fixed it.
+- `docs/2026-09-28_code-review-zsh-sources.md` records the full review of the
+  zsh sources made on 2026-09-28, each finding with the commit that fixed it.
 
 ## Neovim project tooling
 

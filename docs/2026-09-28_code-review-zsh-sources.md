@@ -1,28 +1,33 @@
 ---
 ctime: 2026-09-28
-mtime: 2026-10-05
+mtime: 2026-11-03
 spdx: GPL-3.0-only
-title: Code Review of the Zsh Sources
+title: "Code Review: Zsh Configuration Sources"
 description: >-
   A full read-through review of the zsh sources, with each finding fixed in its
   own commit.
 tags:
   - zsh
-  - review
+  - report
+  - code-review
 ---
 
 <!--
    -
    - ~chewygumxx/zsh-config.git
-   - ::: :/docs/code-review.md
+   - ::: :/docs/2026-09-28_code-review-zsh-sources.md
    -
    -->
 
-# Code Review of the Zsh Sources
+# Code Review: Zsh Configuration Sources
 
-Review date: 2026-09-28. Branch: `claude/code-review`, based on `8278c1b`.
+| Review | Value                |
+| ------ | -------------------- |
+| Date   | 2026-09-28           |
+| Branch | `claude/code-review` |
+| Commit | `8278c1b`            |
 
-## Scope and method
+## Scope and Method
 
 Every zsh file in the repository was read in full: `.zshenv`, `.zshrc`, and
 everything under `env/`, `rc/`, `util/`, `spec/`, `func/`, `wrap/` and
@@ -240,7 +245,7 @@ runs rather than skips.
 - **Test:** `tests/env.zunit`, "A non-interactive shell carries the tool
   relocations".
 
-## Low and nits
+## Low and Nits
 
 - **Missing XDG fallbacks** in `util/nvm.rc.zsh`, `wrap/gtrash:29` and
   `wrap/nvim:172`. The `wrap/cloudflared:22` cache fallback now follows the
