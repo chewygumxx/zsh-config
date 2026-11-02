@@ -24,8 +24,13 @@
 #
 
 # Derived from this file rather than from $PWD, so the suite does not depend on
-# the directory zunit was invoked from.
-ZSH_CONFIG_ROOT="${${(%):-%N}:A:h:h:h}"
+# the directory zunit was invoked from. Two roots, because they answer
+# different questions: ZSH_REPO_ROOT is where the project files, tests and
+# .mise.toml live, and ZSH_CONFIG_ROOT is the runtime that ZDOTDIR names.
+# tests/_support/autoload.zsh derives the same pair, and tests/layout.zunit
+# holds the two to agreement.
+ZSH_REPO_ROOT="${${(%):-%N}:A:h:h:h}"
+ZSH_CONFIG_ROOT="$ZSH_REPO_ROOT"
 
 # Prefix for every sandbox this file creates. sandbox_destroy refuses to remove
 # anything not matching it.
@@ -153,7 +158,7 @@ function sandbox_zsh() {
     #
     # mise records trust under XDG_STATE_HOME, which is empty here, so without
     # MISE_TRUSTED_CONFIG_PATHS util/mise.rc.zsh would warn on every start that
-    # this checkout's .mise.toml is not trusted, as the live shell never does.
+    # the repository's .mise.toml is not trusted, as the live shell never does.
     env -i \
         HOME="$root" \
         PATH="$PATH" \
@@ -165,7 +170,7 @@ function sandbox_zsh() {
         XDG_STATE_HOME="$root/.local/state" \
         XDG_RUNTIME_DIR="$root/run" \
         ZDOTDIR="$root/.config/zsh" \
-        MISE_TRUSTED_CONFIG_PATHS="$ZSH_CONFIG_ROOT" \
+        MISE_TRUSTED_CONFIG_PATHS="$ZSH_REPO_ROOT" \
         $SANDBOX_ENV \
         zsh "$@"
 }
