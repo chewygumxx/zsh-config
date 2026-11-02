@@ -21,7 +21,7 @@
 
 # The same pair tests/_support/sandbox.zsh derives; see the note there.
 ZSH_REPO_ROOT="${${(%):-%N}:A:h:h:h}"
-ZSH_CONFIG_ROOT="$ZSH_REPO_ROOT"
+ZSH_CONFIG_ROOT="$ZSH_REPO_ROOT/zsh"
 
 # -U keeps the array unique, so sourcing this file more than once in one zunit
 # process cannot stack up duplicate entries.

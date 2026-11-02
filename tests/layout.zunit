@@ -33,6 +33,48 @@
     done
 
     assert "$ZSH_REPO_ROOT/.mise.toml" is_file
-    assert "$seen[1]" same_as "$ZSH_REPO_ROOT|$ZSH_REPO_ROOT"
+    assert "$seen[1]" same_as "$ZSH_REPO_ROOT|$ZSH_REPO_ROOT/zsh"
     assert "$seen[2]" same_as "$seen[1]"
+}
+
+@test 'The runtime lives beneath zsh/ and nowhere else' {
+    # Spec criterion A1. Checked on disk and in the index alike: a file left
+    # behind at the root, tracked or not, is a second configuration tree that
+    # a stray ZDOTDIR could still select.
+    local -a names=(.zshenv .zshrc env rc util func wrap comp spec)
+    local -a moved=("$ZSH_CONFIG_ROOT"/${^names}(N))
+    local -a strays=("$ZSH_REPO_ROOT"/${^names}(N))
+    local -a tracked=(
+        ${(0)"$(git -C "$ZSH_REPO_ROOT" ls-files -z -- $names)"}
+    )
+
+    if (( ${#strays} )); then
+        fail "Left at the root: ${(j:, :)${strays[@]:t}}"
+    fi
+
+    assert ${#moved} equals ${#names}
+    assert ${#strays} equals 0
+    assert ${#tracked} equals 0
+}
+
+@test 'The generated chezmoi environment is ignored at its new path' {
+    # Spec criterion A8. chezmoi-environment in the dotfiles repository writes
+    # this file into the live clone with machine-specific paths, so it has to
+    # stay untracked wherever the runtime moves.
+    run git -C "$ZSH_REPO_ROOT" check-ignore -q -- zsh/env/chezmoi.env.zsh
+
+    assert $state equals 0
+}
+
+@test 'The checkout holds no generated chezmoi environment' {
+    # The sandbox links this checkout's runtime, so a generated file here
+    # would load the real machine's paths into every test shell. It only ever
+    # exists in the live clone, which is why the suite must never run there.
+    local -a generated=("$ZSH_CONFIG_ROOT"/env/chezmoi.env.zsh(N))
+
+    if (( ${#generated} )); then
+        fail 'env/chezmoi.env.zsh is present; is this the live clone?'
+    fi
+
+    assert ${#generated} equals 0
 }

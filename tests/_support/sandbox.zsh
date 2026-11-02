@@ -30,7 +30,7 @@
 # tests/_support/autoload.zsh derives the same pair, and tests/layout.zunit
 # holds the two to agreement.
 ZSH_REPO_ROOT="${${(%):-%N}:A:h:h:h}"
-ZSH_CONFIG_ROOT="$ZSH_REPO_ROOT"
+ZSH_CONFIG_ROOT="$ZSH_REPO_ROOT/zsh"
 
 # Prefix for every sandbox this file creates. sandbox_destroy refuses to remove
 # anything not matching it.
@@ -100,7 +100,8 @@ function sandbox_create() {
 
     # zsh finds .zshenv and .zshrc through ZDOTDIR, and env/zsh_dirs.env.zsh
     # derives every source directory from it, so this symlink is what puts this
-    # checkout under test rather than the live one.
+    # checkout's runtime, its zsh/ directory, under test rather than the live
+    # one. Never the repository root: that is not a configuration.
     ln -sfn -- "$ZSH_CONFIG_ROOT" "$config/zsh" || return 1
 
     # Linked one entry at a time rather than as a single directory symlink.

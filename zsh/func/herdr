@@ -1,0 +1,18 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/zsh/func/herdr
+#
+#
+
+#
+# Wrapper function file as configuration and custom subcommands
+#
+
+emulate -L zsh
+
+local __this_file="${(D)${functions_source[${(%):-%N}]:-${(%):-%N}}}"

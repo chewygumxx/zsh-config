@@ -1,0 +1,35 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/zsh/func/adb-wifi
+#
+#
+# ADB Wifi Connect and Set Port
+#
+
+if [[ -z "$commands[adb]" ]]; then
+    echo "command 'adb' not found" >&2
+    return 127
+fi
+
+if [[ -z "$1" ]]; then
+    echo -e "\e[1;34m${0}\e[0;35m: \e[31mInvalid invocation \e[0m"
+    echo "First argument must be the randomly generated port number" >&2
+    echo "produced when first toggling on Wireless Debugging." >&2
+    return 1
+fi
+
+local temp_port=$1
+
+# Declared local. Without it both names were assigned into the global namespace
+# and persisted in the interactive session after every call.
+local CHEWYTELE_IP="${2:-192.168.4.22}"
+local CUSTOM_PORT="${3:-55555}"
+
+command adb connect "${CHEWYTELE_IP}:${temp_port}"
+command adb tcpip   "${CUSTOM_PORT}"
+command adb disconnect
+command adb connect "${CHEWYTELE_IP}:${CUSTOM_PORT}"

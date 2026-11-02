@@ -53,6 +53,25 @@
     assert ${#TEST_FILES} is_greater_than 1
 }
 
+@test 'Every tracked shell file is checked' {
+    # Guards the globs in @setup. Each carries (N), so one that stops
+    # matching, as a stale path would after a move, drops its whole directory
+    # from every test in this file without a word. comp/.keep is the one
+    # tracked file there that is not shell.
+    local -a tracked unchecked
+
+    tracked=(${(0)"$(git -C "$ZSH_REPO_ROOT" ls-files -z -- zsh tests/_support)"})
+    tracked=("$ZSH_REPO_ROOT"/${^tracked:#*/.keep})
+    unchecked=(${tracked:|SHELL_FILES})
+
+    if (( ${#unchecked} )); then
+        fail "Not checked: ${(j:, :)${unchecked[@]#$ZSH_REPO_ROOT/}}"
+    fi
+
+    assert ${#tracked} is_greater_than 1
+    assert ${#unchecked} equals 0
+}
+
 @test 'Every shell file refuses direct execution' {
     # #!/bin/false rather than a real interpreter, because none of these files
     # is ever run: they are sourced or autoloaded.

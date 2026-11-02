@@ -1,0 +1,25 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/zsh/wrap/tldr
+#
+#
+# Compatible with:
+# https://github.com/tldr-pages/tlrc
+# https://github.com/tealdeer-rs/tealdeer
+#
+
+(( $+commands[tldr] )) || return 127
+
+if [[ ${#} -eq 0 ]]; then
+    command tldr --list | fzf \
+        --preview "tldr {1} --color=always" \
+        --preview-window=right,70% \
+        --bind "enter:become(tldr {1})"
+else
+    # Quoted, so an empty argument reaches tldr rather than being dropped.
+    command tldr "$@"
+fi

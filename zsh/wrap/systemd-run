@@ -1,0 +1,101 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/zsh/wrap/systemd-run
+#
+#
+
+(($+commands[systemd-run])) || return 127
+
+emulate -L zsh
+
+#
+# Runs a command as a transient user unit named after the command, so that
+# `systemd-run cclip -t image/png` runs
+# `systemd-run --user --unit=cclip_-t_image_png cclip -t image/png`.
+#
+# Every option is systemd-run's own and is passed through untouched. --user is
+# added only when no option already picks a manager, and --unit only when no
+# option names the unit and a command is present.
+#
+# This wrapper once parsed options of its own, -u and -h among them, and took
+# whatever word followed them as the command. A genuine systemd-run option such
+# as --user was then rejected as `Command not found: --user`.
+#
+
+# systemd-run's options that take their value as the next word, as of systemd
+# 262. systemd-run stops parsing at the first non-option, so this list is what
+# tells the value in `--on-calendar 4:00 job` apart from the command. An
+# abbreviated long option, which getopt_long also accepts, is not recognised.
+local -a value_opts=(
+    -H --host -M --machine -C --capsule -u --unit -p --property
+    --description --slice --expand-environment --service-type --uid --gid
+    --nice --working-directory --root-directory -E --setenv --output --json
+    --job-mode --background --path-property --socket-property --on-active
+    --on-boot --on-startup --on-unit-active --on-unit-inactive --on-calendar
+    --timer-property
+)
+local -a manager_opts=(--user --system -H --host -M --machine -C --capsule)
+
+local word opt unit
+local -a inject name
+integer has_manager has_unit i=1 j
+
+while ((i <= $#)); do
+    word="$argv[i]"
+
+    case "$word" in
+        --)
+            ((i++))
+            break
+            ;;
+        --*)
+            opt="${word%%=*}"
+            ((manager_opts[(Ie)$opt])) && has_manager=1
+            [[ "$opt" == --unit ]] && has_unit=1
+            [[ "$word" != *=* ]] && ((value_opts[(Ie)$opt])) && ((i++))
+            ;;
+        -?*)
+            # Short options may be bundled, as in -qGu name. The first one that
+            # takes a value consumes the rest of the word, or the next word when
+            # it is last.
+            for ((j = 2; j <= $#word; j++)); do
+                opt="-$word[j]"
+                ((manager_opts[(Ie)$opt])) && has_manager=1
+                [[ "$opt" == -u ]] && has_unit=1
+
+                if ((value_opts[(Ie)$opt])); then
+                    ((j == $#word)) && ((i++))
+                    break
+                fi
+            done
+            ;;
+        *)
+            break
+            ;;
+    esac
+
+    ((i++))
+done
+
+((has_manager)) || inject+=(--user)
+
+if ((!has_unit && i <= $#)); then
+    # Sliced from the command, which is known to exist. A quoted slice lying
+    # wholly past the end of argv yields one empty word rather than none, so
+    # `argv[i + 1, i + 2]` turned `systemd-run true` into the unit `true_`.
+    name=("${(@)argv[i, i + 2]}")
+    name[1]="${name[1]:t}"
+    unit="${(j:_:)name}"
+
+    # A unit name may hold only ASCII letters, digits and `:_.-`, and at most
+    # 255 characters including its suffix.
+    inject+=(--unit="${${unit//[^A-Za-z0-9:_.-]/_}[1,128]}")
+fi
+
+# `command` is required: this function is named systemd-run and autoloaded, so
+# a bare call resolves back to the function rather than the binary.
+command systemd-run $inject "$@"

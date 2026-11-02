@@ -1,0 +1,178 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/zsh/wrap/eza
+#
+#
+
+#
+# Zsh function for wrapping command line utility: eza
+# Dependent upon array variables: __eza_opts __eza_ignore_glob
+#
+
+# functions_source, not %N:A. In an autoloaded function %N is the bare
+# function name, so :A resolved it against $PWD rather than fpath.
+local __this_file="${(D)${functions_source[${(%):-%N}]:-${(%):-%N}}}"
+
+# A `local __eza_ignore_glob=($__eza_ignore_glob)` shadow used to stand here. It
+# brought the name into existence before the validation loop below ran, so the
+# -v test could never fail for it and only __eza_opts was ever really checked.
+# The array is read once, at the --ignore-glob line, and never modified, so no
+# local copy is needed.
+
+# ---------------------
+# Validate Environment
+# ---------------------
+
+if ((!$+commands[eza])); then
+    print -u2 "${__this_file}: [FATAL] Command not found: eza"
+    return 127
+fi
+
+local envvar
+for envvar in __eza_opts __eza_ignore_glob; do
+    if [[ ! -v "$envvar" ]]; then
+        print -u2 "${__this_file}: [ERROR] Variable not set: $envvar"
+        continue
+    fi
+
+    if [[ "${(Pt)envvar}" != array* ]]; then
+        print -u2 "${__this_file}: [ERROR] Variable is not an array: $envvar"
+    fi
+done
+
+# -----------------
+# Invocation Parse
+# -----------------
+
+# $__eza_opts, not "${__eza_opts[@]}". Unlike bash, zsh expands the quoted [@]
+# form of an unset array to a single empty string, which was passed through to
+# eza as an empty argument and rejected as `"": No such file or directory`. The
+# unquoted form yields no words at all here and, since zsh does not word-split
+# parameters, still preserves any element containing spaces.
+# shuck: disable=C006
+local -a opts=($__eza_opts)
+local -a args=()
+local -i ignore=1
+local -i long=0
+local flags kept
+local -i value_next
+
+# Options that take a value as a separate word are kept together with it. The
+# catch-all -* branch used to take the option alone, so the 2 of
+# `lt --level 2` fell through to the operands and was listed as $PWD/2.
+#
+# The wrapper's own switch is --unignore only. It used to claim -u as well,
+# which is eza's short form of --accessed, so that could never be passed on.
+while (($#)); do
+    case "$1" in
+    --)
+        shift
+        args+=("$@")
+        break
+        ;;
+    --unignore)
+        ignore=0
+        ;;
+    --long)
+        long+=1
+        ;;
+    --tree)
+        opts+=("$1" --git-ignore)
+        ;;
+    --level | --sort | --time | --time-style | --ignore-glob | --width)
+        opts+=("$1")
+        if (($# > 1)); then
+            opts+=("$2")
+            shift
+        fi
+        ;;
+    --*)
+        opts+=("$1")
+        ;;
+    -?*)
+        # A cluster of short flags, such as -la, is taken apart one letter at a
+        # time. Only a bare -l or -T used to be recognised, so -la was passed
+        # through uncounted. Each l is counted exactly as --long is, a T brings
+        # --git-ignore as --tree does, and the first letter that takes a value
+        # ends the cluster: the rest of it is that value, or the next word is.
+        flags="${1#-}"
+        kept=""
+        value_next=0
+        while [[ -n "$flags" ]]; do
+            case "$flags[1]" in
+            l)
+                long+=1
+                ;;
+            T)
+                kept+=T
+                opts+=(--git-ignore)
+                ;;
+            [LstIw])
+                kept+="$flags"
+                ((${#flags} == 1)) && value_next=1
+                break
+                ;;
+            *)
+                kept+="$flags[1]"
+                ;;
+            esac
+            flags="$flags[2,-1]"
+        done
+
+        [[ -n "$kept" ]] && opts+=("-$kept")
+
+        if ((value_next && $# > 1)); then
+            opts+=("$2")
+            shift
+        fi
+        ;;
+    *)
+        args+=("$1")
+        ;;
+    esac
+    shift
+done
+
+# --------
+# Options
+# --------
+
+# Appended only when the join is non-empty. An unset or empty __eza_ignore_glob
+# otherwise passes a bare `--ignore-glob ""` through to eza, which rejects the
+# empty pattern with `"": No such file or directory`.
+((ignore)) && [[ -n "${(j:|:)__eza_ignore_glob}" ]] &&
+    opts+=("--ignore-glob" "${(j:|:)__eza_ignore_glob}")
+
+if ((long == 0)); then
+    opts+=("--no-permissions" "--no-user" "--no-filesize" "--no-time")
+elif ((long == 1)); then
+    opts+=("--header" "--mounts" "--no-user")
+elif ((long > 1)); then
+    opts+=("--header" "--mounts" "--extended" "--group" "--smart-group")
+else
+    print -u2 "${__this_file}: Variable 'long' is somehow negative"
+fi
+
+# ---------
+# Argument
+# ---------
+
+((${#args} == 0)) && args+=("${PWD}")
+
+# Always resolve to absolute paths, so headers stay stable regardless of cwd
+typeset -a paths=()
+local p
+for p in "${args[@]}"; do
+    paths+=("${p:a}")
+done
+
+# --------
+# Execute
+# --------
+
+\builtin command eza "${opts[@]}" "${paths[@]}"

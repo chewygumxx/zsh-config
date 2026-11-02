@@ -1,0 +1,137 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/zsh/wrap/gh
+#
+#
+
+(($+commands[gh])) || return 127
+
+# functions_source, not %N:A. In an autoloaded function %N is the bare
+# function name, so :A resolved it against $PWD rather than fpath.
+local __this_file="${(D)${functions_source[${(%):-%N}]:-${(%):-%N}}}"
+
+# ------------------------------
+# ** Configuration: Zsh Wrapper
+# ------------------------------
+
+# Can be set to null to disable automatic local cloning
+local GH_GIST_DIR="${GH_GIST_DIR-$HOME/dev/_gist}"
+
+# --------------------------
+# Configuration: GitHub CLI
+# --------------------------
+
+local -x GH_TELEMETRY="false"
+local -x GH_BROWSER="firefox --new-tab"
+
+# ----------
+# Functions
+# ----------
+
+local -a int_funcs # Internal function short names
+
+int_funcs+=("main")
+__gh_main() {
+    if (($# == 0)) || [[ "$1" == "help" ]] || (($@[(Ie)--help])); then
+        __gh_help "$@"
+        return
+    fi
+
+    case "$1" in
+        # Subcommand Aliases
+        co)
+            shift
+            command gh pr checkout "$@"
+            ;;
+        g)
+            shift
+            __gh_gist_create "$@"
+            ;;
+        gp)
+            shift
+            __gh_gist_create --public "$@"
+            ;;
+
+        # Subcommand Overrides
+        gist)
+            shift
+            case "$1" in
+                create)
+                    shift
+                    __gh_gist_create "$@"
+                    ;;
+                *)
+                    command gh gist "$@"
+                    ;;
+            esac
+            ;;
+
+        # Fallthrough
+        *)
+            command gh "$@"
+            ;;
+    esac
+}
+
+int_funcs+=("help")
+__gh_help() {
+    # Split with ${=...}. zsh does not word-split parameters, so a pager given
+    # with arguments, such as PAGER="less -R", was run as one command named
+    # "less -R" and failed with command not found.
+    if [[ -n "${HELPPAGER:-}" ]]; then
+        command gh "$@" | ${=HELPPAGER}
+    elif (($+commands[bat])); then
+        command gh "$@" | command bat --language=help
+    elif [[ -n "${PAGER:-}" ]]; then
+        command gh "$@" | ${=PAGER}
+    elif (($+commands[less])); then
+        command gh "$@" | command less --raw-control-characters --quit-if-one-screen
+    else
+        command gh "$@"
+    fi
+}
+
+int_funcs+=("gist_create")
+__gh_gist_create() {
+    local gist_{url,id,json,created,files}
+
+    # Create
+    # `command gh gist create` indeed returns only the URL
+    gist_url="$(command gh gist create "$@")" || return
+    print -r -- "$gist_url"
+
+    # If null, local cloning disabled
+    [[ -z "$GH_GIST_DIR" ]] && return
+    (($+commands[jq])) || {
+        print -u2 "${__this_file}: [ERROR] Command not found: jq"
+        return 127
+    }
+
+    # Query API
+    gist_id="${gist_url##*/}"
+    gist_json="$(command gh api "gists/$gist_id")" || return
+    gist_created="$(command jq -r '.created_at' <<< "$gist_json")" || return
+    gist_files=("${(@0)$(command jq -j '.files[].filename | . + "\u0000"' <<< "$gist_json")}") || return
+
+    # Local clone
+    command gh gist clone "$gist_id" \
+        "$GH_GIST_DIR/${gist_created%%T*}_${(j:_:)gist_files}" || return
+}
+
+# --------
+# Execute
+# --------
+
+local return_code
+{
+    __gh_main "$@"
+} always {
+    return_code=$?
+    unset -f __gh_${^int_funcs}
+    return "$return_code"
+}

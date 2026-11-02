@@ -1,0 +1,18 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+
+# 
+# 
+# ~chewygumxx/zsh-config.git
+# ::: :/zsh/wrap/yazi
+# 
+# 
+
+local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+
+command yazi "$@" --cwd-file="$tmp"
+IFS= read -r -d '' cwd < "$tmp"
+[ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
+
+command rm -f -- "$tmp"

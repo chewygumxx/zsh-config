@@ -1,0 +1,41 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/zsh/func/zedd
+#
+#
+# Edit Zsh function file in Neovim
+#
+
+# functions_source, not %N:A. In an autoloaded function %N is the bare
+# function name, so :A resolved it against $PWD rather than fpath.
+local __this_file="${(D)${functions_source[${(%):-%N}]:-${(%):-%N}}}"
+
+local func_name="$1"
+
+if [[ -z "$func_name" ]]; then
+    print -u2 "${__this_file}: Usage: zedd <function-name>"
+    return 1
+fi
+
+local func_file fpath_dir
+for fpath_dir in $fpath; do
+    if [[ -f "$fpath_dir/$func_name" ]]; then
+        func_file="$fpath_dir/$func_name"
+        break
+    fi
+done
+
+if [[ -z "$func_file" ]]; then
+    print -u2 "${__this_file}: No function file found in \$fpath for: $func_name"
+    return 127
+fi
+
+nvim "$func_file"
+
+unset -f "$func_name"
+autoload -Uz "$func_file"
+

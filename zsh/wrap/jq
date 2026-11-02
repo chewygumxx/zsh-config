@@ -1,0 +1,29 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/zsh/wrap/jq
+#
+#
+
+#
+# Wrapper function for `jq` JSONquery utility
+# Currently, this exists entirely for default `--indent 4`
+#
+
+(($+commands[jq])) || return 127
+
+# (Ie) searches the arguments for an exact word and yields its index, 0 when
+# absent. This used to read (($+@[--indent])), which is not a subscript idiom at
+# all: it raised `bad math expression` on stderr for every call and was never
+# true, so --indent 4 went ahead of whatever the caller passed. The other
+# layout options are respected too, since a forced indent contradicts them.
+if ! ((${@[(Ie)--indent]} || ${@[(Ie)--tab]} || ${@[(Ie)-c]} ||
+    ${@[(Ie)--compact-output]})); then
+    command jq --indent 4 "$@"
+else
+    command jq "$@"
+fi

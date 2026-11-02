@@ -1,0 +1,56 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/zsh/func/gc
+#
+
+#
+# Git commit
+#
+
+(( $+commands[git] )) || return 127
+
+# functions_source, not %N:A. In an autoloaded function %N is the bare
+# function name, so :A resolved it against $PWD rather than fpath.
+local __this_file="${(D)${functions_source[${(%):-%N}]:-${(%):-%N}}}"
+
+if (( $# >= 1 )); then
+    # Joined explicitly. An `IFS=" "` prefix used to stand before command, but
+    # "$*" is expanded with the caller's IFS before any such assignment applies.
+    command git commit --message="${(j: :)@}"
+    return
+fi
+
+if (( $# == 0 )) && (( $+commands[nvim] )); then
+    local tempfile
+    # TMPDIR is not set in this configuration, interactive or otherwise, so the
+    # bare form expanded to /git-commit-message.XXXXXXXXXX and mktemp failed
+    # with permission denied at the filesystem root on every call.
+    if tempfile="$(mktemp "${TMPDIR:-/tmp}/git-commit-message.XXXXXXXXXX")"; then
+        # zsh's order is `trap ACTION SIGNAL`. Reversed, it reported
+        # `undefined signal` and installed nothing, leaking the message file on
+        # every call. Set inside a function, an EXIT trap runs when the function
+        # returns, which is the scope wanted here.
+        #
+        # The path is interpolated now, not deferred: single quotes would put
+        # off expanding $tempfile until the trap fires, by which point the local
+        # is out of scope and the removal silently targets an empty path. (q)
+        # keeps the result safe should the path ever contain whitespace.
+        trap "command rm -f -- ${(q)tempfile}" EXIT
+        command nvim "$tempfile"
+        # Negated. `-s` is true when the file exists and is non-empty, so the
+        # unnegated test aborted whenever a message HAD been written and fell
+        # through to `git commit -F` only when the file was empty: the editor
+        # path could never produce a commit.
+        if [[ ! -s "$tempfile" ]]; then
+            print -u2 -f '%s: %s "%s" %s\n' \
+                "$__this_file" "Empty file" "$tempfile" "no commit made"
+            return
+        fi
+        command git commit -F "$tempfile"
+    fi
+fi

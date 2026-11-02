@@ -1,0 +1,37 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/zsh/wrap/sv
+#
+#
+
+#
+# Zsh wrapper function for Termux service manager: sv
+#
+
+# functions_source, not %N:A. In an autoloaded function %N is the bare
+# function name, so :A resolved it against $PWD rather than fpath.
+local __this_file="${(D)${functions_source[${(%):-%N}]:-${(%):-%N}}}"
+
+
+# ---------------------
+# Validate Environment
+# ---------------------
+
+if [[ ! -v TERMUX_VERSION ]]; then
+    print -u2 "${__this_file}: This function is termux exclusive"
+    return 1
+fi
+
+if (( ! $+commands[sv] )); then
+    print -u2 "${__this_file}: command 'sv' not found"
+    print -z "command pkg install termux-services"
+    return 127
+fi
+
+
+command sv "$@"

@@ -1,0 +1,83 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/zsh/func/gcp
+#
+#
+# `local +h functions` used to stand here, commented as locally scoping the
+# functions declared below. It does not: zsh defines functions globally
+# regardless, and print_help was left behind in the interactive namespace after
+# the first call. An EXIT trap set inside a function runs when that function
+# returns, so this removes the helper on every path out, early returns included.
+local this_file="${(%):-%N}"
+trap 'unset -f print_help' EXIT
+
+function print_help () {
+    print -f "%s\n" \
+        "git add, commit and push for the lazy" \
+        "Usage: $this_file [options] [message]" \
+
+    print -f "\n%s\n" "Options:"
+    # -- terminates print's own option parsing. Without it the "-e" argument
+    # below is consumed as a print flag and the entire options table is replaced
+    # by `bad option: -e`.
+    print -f "    %-5s %s\n" -- \
+        "-e " "Reuse and edit last commit message and author time, ignores -f and message" \
+        "-f " "Same as -e, except don't edit the commit message" \
+        "-q " "Quiet" \
+        "-v " "Verbose" \
+        "-h " "Print this help"
+
+    print -f "\n%s\n" "If no option nor message is given, reuse last message with new time"
+}
+
+# Cannot be prepended with `local` inline or else `getopt_exit=$?`
+# will always be 0
+local getopt_parsed
+getopt_parsed=$(getopt -n "$0" -o "efqvh" -- "$@")
+local getopt_exit=$?
+if [[ $getopt_exit -ne 0 ]]; then 
+    print -u2 "${0}: getopt parse failed"
+    return $getopt_exit
+fi
+eval set -- "$getopt_parsed"
+
+local edit=0
+local fix=0
+local output=""
+
+while true; do
+    case "$1" in
+        -e) edit=1;      shift    ;;
+        -f) fix=1;       shift    ;;
+        -q) output="-q"; shift    ;;
+        -v) output="-v"; shift    ;;
+        -h) print_help;  return 0 ;;
+        --) shift;       break    ;;
+        *)  print -u2 "${0}: Error while parsing getopt_parsed: '$1'"
+            return 1
+            ;;
+    esac
+done
+
+# This check is after getopt such that `gcp -h` still functions
+if ! git -C . rev-parse 2>/dev/null; then
+    print -u2 "${0}: Not a git repository"
+    return 1
+fi
+
+if   ((  $edit  )); then
+    local cm_argv=(--reedit-message=HEAD)
+elif ((  $fix   )); then
+    local cm_argv=(--reuse-message=HEAD)
+else
+    local IFS=" " 
+    local cm_argv=(--message="${*:-"Lazy Commit: $(date)"}")
+fi
+
+git add .  $output 
+git commit $output $cm_argv
+git push   $output

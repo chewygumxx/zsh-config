@@ -82,10 +82,10 @@ jobs:
               uses: actions/cache@v6
               with:
                   path: ~/zsh-test-plugins
-                  key: zsh-plugins-${{ hashFiles('spec/*.spec.zsh', 'rc/completion.rc.zsh') }}
+                  key: zsh-plugins-${{ hashFiles('zsh/spec/*.spec.zsh', 'zsh/rc/completion.rc.zsh') }}
 
-            # zsh-completions and fzf-tab are cloned by rc/completion.rc.zsh
-            # rather than declared in spec/, and fzf-tab only when fzf is on
+            # zsh-completions and fzf-tab are cloned by zsh/rc/completion.rc.zsh
+            # rather than declared in zsh/spec/, and fzf-tab only when fzf is on
             # PATH. It is cloned here regardless, so the result does not depend
             # on whether the runner image happens to ship fzf.
             - name: Clone plugins
