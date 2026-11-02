@@ -74,6 +74,9 @@ export GOBIN="$__tools_data/go/bin"
 # Gradle
 export GRADLE_USER_HOME="$__tools_data/gradle"
 
+# npm, whose cache and debug logs (cache/_logs) otherwise land in ~/.npm
+export npm_config_cache="$__tools_cache/npm"
+
 # Parallel
 export PARALLEL_HOME="$__tools_data/parallel"
 
