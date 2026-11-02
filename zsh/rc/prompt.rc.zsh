@@ -1,0 +1,101 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/zsh/rc/prompt.rc.zsh
+#
+#
+# https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html
+# https://zsh.sourceforge.io/Doc/Release/Parameters.html#index-PROMPT
+# https://zsh.sourceforge.io/Doc/Release/Parameters.html#Parameters-Used-By-The-Shell-1
+#
+
+autoload -Uz add-zsh-hook
+
+unsetopt single_line_zle # For >>Right PS1
+
+setopt prompt_subst # Prompt subject to parameter expansion, command
+# substitution, and arithmetic expansion
+
+setopt prompt_percent
+() {
+    local blink="%{"$'\e[5m'"%}"
+    local none="%{"$'\e[0m'"%}"
+
+    local clock=(
+        "%F{#626262}[%f"
+        "%F{#5f95fa}%D{%H}%f"
+        "%F{#7171d3}:%f"
+        "%F{#5f95fa}%D{%M}%f"
+        "%F{#7171d3}:%f"
+        "%F{#5f95fa}%D{%S}%f"
+        "%F{#626262}]%f"
+    )
+    local caret_privilege=(
+        "%(#." # If user is root
+        $blink "%F{red}%#%f" $none # Caret is a blinking red '#'
+        "." # Else
+        "%F{#4db380}>%f" # Caret is green '>'
+        ")"
+    )
+
+    # Don't consider the herdr parent shell
+    # If in a `herdr` pane, increase the SHLVL condition by one and decrease the level printed by one
+    local herdr_offset=${+HERDR_ENV}
+    local shell_level="%($((2 + herdr_offset))L.%F{#ec5f66} <$((SHLVL - herdr_offset))>%f.)"
+
+    local curr_work_dir=" %F{magenta}%(#.%d.%~)%f" # If root, /absolute/path, otherwise ~named/path
+    local background_jobs="%(1j.%F{2} [%B%j%b]%f.)"
+    local exit_code="%(?..%F{red}%B %?%b%f)" # Exit Code (if not zero)
+
+    local -a __ps1_mods=(
+        "${(j::)clock}"
+
+        "$shell_level"
+        "$curr_work_dir"
+
+        "$background_jobs"
+        "$exit_code"
+        "${(j::)caret_privilege}"
+    )
+
+    PS1="${(j::)__ps1_mods}"
+}
+
+# The start time has to outlive the hook that records it, so it is a global,
+# and named for this file. It was a bare time_invoked, which any script or
+# function of the same name would have read or clobbered.
+function __preexec_rps1() {
+    typeset -g __rps1_time_invoked=$SECONDS
+}
+add-zsh-hook preexec __preexec_rps1
+
+function __format_duration() {
+    local total=$1
+    local h=$((total / 3600))
+    local m=$(((total % 3600) / 60))
+    local s=$((total % 60))
+
+    if ((h > 0)); then
+        printf '%dh %dm %ds' "$h" "$m" "$s"
+    elif ((m > 0)); then
+        printf '%dm %ds' "$m" "$s"
+    else
+        printf '%ds' "$s"
+    fi
+}
+
+function __precmd_rps1() {
+    RPS1=""
+
+    if [[ -n $__rps1_time_invoked ]]; then
+        local time_exec=$(($SECONDS - $__rps1_time_invoked))
+        if [[ $time_exec -gt 10 ]]; then
+            RPS1="%F{blue}$(__format_duration $time_exec)%f"
+        fi
+        unset __rps1_time_invoked
+    fi
+}
+add-zsh-hook precmd __precmd_rps1

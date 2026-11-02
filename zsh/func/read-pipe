@@ -1,0 +1,25 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/zsh/func/read-pipe
+#
+#
+# Both branches return. Without that, the usage text printed and execution fell
+# through into the loop below regardless: with no argument, `cat` received no
+# operand, read stdin instead, and span forever.
+if [[ $# -eq 0 ]]; then
+    print -u2 -- "Usage: $0 <fifo>"
+    print -u2 -- "    Persistently reads named pipe FIFO file even after EOF"
+    print -u2 -- "    All other arguments ignored"
+    return 2
+elif [[ ! -p $1 ]]; then
+    print -u2 -- "${0}: Unrecognised file '$1' (not FIFO)"
+    return 1
+fi
+
+while true; do
+    stdbuf -oL cat "$1"
+done

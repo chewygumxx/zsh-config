@@ -24,8 +24,13 @@
 #
 
 # Derived from this file rather than from $PWD, so the suite does not depend on
-# the directory zunit was invoked from.
-ZSH_CONFIG_ROOT="${${(%):-%N}:A:h:h:h}"
+# the directory zunit was invoked from. Two roots, because they answer
+# different questions: ZSH_REPO_ROOT is where the project files, tests and
+# .mise.toml live, and ZSH_CONFIG_ROOT is the runtime that ZDOTDIR names.
+# tests/_support/autoload.zsh derives the same pair, and tests/layout.zunit
+# holds the two to agreement.
+ZSH_REPO_ROOT="${${(%):-%N}:A:h:h:h}"
+ZSH_CONFIG_ROOT="$ZSH_REPO_ROOT/zsh"
 
 # Prefix for every sandbox this file creates. sandbox_destroy refuses to remove
 # anything not matching it.
@@ -95,7 +100,8 @@ function sandbox_create() {
 
     # zsh finds .zshenv and .zshrc through ZDOTDIR, and env/zsh_dirs.env.zsh
     # derives every source directory from it, so this symlink is what puts this
-    # checkout under test rather than the live one.
+    # checkout's runtime, its zsh/ directory, under test rather than the live
+    # one. Never the repository root: that is not a configuration.
     ln -sfn -- "$ZSH_CONFIG_ROOT" "$config/zsh" || return 1
 
     # Linked one entry at a time rather than as a single directory symlink.
@@ -153,7 +159,7 @@ function sandbox_zsh() {
     #
     # mise records trust under XDG_STATE_HOME, which is empty here, so without
     # MISE_TRUSTED_CONFIG_PATHS util/mise.rc.zsh would warn on every start that
-    # this checkout's .mise.toml is not trusted, as the live shell never does.
+    # the repository's .mise.toml is not trusted, as the live shell never does.
     env -i \
         HOME="$root" \
         PATH="$PATH" \
@@ -165,7 +171,7 @@ function sandbox_zsh() {
         XDG_STATE_HOME="$root/.local/state" \
         XDG_RUNTIME_DIR="$root/run" \
         ZDOTDIR="$root/.config/zsh" \
-        MISE_TRUSTED_CONFIG_PATHS="$ZSH_CONFIG_ROOT" \
+        MISE_TRUSTED_CONFIG_PATHS="$ZSH_REPO_ROOT" \
         $SANDBOX_ENV \
         zsh "$@"
 }
@@ -268,4 +274,83 @@ function sandbox_copy_config() {
         "$dest"/ || return 1
 
     print -r -- "$dest"
+}
+
+#
+# Install the tracked runtime into a sandbox the way the live installation is
+# laid out, and print the live checkout's path.
+#
+# Only the files git tracks beneath zsh/ are copied, read from the working tree
+# so uncommitted edits are what get tested. A generated env/chezmoi.env.zsh, or
+# any other untracked file, therefore never reaches the copy, and nothing in it
+# links back to this checkout. The configuration path is then repointed at the
+# copy's zsh/ child, replacing the link sandbox_create made, so ZDOTDIR is
+# reached through a symlink exactly as on the live machine.
+#
+function sandbox_install_runtime() {
+    emulate -L zsh
+
+    local root="$1"
+
+    [[ -n "$root" && -d "$root" ]] || return 1
+
+    local live="$root/.local/share/zsh-config"
+    local -a files
+    files=(${(0)"$(git -C "$ZSH_REPO_ROOT" ls-files -z -- zsh)"})
+
+    # An empty list would install nothing and leave the old link in place,
+    # and every assertion would then be about the checkout instead.
+    ((${#files})) || return 1
+
+    local file
+    for file in $files; do
+        mkdir -p -m 0755 -- "$live/${file:h}" || return 1
+        cp -- "$ZSH_REPO_ROOT/$file" "$live/$file" || return 1
+    done
+
+    # -n replaces the existing link rather than descending into its target.
+    ln -sfn -- "$live/zsh" "$root/.config/zsh" || return 1
+
+    print -r -- "$live"
+}
+
+#
+# Run zsh against a sandbox as a machine with no ZDOTDIR and no XDG variable
+# would: only HOME, PATH, TERM and SHELL, plus the mise trust that every
+# sandbox start carries. zsh then finds its configuration through ~/.zshenv,
+# which is the portable installation contract.
+#
+function sandbox_zsh_home() {
+    emulate -L zsh
+
+    local root="$1"
+    shift
+
+    env -i \
+        HOME="$root" \
+        PATH="$PATH" \
+        TERM="${TERM:-dumb}" \
+        SHELL="${commands[zsh]:-/usr/bin/zsh}" \
+        MISE_TRUSTED_CONFIG_PATHS="$ZSH_REPO_ROOT" \
+        zsh "$@"
+}
+
+#
+# Succeed when this machine's global zshenv assigns ZDOTDIR itself.
+#
+# zsh reads the global zshenv before anything else, even under -f, so where it
+# assigns ZDOTDIR zsh never consults ~/.zshenv, and a test of portable startup
+# would pass without exercising it. Arch here does this; Ubuntu on CI does not.
+#
+function sandbox_global_sets_zdotdir() {
+    emulate -L zsh
+
+    # The single quotes are the point, so C005 is suppressed: the expansion
+    # belongs to the child shell, which is the one whose ZDOTDIR is in question.
+    local set
+    # shuck: disable=C005
+    set="$(env -i HOME="$1" PATH="$PATH" zsh -fc 'print -r -- ${+ZDOTDIR}')" ||
+        return 1
+
+    [[ "$set" == 1 ]]
 }

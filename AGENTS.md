@@ -28,7 +28,13 @@ context, include such within the commit message body.
 ## Repository
 
 Personalised Z Shell configuration dotfiles (`~chewygumxx/zsh-config`).
-Effective when `ZDOTDIR` is equal to the directory path of the repository root.
+
+The runtime is the `zsh/` directory: `.zshenv`, `.zshrc` and the seven module
+directories. It is effective when `ZDOTDIR` names that directory, and nothing
+in it reads from the repository around it. Everything else at the root is
+project tooling. Throughout this file, a runtime path such as `rc/` or
+`env/zsh_dirs.env.zsh` is relative to `zsh/`; a path naming a repository file,
+such as `tests/` or `.mise.toml`, is relative to the root.
 
 Note that `~/.config/zsh` is a separate clone of this same repository and is the
 live configuration. This checkout is the source; commits here do not affect the
@@ -45,9 +51,34 @@ Changes reach `main` through pull requests. Once one merges, pull `main` here
 before anything else, since `sync-header-metadata` may have committed on top
 (see "GitHub workflows"), then `git push local main`.
 
+**Until the live cutover, do not push to `local`.** The live clone at
+`~/.config/zsh` predates the move to `zsh/` and is itself the running
+`ZDOTDIR`. Any commit from the move onward deletes `.zshenv` and `.zshrc` from
+its root, and every new shell then starts unconfigured. The cutover replaces
+that clone with one whose `zsh/` child is linked at `~/.config/zsh`, in the
+order `docs/spec/2026-11-03_runtime-directory-separation.md` sets out under
+"Initial Cutover and Recovery". Remove this paragraph once that has been done.
+
 On this machine `/etc/zsh/zshenv` supplies `XDG_CONFIG_HOME`, `XDG_CACHE_HOME`,
 `XDG_DATA_HOME`, `XDG_STATE_HOME` and `ZDOTDIR`. That file is machine-local and
 not part of this repo, so nothing here may depend on it.
+
+## Installation
+
+`ZDOTDIR` must name the runtime directory itself, never the repository root.
+The intended live arrangement keeps a separate clone outside the configuration
+path and links only its `zsh/` child into place:
+
+```text
+~/.local/share/zsh-config/          live clone, the `local` remote
+~/.config/zsh -> ~/.local/share/zsh-config/zsh
+```
+
+Where nothing supplies `ZDOTDIR`, zsh reads `~/.zshenv`. For the default
+configuration path, link that to `~/.config/zsh/.zshenv`; the runtime finds
+itself through its own `${XDG_CONFIG_HOME:=$HOME/.config}/zsh` fallback. A
+runtime installed anywhere else needs `ZDOTDIR` set before that file is read.
+The live clone needs no development dependencies to start a shell.
 
 ## Loading architecture
 
@@ -143,10 +174,11 @@ autoload out of the current working directory.
   interactive shell. `env/chezmoi.env.zsh` is not part of this repository:
   `chezmoi-environment` in the dotfiles repository writes it into the live
   clone, exporting the `CHEZMOI_*` paths that `rc/directory.rc.zsh` turns into
-  the `~df` named directories. It is gitignored for that reason. Do not run
-  the suite in the live clone: the sandbox links the whole checkout, so that
-  file points the test shell at the real dotfiles, and `tests/header.zunit`
-  and `tests/boot.zunit` both fail on it.
+  the `~df` named directories. It is gitignored, as
+  `/zsh/env/chezmoi.env.zsh`, for that reason. Do not run the suite in the
+  live clone: the sandbox links the checkout's runtime, so that file would
+  point the test shell at the real dotfiles; `tests/layout.zunit` fails on
+  sight of it.
 - `rc/` - `*.rc.zsh`, interactive-only modules sourced by `.zshrc` (aliases,
   completion, directory hashes, function loading, history, ls_colors, plugin
   management, prompt).
@@ -225,7 +257,8 @@ autoloads that helper by path, since `func/` is not on `fpath` until
   `.zshenv` and `.zshrc`, opens with the same header block: `#!/bin/false`, then
   `# vim:set expandtab shiftwidth=4 filetype=zsh:`, then
   `# SPDX-License-Identifier: GPL-3.0-only`, then a comment naming the file's
-  own repo-relative path. These files are only ever sourced or autoloaded, so
+  own repo-relative path (`zsh/rc/completion.rc.zsh`, not
+  `rc/completion.rc.zsh`). These files are only ever sourced or autoloaded, so
   `#!/bin/false` is deliberate: it prevents accidental direct execution.
   `comp/` files carry the same block with `#compdef <command>` in place of the
   shebang, because compinit reads only line one and registers the file only
@@ -278,7 +311,11 @@ These each caused a real, long-lived bug here:
   held in a variable.
 - `${a:|b}` inside **double quotes** joins `a` into one word before the
   difference is taken, so nothing is ever removed. Assign it unquoted, as in
-  `local -a extra=(${a:|b})`, then test the result.
+  `local -a extra=(${a:|b})`, then test the result. Every per-element operator
+  behaves the same way: `"${(M)a:#rc:*}"` filters the joined string,
+  `"${a:t}"` takes the tail of it, and `"${a#prefix}"` strips the first
+  element alone. Filter in an unquoted assignment first, or write `${a[@]:t}`
+  so the elements survive the quotes.
 - `_arguments` calls an action given as a command and words with **its own
   compadd options inserted ahead of the words**, such as `-J argument-1`. A
   completer that reads its argument from `$1` gets `-J`; read `${@[-1]}`. The
@@ -353,6 +390,12 @@ that `node_modules/` is never walked), `lint:types` (`tsc` over
 most recent commit message and is deliberately kept out of the aggregate, since
 it depends on `HEAD` rather than on the working tree.
 
+`lint:syntax` also fails when a tracked shell file is missing from its globs,
+since each one carries `(N)` and would otherwise drop a directory in silence.
+mise renders task scripts as Tera templates, so a script there cannot contain
+an opening brace directly followed by a hash, which opens a Tera comment:
+write a length as `$#name`, not in its braced form.
+
 `lint:actions` carries a deliberate exclusion, commented inline in `.mise.toml`:
 it ignores a known `actionlint` false positive against
 `actions/create-github-app-token@v3`, where `client-id` is in fact valid and
@@ -407,8 +450,8 @@ requires Node.js 24 or later in any workflow that uses it.
   from a GitHub App; this is the step behind the `lint:actions` exclusion.
 
 The test job does not let `rc/plugin.rc.zsh` clone anything. It clones each
-plugin itself into a cache keyed on `spec/*.spec.zsh` and
-`rc/completion.rc.zsh`, from a slug list written out in the workflow: the
+plugin itself into a cache keyed on `zsh/spec/*.spec.zsh` and
+`zsh/rc/completion.rc.zsh`, from a slug list written out in the workflow: the
 enabled specs, plus zsh-completions and fzf-tab, which `rc/completion.rc.zsh`
 clones. Enabling a spec therefore means adding its slug there too; otherwise
 the sandboxed start clones it for real, and `tests/boot.zunit` fails on CI
@@ -426,14 +469,17 @@ reporting it as cloned during startup.
 - `.mcp.json` registers the GitHub MCP server, authenticated per request
   through `gh auth token`.
 - `.worktreeinclude` names the gitignored files copied into a new worktree:
-  `env*`, `*.local.*` and `node_modules/`.
+  `.env*`, `*.local.*` and `node_modules/`. The leading dot matters: a bare
+  `env*` also matched the runtime's `env/`, and with it a generated
+  `chezmoi.env.zsh`.
 - `docs/2026-09-28_code-review-zsh-sources.md` records the full review of the
   zsh sources made on 2026-09-28, each finding with the commit that fixed it.
 
 ## Neovim project tooling
 
 `.nvim.lua` is loaded through `exrc`, which nvim-config enables and `:trust`
-gates. It gives a new file in `func/`, `wrap/`, `util/` or `spec/` a body
+gates. It gives a new file in `zsh/func/`, `zsh/wrap/`, `zsh/util/` or
+`zsh/spec/` a body
 template via `vim.snippet.expand`, and registers a blink source whose snippets
 are offered only in those directories. The filetype stays plain `zsh` on
 purpose: a compound filetype stops shuck attaching and hides blink's zsh
@@ -492,8 +538,12 @@ archived.
   against a stub binary that emits a stand-in script.
 - `tests/header.zunit` - header block conformance, including that every
   `# ::: :/<path>` line matches the file's real location, which is what catches
-  a copied file.
-- `tests/_support/` - `sandbox.zsh` builds and tears down the throwaway `HOME`;
+  a copied file, and that every tracked shell file is among those checked.
+- `tests/layout.zunit` - the layout contract: both helpers derive the same two
+  roots from any directory, the runtime lives beneath `zsh/` and nowhere else,
+  and the generated `chezmoi.env.zsh` stays ignored and absent.
+- `tests/_support/` - `sandbox.zsh` builds and tears down the throwaway `HOME`,
+  and can install a tracked-only copy of the runtime;
   `autoload.zsh` puts `func/`, `wrap/` and `comp/` on `fpath` and writes stub
   binaries; `herdr.zsh` stubs herdr with a canned snapshot and a stand-in for
   its generated completion script.
@@ -506,9 +556,28 @@ No test is `skip`ped to record a known defect. Three once were, in
 `tests/wrap.zunit`, for `wrap/jq`, `wrap/chezmoi` and `wrap/sv`; each skip was
 removed along with its fix, and that remains the rule for any future one. The
 only skips left are conditional: the plugin-cache guard on `tests/boot.zunit`,
-and a test whose subject is absent on the machine running it.
+the two portable-startup tests where the global zshenv assigns `ZDOTDIR`, and a
+test whose subject is absent on the machine running it.
 
 ### Sandboxing
+
+The helpers keep two roots. `ZSH_REPO_ROOT` is the repository, derived from
+the helper's own path; `ZSH_CONFIG_ROOT` is `$ZSH_REPO_ROOT/zsh`, the runtime.
+Runtime discovery, autoloading and the sandbox's configuration link use the
+second. Test discovery, header paths and `MISE_TRUSTED_CONFIG_PATHS` use the
+first, since `.mise.toml` stays at the root.
+
+`sandbox_install_runtime` copies only the files git tracks under `zsh/` into
+`.local/share/zsh-config/` inside the sandbox, and points `.config/zsh` at its
+`zsh/` child, mirroring the live installation. `sandbox_zsh_home` starts zsh
+with neither `ZDOTDIR` nor any XDG variable, so it is found through
+`~/.zshenv`. That only works where the global zshenv leaves `ZDOTDIR` unset.
+This machine's assigns it even under `zsh -f`, so the two portable-startup
+tests skip here through `sandbox_global_sets_zdotdir` and run on CI. The same
+global file also assigns the XDG variables, so `sandbox_zsh_bare` exercises
+their fallbacks fully only on CI. To exercise both locally, run
+`tests/env.zunit` and `tests/boot.zunit` in an Ubuntu container, with a copy of
+the checkout and the plugin cache mounted read-only as `ZSH_TEST_PLUGIN_DIR`.
 
 `sandbox_create` builds a scratch `HOME`, symlinks the checkout to
 `$XDG_CONFIG_HOME/zsh`, and sets every XDG variable, so that no value inherited

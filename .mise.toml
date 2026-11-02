@@ -114,17 +114,33 @@ run = '''
 
     local -a files
     files=(
-        .zshenv
-        .zshrc
-        env/*.env.zsh
-        rc/*.rc.zsh
-        util/*.rc.zsh
-        spec/*.spec.zsh
-        comp/_*(.)
-        func/*(.)
-        wrap/*(.)
+        zsh/.zshenv
+        zsh/.zshrc
+        zsh/env/*.env.zsh
+        zsh/rc/*.rc.zsh
+        zsh/util/*.rc.zsh
+        zsh/spec/*.spec.zsh
+        zsh/comp/_*(.)
+        zsh/func/*(.)
+        zsh/wrap/*(.)
         tests/_support/*.zsh
     )
+
+    # null_glob lets a pattern that matches nothing drop out in silence, which
+    # would leave a whole directory unparsed with this task still green. So
+    # every tracked shell file has to be among those listed. comp/.keep is the
+    # one tracked file there that is not shell.
+    local -a tracked unparsed
+    tracked=(${(0)"$(git ls-files -z -- zsh tests/_support)"})
+    tracked=(${tracked:#*/.keep})
+    unparsed=(${tracked:|files})
+
+    # $#name rather than the braced length form: mise renders this script as
+    # a Tera template, where an opening brace then a hash starts a comment.
+    if (( $#unparsed )); then
+        print -u2 -- "lint:syntax: [ERROR] Not parsed: ${(j:, :)unparsed}"
+        return 1
+    fi
 
     # The test files themselves are absent on purpose, and this is the one
     # carve-out in this task. A .zunit file is not valid zsh: `@test 'name' {`

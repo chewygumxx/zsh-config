@@ -8,6 +8,10 @@
 #
 #
 
-env*
+# Untracked local environment overrides, as .gitignore names them. The leading
+# dot matters: a bare env* also matches the runtime's env/ directory at any
+# depth, and would copy a generated env/chezmoi.env.zsh, with this machine's
+# paths, into the new worktree.
+.env*
 *.local.*
 /node_modules/

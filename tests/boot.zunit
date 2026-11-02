@@ -103,10 +103,12 @@
 
 @test 'No element of fpath is empty' {
     # An empty entry on fpath makes zsh autoload out of the current working
-    # directory. The count is taken through a parameter expansion because zsh
-    # drops empty words from an unquoted array expansion, which would hide
-    # exactly what is being looked for.
-    run sandbox_zsh_stdout "$SANDBOX" -i -c 'print -r -- ${#${(M)fpath:#}}'
+    # directory. Counted as "${#${(@M)fpath:#}}", and every part of that is
+    # needed: zsh drops empty elements from an unquoted array expansion, and
+    # inside double quotes without (@) the filtered array is joined into one
+    # word first, so either way the empty match vanished before it was counted
+    # and this test could never fail.
+    run sandbox_zsh_stdout "$SANDBOX" -i -c 'print -r -- "${#${(@M)fpath:#}}"'
 
     assert "$output" equals 0
 }
@@ -444,4 +446,121 @@
     '
 
     assert "$output" contains 'Regenerating chezmoi completion file'
+}
+
+@test 'A runtime under a hostile directory name loads each module once' {
+    # Spec criterion A3. Spaces and every loader keyword in one name. The
+    # .zshrc reorder patterns are anchored to the final path component;
+    # matched as bare substrings they would catch every file here and source
+    # each more than once, and an unquoted expansion would split the path.
+    local conf
+    conf="$(sandbox_copy_config "$SANDBOX" 'a completion function ls_colors dir')"
+
+    print -r -- 'print -u2 PROBE-RC' > "$conf/rc/probe.rc.zsh"
+    print -r -- 'print -u2 PROBE-UTIL' > "$conf/util/probe.rc.zsh"
+
+    # Appended after the defaults, so this ZDOTDIR wins.
+    local -a SANDBOX_ENV=(ZDOTDIR="$conf")
+
+    run sandbox_zsh "$SANDBOX" -i -c '
+        print -r -- "rc:$zsh_dirs[rc]"
+        print -r -- "empty:${#${(@M)fpath:#}}"
+    '
+
+    # Filtered through unquoted array assignments. Inside double quotes the
+    # array is joined into one word before the :# filter runs, so a filter
+    # anchored to the start of a line would never match.
+    local -a rc_hits=(${(M)lines:#PROBE-RC})
+    local -a util_hits=(${(M)lines:#PROBE-UTIL})
+    local -a rc_line=(${(M)lines:#rc:*})
+    local -a empty_line=(${(M)lines:#empty:*})
+
+    assert ${#rc_hits} equals 1
+    assert ${#util_hits} equals 1
+    assert "$rc_line" same_as "rc:$conf/rc"
+    assert "$empty_line" same_as 'empty:0'
+}
+
+@test 'An installed copy of the tracked runtime starts on its own' {
+    # Spec criterion A4, and the startup half of A9. Shaped like the live
+    # installation: tracked files only, copied rather than linked, reached
+    # through the configuration path. Repository-local tool directories are
+    # dropped from PATH, so a startup that quietly needed Bun or the test
+    # binaries would show here. Every probe line has to name the copy, so a
+    # shell that started cleanly but loaded nothing cannot pass.
+    local root live
+    root="$(sandbox_create)"
+    live="$(sandbox_install_runtime "$root")"
+
+    # Filtered in an unquoted assignment first: inside double quotes $path
+    # would be joined into one word before the filter saw an element.
+    local -a tool_path=(${path:#$ZSH_REPO_ROOT/*})
+    local PATH="${(j.:.)tool_path}"
+    local -a SANDBOX_ENV=(ZSH_TEST_REPO_ROOT="$ZSH_REPO_ROOT")
+
+    sandbox_warm "$root"
+
+    local diagnostics probe
+    diagnostics="$(sandbox_zsh_stderr "$root" -i -c exit)"
+    probe="$(sandbox_zsh_stdout "$root" -i -c '
+        autoload +X mkcd
+        print -r -- "conf:${zsh_dirs[conf]:A}"
+        print -r -- "func:${functions_source[mkcd]:A}"
+        print -r -- "complete:$+functions[_main_complete]"
+        print -r -- "plugins:${#zsh_plugins_loaded}"
+        local entry
+        for entry in $fpath ${(v)zsh_dirs}; do
+            [[ "${entry:A}/" == "$ZSH_TEST_REPO_ROOT"/* ]] &&
+                print -r -- "leak:$entry"
+        done
+        true
+    ')"
+
+    local -a links=("$live"/**/*(N@D))
+    local -a generated=("$live"/zsh/env/chezmoi.env.zsh(N))
+    local expected="${live:A}"
+
+    sandbox_destroy "$root"
+
+    local -a lines=("${(@f)probe}")
+    local -a leaks=(${(M)lines:#leak:*})
+
+    assert "$diagnostics" is_empty
+    assert "$lines[1]" same_as "conf:$expected/zsh"
+    assert "$lines[2]" same_as "func:$expected/zsh/func/mkcd"
+    assert "$lines[3]" same_as 'complete:1'
+    assert "$lines[4]" different_to 'plugins:0'
+    assert "${(j: :)leaks}" is_empty
+    assert ${#links} equals 0
+    assert ${#generated} equals 0
+}
+
+@test 'A home startup link starts the interactive runtime' {
+    # The interactive half of spec criterion A6; see the note on the same
+    # test in env.zunit. .zshrc is found through the ZDOTDIR that
+    # env/zsh_dirs.env.zsh assigns, not one inherited from anywhere.
+    sandbox_global_sets_zdotdir "$SANDBOX" &&
+        skip 'The global zshenv assigns ZDOTDIR, so ~/.zshenv is never read'
+
+    local root
+    root="$(sandbox_create)"
+    sandbox_install_runtime "$root" > /dev/null
+    ln -s -- "$root/.config/zsh/.zshenv" "$root/.zshenv"
+
+    sandbox_zsh_home "$root" -i -c exit > /dev/null 2>&1
+
+    local probe
+    probe="$(sandbox_zsh_home "$root" -i -c '
+        print -r -- "rc:$zsh_dirs[rc]"
+        print -r -- "complete:$+functions[_main_complete]"
+        print -r -- "plugins:${#zsh_plugins_loaded}"
+    ' 2> /dev/null)"
+
+    sandbox_destroy "$root"
+
+    local -a lines=("${(@f)probe}")
+
+    assert "$lines[1]" same_as "rc:$root/.config/zsh/rc"
+    assert "$lines[2]" same_as 'complete:1'
+    assert "$lines[3]" different_to 'plugins:0'
 }

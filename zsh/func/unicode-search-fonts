@@ -1,0 +1,23 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/zsh/func/unicode-search-fonts
+#
+#
+local UNICODE=$1 # U+0123
+if ! [[ $UNICODE =~ '^U\+[0-9ABCDEFabcdef]{4}$' ]]; then
+    # On stderr and with status 2, like the other usage errors in func/. It was
+    # printed on stdout and returned 0, so a caller could not tell it failed.
+    print -u2 -- "Usage: $0 <unicode>"
+    print -u2 -- "       $0 U+1234"
+    return 2
+fi
+
+fd -e ttf -e otf . '/usr/share/fonts' --exec echo $UNICODE | parallel \
+    --colsep "^(U\+[0-9ABCDEFabcdef]{4}) (.*?)$" \
+    'result=$(interrofont --glyph-for {2} {3})
+    [[ $result != *"not in font"* ]] && echo "{3}: $result"'
+    # With parallel --colsep, {1} is always the entire line

@@ -1,0 +1,77 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/zsh/wrap/claude
+#
+#
+
+#
+# Wrapper function as configuration
+#
+# `claude doctor`
+# https://code.claude.com/docs/en/settings
+# https://code.claude.com/docs/en/cli-reference
+#
+
+(($+commands[claude])) || return 127
+
+emulate -L zsh
+setopt localoptions extended_glob
+
+# ------------
+# Directories
+# ------------
+
+local -x CLAUDE_CONFIG_DIR="${CLAUDE_CONFIG_DIR:-${XDG_CONFIG_HOME:=$HOME/.config}/claude}"
+if [[ ! -d "$CLAUDE_CONFIG_DIR" ]]; then
+    mkdir -p "$CLAUDE_CONFIG_DIR" || return 1
+fi
+
+if [[ ! -v CLAUDE_CODE_PROJECT_DIR_NAME ]]; then
+    local git_origin{,_trim} git_slug
+
+    # Quiet on purpose. Outside a repository, or in one without an origin, git
+    # printed its complaint on every launch; the fallback name below already
+    # covers both cases.
+    git_origin="$(command git -C "$PWD" remote get-url origin 2> /dev/null)"
+    git_origin_trim="${${git_origin##*:}%\.git}"
+    git_slug="${(j:_:)${${(s:/:)git_origin_trim}[-2,-1]}}"
+    git_slug="${git_slug// /_}"
+
+    # POSIX portable filename charset
+    git_slug="${git_slug//[^A-Za-z0-9._-]/_}"
+    git_slug="${git_slug//_##/_}"
+    git_slug="${git_slug##[-._]##}"
+    git_slug="${git_slug%%[-._]##}"
+    git_slug="${git_slug:-project}"
+
+    local -x CLAUDE_CODE_PROJECT_DIR_NAME="$git_slug"
+fi
+
+# ----------
+# Utilities
+# ----------
+
+if (($+commands[rg])); then
+    # Locally installed is almost certainly more up-to-date
+    local -x USE_BUILTIN_RIPGREP="${USE_BUILTIN_RIPGREP:-0}"
+fi
+
+# ----------
+# Telemetry
+# ----------
+
+local -x DO_NOT_TRACK="${DO_NOT_TRACK:-1}"
+local -x DISABLE_TELEMETRY="${DISABLE_TELEMETRY:-1}"
+local -x DISABLE_GROWTHBOOK="${DISABLE_GROWTHBOOK:-1}"
+local -x CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="${CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC:-1}"
+
+# --------
+# Execute
+# --------
+
+command claude "$@"

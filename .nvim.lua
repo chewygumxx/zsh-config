@@ -29,9 +29,14 @@
 ---@field body  string
 
 -- Resolved from this file rather than from cwd, since exrc also picks up a
--- `.nvim.lua` from any parent of the directory Neovim was started in
-local root     = vim.fs.dirname(
-    vim.fs.abspath(assert(debug.getinfo(1, "S")).source:sub(2))
+-- `.nvim.lua` from any parent of the directory Neovim was started in. The
+-- source directories classified below are children of the runtime, `zsh/`,
+-- not of the repository root this file sits in
+local root     = vim.fs.joinpath(
+    vim.fs.dirname(
+        vim.fs.abspath(assert(debug.getinfo(1, "S")).source:sub(2))
+    ),
+    "zsh"
 )
 local root_pat = vim.pesc(root)
 

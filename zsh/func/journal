@@ -1,0 +1,27 @@
+#!/bin/false
+# vim:set expandtab shiftwidth=4 filetype=zsh:
+# SPDX-License-Identifier: GPL-3.0-only
+#
+#
+# ~chewygumxx/zsh-config.git
+# ::: :/zsh/func/journal
+#
+#
+# Generate fleeting journal entry and populate with cat stdin.
+#
+
+local suffix=""
+if [[ -n $1 ]]; then
+    local safe="${1//[^[:alnum:]_-]/}"
+    safe="${safe#[-.]}"
+    [[ -z $safe ]] && { print -u2 "${0}: invalid suffix argument"; return 1 }
+    suffix="_${safe}"
+fi
+
+local journal_dir="$HOME/doc/journal"
+# Created here, since the append below cannot create a missing parent.
+\builtin command mkdir -p -- "$journal_dir" || return
+local entry_path="$journal_dir/$(date +%Y-%m-%d)$suffix.txt"
+
+echo -e "\e[35mJournaling to \e[32m${(D)entry_path}\e[0m"
+cat >>| "$entry_path"

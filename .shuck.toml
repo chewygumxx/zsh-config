@@ -12,15 +12,15 @@
 # https://ewhauser.github.io/shuck/docs/settings/
 
 [per-file-shell]
-".zshenv" = "zsh"
-".zshrc" = "zsh"
-"func/*" = "zsh"
-"wrap/*" = "zsh"
-"comp/*" = "zsh"
-"util/*" = "zsh"
-"spec/*" = "zsh"
-"rc/*" = "zsh"
-"env/*" = "zsh"
+"zsh/.zshenv" = "zsh"
+"zsh/.zshrc" = "zsh"
+"zsh/func/*" = "zsh"
+"zsh/wrap/*" = "zsh"
+"zsh/comp/*" = "zsh"
+"zsh/util/*" = "zsh"
+"zsh/spec/*" = "zsh"
+"zsh/rc/*" = "zsh"
+"zsh/env/*" = "zsh"
 
 # Required for correctness rather than tidiness. Left unmapped, shuck reads
 # these as sh, where `$+functions[...]` means nothing, and `shuck format`

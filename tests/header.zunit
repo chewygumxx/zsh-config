@@ -39,10 +39,10 @@
         "$ZSH_CONFIG_ROOT"/comp/_*(N.)
         "$ZSH_CONFIG_ROOT"/func/*(N.)
         "$ZSH_CONFIG_ROOT"/wrap/*(N.)
-        "$ZSH_CONFIG_ROOT"/tests/_support/*.zsh(N)
+        "$ZSH_REPO_ROOT"/tests/_support/*.zsh(N)
     )
 
-    TEST_FILES=("$ZSH_CONFIG_ROOT"/tests/*.zunit(N))
+    TEST_FILES=("$ZSH_REPO_ROOT"/tests/*.zunit(N))
 }
 
 @test 'The file list is not empty' {
@@ -51,6 +51,25 @@
     assert ${#SHELL_FILES} is_greater_than 1
 
     assert ${#TEST_FILES} is_greater_than 1
+}
+
+@test 'Every tracked shell file is checked' {
+    # Guards the globs in @setup. Each carries (N), so one that stops
+    # matching, as a stale path would after a move, drops its whole directory
+    # from every test in this file without a word. comp/.keep is the one
+    # tracked file there that is not shell.
+    local -a tracked unchecked
+
+    tracked=(${(0)"$(git -C "$ZSH_REPO_ROOT" ls-files -z -- zsh tests/_support)"})
+    tracked=("$ZSH_REPO_ROOT"/${^tracked:#*/.keep})
+    unchecked=(${tracked:|SHELL_FILES})
+
+    if (( ${#unchecked} )); then
+        fail "Not checked: ${(j:, :)${unchecked[@]#$ZSH_REPO_ROOT/}}"
+    fi
+
+    assert ${#tracked} is_greater_than 1
+    assert ${#unchecked} equals 0
 }
 
 @test 'Every shell file refuses direct execution' {
@@ -66,12 +85,12 @@
     for file in $SHELL_FILES; do
         if [[ "$file" == "$ZSH_CONFIG_ROOT"/comp/* ]]; then
             [[ "$(head -n 1 -- "$file")" == '#compdef '* ]] ||
-                offenders+=("${file#$ZSH_CONFIG_ROOT/}")
+                offenders+=("${file#$ZSH_REPO_ROOT/}")
             continue
         fi
 
         [[ "$(head -n 1 -- "$file")" == '#!/bin/false' ]] ||
-            offenders+=("${file#$ZSH_CONFIG_ROOT/}")
+            offenders+=("${file#$ZSH_REPO_ROOT/}")
     done
 
     if (( ${#offenders} )); then
@@ -90,7 +109,7 @@
 
     for file in $TEST_FILES; do
         [[ "$(head -n 1 -- "$file")" == '#!/usr/bin/env zunit' ]] ||
-            offenders+=("${file#$ZSH_CONFIG_ROOT/}")
+            offenders+=("${file#$ZSH_REPO_ROOT/}")
     done
 
     if (( ${#offenders} )); then
@@ -108,10 +127,10 @@
         lines=("${(@f)$(head -n 3 -- "$file")}")
 
         [[ "$lines[2]" == '# vim:set expandtab shiftwidth=4 filetype=zsh:' ]] ||
-            offenders+=("${file#$ZSH_CONFIG_ROOT/}:2")
+            offenders+=("${file#$ZSH_REPO_ROOT/}:2")
 
         [[ "$lines[3]" == '# SPDX-License-Identifier: GPL-3.0-only' ]] ||
-            offenders+=("${file#$ZSH_CONFIG_ROOT/}:3")
+            offenders+=("${file#$ZSH_REPO_ROOT/}:3")
     done
 
     if (( ${#offenders} )); then
@@ -126,7 +145,7 @@
     local -a offenders=()
 
     for file in $SHELL_FILES $TEST_FILES; do
-        relative="${file#$ZSH_CONFIG_ROOT/}"
+        relative="${file#$ZSH_REPO_ROOT/}"
 
         # -x for a whole line and -F for a literal, so nothing in the path is
         # read as a pattern.
