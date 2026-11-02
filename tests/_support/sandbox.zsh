@@ -313,3 +313,44 @@ function sandbox_install_runtime() {
 
     print -r -- "$live"
 }
+
+#
+# Run zsh against a sandbox as a machine with no ZDOTDIR and no XDG variable
+# would: only HOME, PATH, TERM and SHELL, plus the mise trust that every
+# sandbox start carries. zsh then finds its configuration through ~/.zshenv,
+# which is the portable installation contract.
+#
+function sandbox_zsh_home() {
+    emulate -L zsh
+
+    local root="$1"
+    shift
+
+    env -i \
+        HOME="$root" \
+        PATH="$PATH" \
+        TERM="${TERM:-dumb}" \
+        SHELL="${commands[zsh]:-/usr/bin/zsh}" \
+        MISE_TRUSTED_CONFIG_PATHS="$ZSH_REPO_ROOT" \
+        zsh "$@"
+}
+
+#
+# Succeed when this machine's global zshenv assigns ZDOTDIR itself.
+#
+# zsh reads the global zshenv before anything else, even under -f, so where it
+# assigns ZDOTDIR zsh never consults ~/.zshenv, and a test of portable startup
+# would pass without exercising it. Arch here does this; Ubuntu on CI does not.
+#
+function sandbox_global_sets_zdotdir() {
+    emulate -L zsh
+
+    # The single quotes are the point, so C005 is suppressed: the expansion
+    # belongs to the child shell, which is the one whose ZDOTDIR is in question.
+    local set
+    # shuck: disable=C005
+    set="$(env -i HOME="$1" PATH="$PATH" zsh -fc 'print -r -- ${+ZDOTDIR}')" ||
+        return 1
+
+    [[ "$set" == 1 ]]
+}
