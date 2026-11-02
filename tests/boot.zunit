@@ -103,10 +103,12 @@
 
 @test 'No element of fpath is empty' {
     # An empty entry on fpath makes zsh autoload out of the current working
-    # directory. The count is taken through a parameter expansion because zsh
-    # drops empty words from an unquoted array expansion, which would hide
-    # exactly what is being looked for.
-    run sandbox_zsh_stdout "$SANDBOX" -i -c 'print -r -- ${#${(M)fpath:#}}'
+    # directory. Counted as "${#${(@M)fpath:#}}", and every part of that is
+    # needed: zsh drops empty elements from an unquoted array expansion, and
+    # inside double quotes without (@) the filtered array is joined into one
+    # word first, so either way the empty match vanished before it was counted
+    # and this test could never fail.
+    run sandbox_zsh_stdout "$SANDBOX" -i -c 'print -r -- "${#${(@M)fpath:#}}"'
 
     assert "$output" equals 0
 }
@@ -462,7 +464,7 @@
 
     run sandbox_zsh "$SANDBOX" -i -c '
         print -r -- "rc:$zsh_dirs[rc]"
-        print -r -- "empty:${#${(M)fpath:#}}"
+        print -r -- "empty:${#${(@M)fpath:#}}"
     '
 
     # Filtered through unquoted array assignments. Inside double quotes the
