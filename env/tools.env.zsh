@@ -44,6 +44,13 @@ export ANDROID_USER_HOME="$__tools_data/android"
 export DOTNET_CLI_HOME="$__tools_data/dotnet"
 export NUGET_PACKAGES="$__tools_cache/NuGetPackages"
 
+# Bun. With XDG_CACHE_HOME set, global packages and their links default to
+# $XDG_CACHE_HOME/.bun, so clearing the cache uninstalled them. Bun 1.4.2
+# ignores globalDir and globalBinDir in a global .bunfig.toml; only these
+# variables move them. The download cache stays under XDG_CACHE_HOME.
+export BUN_INSTALL_GLOBAL_DIR="$__tools_data/bun/global"
+export BUN_INSTALL_BIN="$HOME/.local/bin"
+
 # Console Do Not Track, https://consoledonottrack.com, honoured by gh among
 # many others. 1, as the convention specifies and as wrap/claude defaults it;
 # it was "true" here.
