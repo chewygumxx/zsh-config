@@ -8,9 +8,7 @@ description: >-
   separating repository and runtime paths in tests, and preserving deliberate
   live deployment.
 tags:
-  - zsh
-  - architecture
-  - specification
+  - spec
 ---
 
 <!--
@@ -31,7 +29,7 @@ tags:
 | Scope    | Runtime location, test interfaces, project tooling, and installation compatibility |
 
 This specification develops the recommendation recorded in the
-[repository layout assessment](../notes/2026-11-03_repository-layout-assessment.md).
+[repository layout assessment](./../notes/2026-11-03_repository-layout-assessment.md).
 It defines a future migration. Committing this document does not move the
 configuration, change the live clone, or establish that the acceptance
 criteria below have passed.
@@ -45,7 +43,7 @@ helpers also use one root variable for both runtime files and repository
 infrastructure.
 
 The intended outcome is a complete runtime under `zsh/`. Its contents can be
-used as `ZDOTDIR` independently of the repository's development files. Tests
+sourced via `ZDOTDIR` independently of the repository's development files. Tests
 and tooling remain in the same source history as the runtime they describe.
 The existing distinction between the development checkout and live
 configuration remains intact.
@@ -87,37 +85,34 @@ could serve distribution later, but no such requirement currently justifies
 the extra publication process. Sparse checkout remains an optional checkout
 policy and is not part of the source architecture.
 
-The [assessment](../notes/2026-11-03_repository-layout-assessment.md#alternatives-and-their-costs)
+The [assessment](./../notes/2026-11-03_repository-layout-assessment.md#alternatives-and-their-costs)
 records the trade-offs in more detail.
 
 ## Directory and Ownership Boundaries
 
 ```text
 repository root/
-├── zsh/                   complete repository-owned runtime
+├── zsh/                   Effective Configuration
 │   ├── .zshenv
 │   ├── .zshrc
-│   ├── env/
-│   ├── rc/
-│   ├── util/
-│   ├── func/
-│   ├── wrap/
-│   ├── comp/
-│   └── spec/              plugin specifications
-├── tests/                 runtime and source-contract tests
+│   ├── env/               Universal Initialisation
+│   ├── rc/                Interactive Initialisation
+│   ├── util/              Tool-Specific Integration
+│   ├── func/              Function (not including wrappers)
+│   ├── wrap/              Wrapper
+│   ├── comp/              Completion
+│   └── spec/              Plugin Specifications
+├── tests/                 Runtime and Source-Contract Tests
 ├── docs/
-│   ├── notes/             rationale and retained assessments
-│   └── spec/              architectural specifications
+│   ├── notes/             Rationale and Retained Assessments
+│   └── spec/              Architectural Specifications
 ├── .github/
 ├── .husky/
 ├── .claude/
 ├── AGENTS.md
 ├── LICENSE
-└── project configuration and dependency manifests
+└── Project configuration, dependency manifests, etc.
 ```
-
-`zsh/spec/` contains executable plugin specifications. `docs/spec/` contains
-design documents. Plugin loading never traverses `docs/spec/`.
 
 All existing tracked runtime files move beneath `zsh/`, including the startup
 files and `comp/.keep`. The root startup files are removed as part of that
