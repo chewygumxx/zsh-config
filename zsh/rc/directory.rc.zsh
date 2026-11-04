@@ -22,21 +22,13 @@ hash -d share="${XDG_DATA_HOME:=$HOME/.local/share}"
     emulate -L zsh
     setopt local_options no_glob_dots
 
-    # Keys remain the first three characters of each $HOME subdirectory, and are
-    # lengthened one character at a time only where that would collide with a
-    # key already assigned. Previously every key was a bare ${dir:0:3}, so two
-    # directories sharing a three-character prefix (Docker and Documents, say)
-    # silently overwrote one another's hash -d entry, and which of the two
-    # survived depended on glob order.
-    #
-    # Existing shortcuts are unaffected whenever prefixes are already distinct.
-    #
-    # (N) matters here because no_glob_dots is set just above: a $HOME holding
-    # only dot-directories matches nothing and would otherwise abort the loop
-    # with `no matches found`.
+    # Directory keys (short-names) are the first three characters of each $HOME
+    # directory excluding directory names beginning with '.' (hidden).
+    # In the event of collision, keys are lengthened by one letter until unique.
     local dir key
     local -A taken
 
+    # (N) matters here because no_glob_dots is set just above
     for dir in "$HOME"/*(N/:t); do
         key="${dir:0:3}"
 
@@ -62,21 +54,21 @@ hash -d share="${XDG_DATA_HOME:=$HOME/.local/share}"
 
 # CHEZMOI_* Must be defined from systemd user session start
 if [[ -v CHEZMOI_WORKING_TREE && -d "$CHEZMOI_WORKING_TREE" ]]; then
-    hash -d dfrepo="$CHEZMOI_WORKING_TREE"
+    hash -d dotfiles="$CHEZMOI_WORKING_TREE"
 fi
 
 if [[ -v CHEZMOI_SOURCE_DIR && -d "$CHEZMOI_SOURCE_DIR" ]]; then
     hash -d df="$CHEZMOI_SOURCE_DIR"
 
     [[ -d "$CHEZMOI_SOURCE_DIR/dot_config" ]] &&
-        hash -d dfconf="$CHEZMOI_SOURCE_DIR/dot_config"
-    [[ -d "$CHEZMOI_SOURCE_DIR/dot_local/bin" ]] &&
-        hash -d dfbin="$CHEZMOI_SOURCE_DIR/dot_local/bin"
+        hash -d dconf="$CHEZMOI_SOURCE_DIR/dot_config"
+    [[ -d "$CHEZMOI_SOURCE_DIR/dot_local" ]] &&
+        hash -d dloc="$CHEZMOI_SOURCE_DIR/dot_local"
 fi
 () {
     emulate -L zsh
 
-    local cfg_dir="${nameddirs[dfconf]:-${XDG_CONFIG_HOME:=$HOME/.config}}"
+    local cfg_dir="${nameddirs[dconf]:-${XDG_CONFIG_HOME:=$HOME/.config}}"
     local -A cfg_dirs
     cfg_dirs=(
         [envd]="$cfg_dir/environment.d"
@@ -107,9 +99,6 @@ fi
 [[ -d "$HOME/net/firefox" ]] && hash -d ff="$HOME/net/firefox"
 () {
     [[ ! -v TERMUX_VERSION ]] && return
-    # No trailing slash. With one, ~emul never matched a path for %~ in the
-    # prompt, and every name below held a doubled slash, as in
-    # /storage/emulated/0//Download, so none of them ever matched either.
     local emulated="/storage/emulated/0"
 
     hash -d pref="${PREFIX:-/data/data/com.termux/files/usr}"
