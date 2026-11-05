@@ -36,9 +36,14 @@ project tooling. Throughout this file, a runtime path such as `rc/` or
 `env/zsh_dirs.env.zsh` is relative to `zsh/`; a path naming a repository file,
 such as `tests/` or `.mise.toml`, is relative to the root.
 
-Note that `~/.config/zsh` is a separate clone of this same repository and is the
-live configuration. This checkout is the source; commits here do not affect the
-running shell until they reach that clone.
+The live configuration is a separate clone of this same repository at
+`~/.local/share/zsh-config`, whose `zsh/` child is linked in as `~/.config/zsh`.
+This checkout is the source; commits here do not affect the running shell until
+they reach that clone. chezmoi owns both halves: the dotfiles repository
+declares the clone as a git-repo external in
+`home/.chezmoiexternals/zsh-config.toml.tmpl`, which `chezmoi apply` refreshes
+from GitHub `main` once its refresh period has passed, and the link as
+`home/dot_config/symlink_zsh`.
 
 `origin` is GitHub alone. The live clone is a second remote, `local`, and sets
 `receive.denyCurrentBranch=updateInstead`, so `git push local main` updates its
@@ -51,13 +56,11 @@ Changes reach `main` through pull requests. Once one merges, pull `main` here
 before anything else, since `sync-header-metadata` may have committed on top
 (see "GitHub workflows"), then `git push local main`.
 
-**Until the live cutover, do not push to `local`.** The live clone at
-`~/.config/zsh` predates the move to `zsh/` and is itself the running
-`ZDOTDIR`. Any commit from the move onward deletes `.zshenv` and `.zshrc` from
-its root, and every new shell then starts unconfigured. The cutover replaces
-that clone with one whose `zsh/` child is linked at `~/.config/zsh`, in the
-order `docs/spec/2026-11-03_runtime-directory-separation.md` sets out under
-"Initial Cutover and Recovery". Remove this paragraph once that has been done.
+Any clone used as a live configuration must have its `zsh/` child, never its
+root, at the configuration path: the root holds no `.zshenv`, so a `ZDOTDIR`
+pointed there starts every shell unconfigured. The move to `zsh/` was cut over
+on 2026-11-03 as `docs/spec/2026-11-03_runtime-directory-separation.md` sets
+out under "Initial Cutover and Recovery".
 
 On this machine `/etc/zsh/zshenv` supplies `XDG_CONFIG_HOME`, `XDG_CACHE_HOME`,
 `XDG_DATA_HOME`, `XDG_STATE_HOME` and `ZDOTDIR`. That file is machine-local and
