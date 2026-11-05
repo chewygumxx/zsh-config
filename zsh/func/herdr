@@ -16,3 +16,5 @@
 emulate -L zsh
 
 local __this_file="${(D)${functions_source[${(%):-%N}]:-${(%):-%N}}}"
+
+command herdr "$@"
