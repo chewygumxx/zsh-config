@@ -231,6 +231,22 @@
     assert $state equals 0
 }
 
+@test 'nvim uses GNU timeout when the default timeout is uutils' {
+    load _support/nvim
+
+    run nvim_background_probe "$TMP/gnu-fallback" gnu-fallback
+
+    assert $state equals 0
+}
+
+@test 'nvim opens the editor without starting jobs when GNU timeout is absent' {
+    load _support/nvim
+
+    run nvim_background_probe "$TMP/no-gnu" no-gnu
+
+    assert $state equals 0
+}
+
 @test 'nvim reads stdin when given a lone dash' {
     stub_command nvim "$TMP/bin"
     load_shell_function nvim

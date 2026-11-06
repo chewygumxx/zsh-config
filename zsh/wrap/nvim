@@ -99,12 +99,24 @@ if (($+commands[chezmoi])); then
     # this wrapper's commands so a refresh cannot race an add or re-add.
     # Start the execution timeout after acquiring the serialization lock, so
     # queued edits retain their full execution budget.
-    if (($+commands[setsid] && $+commands[timeout] && $+commands[flock])); then
+    # Ubuntu can provide uutils as timeout and GNU as gnutimeout. Its affected
+    # uutils versions kill only the direct child on SIGKILL, leaving helpers
+    # alive with inherited state locks. Check the implementation, not the name.
+    local timeout_command timeout_candidate
+    for timeout_candidate in timeout gtimeout gnutimeout; do
+        if (($+commands[$timeout_candidate])) &&
+            [[ "$(command "$timeout_candidate" --version 2> /dev/null)" == *'GNU coreutils'* ]]; then
+            timeout_command="$timeout_candidate"
+            break
+        fi
+    done
+
+    if [[ -n "$timeout_command" ]] && (($+commands[setsid] && $+commands[flock])); then
         if command mkdir -p -- "$cache_dir"; then
             chezmoi_background=(
                 flock --close "$cache_dir/chezmoi.lock"
                 setsid --fork --wait
-                timeout --verbose --kill-after=5s "${NVIM_CHEZMOI_TIMEOUT:-60s}"
+                "$timeout_command" --verbose --kill-after=5s "${NVIM_CHEZMOI_TIMEOUT:-60s}"
                 sh -c '
                     trap "while :; do sleep 1; done" TERM
                     "$@" &
@@ -119,7 +131,7 @@ if (($+commands[chezmoi])); then
             )
         fi
     else
-        print -u2 -- "$__this_file: Automatic chezmoi jobs require setsid, timeout and flock"
+        print -u2 -- "$__this_file: Automatic chezmoi jobs require setsid, flock and GNU timeout"
     fi
 
     # flock stays outside the timeout's process group and closes its lock

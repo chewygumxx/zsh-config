@@ -37,6 +37,16 @@ Automatic jobs require util-linux `setsid` and `flock`, plus GNU `timeout`.
 If a helper is missing, the wrapper reports that requirement and still opens
 the editor, skipping automatic chezmoi work.
 
+The wrapper checks `timeout`, `gtimeout`, then `gnutimeout` for a GNU
+implementation. Ubuntu 26.04 defaults to uutils `timeout` and also installs
+GNU as `gnutimeout`. The uutils 0.8.0 implementation used by the CI runner
+does not kill the whole process group when escalating to `SIGKILL`, leaving
+helpers alive and causing both timeout-cleanup regression tests to fail.
+The same fixtures pass with GNU timeout inside that Ubuntu container.
+This is tracked in [uutils issue #15768](https://github.com/uutils/coreutils/issues/15768).
+If no GNU implementation is available, automatic jobs are skipped with a
+diagnostic rather than using timeout behavior that cannot guarantee cleanup.
+
 Each background command has a 60-second execution limit, starting after it
 acquires the wrapper's queue lock. Waiting edits retain their full execution
 budget. `NVIM_CHEZMOI_TIMEOUT` can override this duration using GNU timeout

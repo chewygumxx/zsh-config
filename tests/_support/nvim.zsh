@@ -16,6 +16,15 @@ function nvim_background_probe() {
     local root="$1" mode="$2"
     local cache="$root/cache/zsh/nvim/chezmoi-managed"
     local worker=0 worker_group=0 result=1 i
+    local candidate gnu_timeout
+
+    for candidate in timeout gtimeout gnutimeout; do
+        if (($+commands[$candidate])) &&
+            [[ "$(command "$candidate" --version 2> /dev/null)" == *'GNU coreutils'* ]]; then
+            gnu_timeout="$commands[$candidate]"
+            break
+        fi
+    done
 
     mkdir -p -- "$root/bin" "$root/home/managed" "$root/config" \
         "$root/src" "${cache:h}"
@@ -65,6 +74,26 @@ esac
 EOF
     chmod 0755 -- "$root/bin/nvim" "$root/bin/chezmoi"
 
+    if [[ "$mode" == gnu-fallback || "$mode" == no-gnu ]]; then
+        cat > "$root/bin/timeout" << 'EOF'
+#!/bin/sh
+if [ "$1" = --version ]; then
+    printf 'timeout (uutils coreutils) fixture\n'
+    exit
+fi
+printf 'unsupported timeout executed\n' >&2
+exit 99
+EOF
+        chmod 0755 -- "$root/bin/timeout"
+        cp -- "$root/bin/timeout" "$root/bin/gtimeout"
+        if [[ "$mode" == gnu-fallback ]]; then
+            [[ -n "$gnu_timeout" ]] || return 1
+            ln -s -- "$gnu_timeout" "$root/bin/gnutimeout"
+        else
+            cp -- "$root/bin/timeout" "$root/bin/gnutimeout"
+        fi
+    fi
+
     cat > "$root/driver.zsh" << 'EOF'
 fpath=("$CASE_RUNTIME/wrap" $fpath)
 autoload -Uz nvim
@@ -74,9 +103,9 @@ if [[ "$CASE_MODE" == serialize ]]; then
     while [[ ! -e "$CASE_ROOT/held" ]]; do sleep 0.02; done
 fi
 if [[ "$CASE_MODE" == add ]]; then
-    nvim "$CASE_ROOT/home/managed/new" <<< y
+    nvim "$CASE_ROOT/home/managed/new" <<< y 2> "$CASE_ROOT/wrapper.err"
 else
-    nvim "$CASE_ROOT/home/managed/file"
+    nvim "$CASE_ROOT/home/managed/file" 2> "$CASE_ROOT/wrapper.err"
 fi
 if [[ "$CASE_MODE" == refresh-once || "$CASE_MODE" == serialize || "$CASE_MODE" == daemon ]]; then
     nvim "$CASE_ROOT/home/managed/file"
@@ -96,6 +125,7 @@ EOF
             zsh -dfi "$root/driver.zsh" || return 1
 
         for i in {1..100}; do
+            [[ "$mode" == no-gnu && -s "$root/returned" ]] && break
             [[ -s "$root/pid" && -s "$root/returned" ]] && break
             sleep 0.02
         done
@@ -104,7 +134,10 @@ EOF
             worker_group="$(command ps -p "$worker" -o pgid=)" || true
         fi
 
-        if [[ "$mode" == refresh-once || "$mode" == serialize ]]; then
+        if [[ "$mode" == no-gnu ]]; then
+            [[ -s "$root/returned" && ! -e "$root/calls" ]] &&
+                command grep -q 'GNU timeout' "$root/wrapper.err" && result=0
+        elif [[ "$mode" == refresh-once || "$mode" == serialize ]]; then
             # Both editor calls returned while the first refresh is pending.
             sleep 0.1
             [[ -s "$root/calls" ]] && result="$(wc -l < "$root/calls")"
