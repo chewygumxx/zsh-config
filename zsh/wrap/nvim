@@ -84,12 +84,49 @@ fi
 # reintroduce the wait. The default location stands in until a rebuild has
 # recorded the real one.
 local -a managed=() managed_paths=()
+local -a chezmoi_background=()
 
 if (($+commands[chezmoi])); then
     local cache_root="${XDG_CACHE_HOME:=$HOME/.cache}/zsh"
     local cache_dir="${zsh_dirs[cache]:-$cache_root}/nvim"
     local cache="$cache_dir/chezmoi-managed"
     local source_dir="${XDG_DATA_HOME:=$HOME/.local/share}/chezmoi"
+
+    # Disowning a job and redirecting stdin leave its controlling terminal
+    # intact. A template or password helper can still open /dev/tty and stop
+    # the whole background job with SIGTTIN while chezmoi holds its state lock.
+    # Start a new session, bound the command and its children, and serialize
+    # this wrapper's commands so a refresh cannot race an add or re-add.
+    # Start the execution timeout after acquiring the serialization lock, so
+    # queued edits retain their full execution budget.
+    if (($+commands[setsid] && $+commands[timeout] && $+commands[flock])); then
+        if command mkdir -p -- "$cache_dir"; then
+            chezmoi_background=(
+                flock --close "$cache_dir/chezmoi.lock"
+                setsid --fork --wait
+                timeout --verbose --kill-after=5s "${NVIM_CHEZMOI_TIMEOUT:-60s}"
+                sh -c '
+                    trap "while :; do sleep 1; done" TERM
+                    "$@" &
+                    wait "$!"
+                    code=$?
+                    if [ "$code" -ne 0 ]; then
+                        printf "chezmoi background command exited with status %s\n" "$code" >&2
+                    fi
+                    exit "$code"
+                ' nvim-chezmoi
+                chezmoi
+            )
+        fi
+    else
+        print -u2 -- "$__this_file: Automatic chezmoi jobs require setsid, timeout and flock"
+    fi
+
+    # flock stays outside the timeout's process group and closes its lock
+    # descriptor in children, so helpers cannot retain the queue lock.
+    # The shell supervisor above stays alive after timeout sends SIGTERM,
+    # ensuring its later SIGKILL reaches the entire process group even if
+    # chezmoi exits first and leaves a helper holding an inherited lock.
 
     if [[ -s "$cache.source" ]]; then
         source_dir="$(< "$cache.source")"
@@ -109,30 +146,30 @@ if (($+commands[chezmoi])); then
         stale=1
     fi
 
-    if [[ -n "$stale" ]]; then
-        # stdin is detached so a template that asks for a passphrase cannot
-        # compete with Neovim for the terminal. Both lists are written to
-        # temporary files and moved into place, so a lookup never reads a half
-        # written cache and a failed rebuild leaves the previous one intact.
+    if [[ -n "$stale" ]] && (($#chezmoi_background)); then
+        # Only one refresh may run while the cache is stale. flock holds the
+        # open description shared with this subshell until the refresh exits.
+        # Both lists are published only after successful commands, preserving
+        # the previous cache on failure. Diagnostics remain in chezmoi.log.
         #
         # The new cache takes the mtime of a stamp made before chezmoi started,
         # so a source edit made while the rebuild ran still reads as newer.
         {
+            command flock -n 9 || return 0
             local stamp tmp tmp_source
 
-            command mkdir -p -- "$cache_dir" &&
-                stamp="$(command mktemp -- "$cache.XXXXXXXX")" &&
+            stamp="$(command mktemp -- "$cache.XXXXXXXX")" &&
                 tmp="$(command mktemp -- "$cache.XXXXXXXX")" &&
                 tmp_source="$(command mktemp -- "$cache.XXXXXXXX")" &&
-                command chezmoi managed --path-style absolute >| "$tmp" &&
-                command chezmoi source-path >| "$tmp_source" &&
+                command "${chezmoi_background[@]}" managed --path-style absolute 9>&- >| "$tmp" &&
+                command "${chezmoi_background[@]}" source-path 9>&- >| "$tmp_source" &&
                 command touch -r "$stamp" -- "$tmp" &&
                 command mv -f -- "$tmp_source" "$cache.source" &&
                 command mv -f -- "$tmp" "$cache"
 
             command rm -f -- \
                 ${stamp:+"$stamp"} ${tmp:+"$tmp"} ${tmp_source:+"$tmp_source"}
-        } < /dev/null > /dev/null 2>&1 &!
+        } 9> "$cache.refresh.lock" < /dev/null > /dev/null 2>> "$cache_dir/chezmoi.log" &!
     fi
 
     # Both the path as given and the one it resolves to are looked up. ${1:a}
@@ -170,7 +207,7 @@ fi
 # one keypress at a time on a terminal, and end of file declines. The question
 # is printed rather than passed as read's ?prompt, which only an interactive
 # shell displays, and the newline read -q never echoes follows it on stderr.
-# stdin is detached from the add for the same reason as the rebuild above.
+# The add uses the same session isolation and time limit as the cache refresh.
 if [[ ! -e "$target" ]]; then
     command nvim "$target"
     local nvim_exit=$?
@@ -178,6 +215,8 @@ if [[ ! -e "$target" ]]; then
     if [[ ! -e "$target" ]]; then
         return $nvim_exit
     fi
+
+    (($#chezmoi_background)) || return $nvim_exit
 
     local parent
     for parent in "${target:h}" "${target:h:A}"; do
@@ -189,7 +228,8 @@ if [[ ! -e "$target" ]]; then
         print -u2
 
         if ((answer == 0)); then
-            command chezmoi add -- "$target" < /dev/null &!
+            command "${chezmoi_background[@]}" add -- "$target" \
+                < /dev/null >> "$cache_dir/chezmoi.log" 2>&1 &!
         fi
         break
     done
@@ -201,7 +241,10 @@ if (($#managed)); then
     local -x TMPDIR="${XDG_CACHE_HOME:=$HOME/.cache}/chezmoi"
     [[ ! -d "$TMPDIR" ]] && command mkdir -p "$TMPDIR"
     command nvim "$target"
-    command chezmoi re-add "${managed[@]}" < /dev/null &!
+    if (($#chezmoi_background)); then
+        command "${chezmoi_background[@]}" re-add "${managed[@]}" \
+            < /dev/null >> "$cache_dir/chezmoi.log" 2>&1 &!
+    fi
     return
 fi
 
