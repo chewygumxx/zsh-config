@@ -181,6 +181,72 @@
     assert "$result" same_as --version
 }
 
+@test 'nvim background chezmoi commands cannot read the editor terminal' {
+    load _support/nvim
+
+    local mode
+    for mode in refresh add re-add; do
+        run nvim_background_probe "$TMP/$mode" "$mode"
+        assert $state equals 0
+    done
+}
+
+@test 'nvim starts only one pending managed cache refresh' {
+    load _support/nvim
+
+    run nvim_background_probe "$TMP/refresh" refresh-once
+
+    assert $state equals 0
+}
+
+@test 'nvim terminates hung background chezmoi jobs and releases their locks' {
+    load _support/nvim
+
+    run nvim_background_probe "$TMP/hang" hang
+
+    assert $state equals 0
+}
+
+@test 'nvim terminates helpers even when their chezmoi parent exits first' {
+    load _support/nvim
+
+    run nvim_background_probe "$TMP/orphan" orphan
+
+    assert $state equals 0
+}
+
+@test 'nvim serializes background chezmoi writes without dropping an edit' {
+    load _support/nvim
+
+    run nvim_background_probe "$TMP/serialize" serialize
+
+    assert $state equals 0
+}
+
+@test 'nvim helpers cannot retain the wrapper queue lock after success' {
+    load _support/nvim
+
+    run nvim_background_probe "$TMP/daemon" daemon
+
+    assert $state equals 0
+}
+
+@test 'nvim uses GNU timeout when the default timeout is uutils' {
+    load _support/nvim
+
+    run nvim_background_probe "$TMP/gnu-fallback" gnu-fallback
+
+    assert $state equals 0
+}
+
+@test 'nvim opens the editor without starting jobs when GNU timeout is absent' {
+    load _support/nvim
+
+    run nvim_background_probe "$TMP/no-gnu" no-gnu
+
+    assert $state equals 0
+}
+
 @test 'nvim reads stdin when given a lone dash' {
     stub_command nvim "$TMP/bin"
     load_shell_function nvim
