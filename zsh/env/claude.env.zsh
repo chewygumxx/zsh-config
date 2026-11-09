@@ -9,7 +9,5 @@
 #
 #
 
-#export CLAUDE_ALT=1
-
 # Herdr also requires this
-export CLAUDE_CONFIG_DIR="$HOME/.local/var/claude"
+export CLAUDE_CONFIG_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/claude"
