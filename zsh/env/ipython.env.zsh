@@ -5,9 +5,8 @@
 #
 #
 # ~chewygumxx/zsh-config.git
-# ::: :/zsh/env/python.env.zsh
+# ::: :/zsh/env/ipython.env.zsh
 #
 #
 
-JUPYTER_CONFIG_DIR="$HOME/.local/var/jupyter"
-IPYTHONDIR="$HOME/.local/var/ipython"
+export IPYTHONDIR="${XDG_DATA_HOME:-$HOME/.local/share}/ipython"
